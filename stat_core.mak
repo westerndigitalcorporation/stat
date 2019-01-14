@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: MIT
 
 # The path to the engine file
-ENGINE_MAKFILE="$(TOOL_DIR)/engine.mak"
+ENGINE_MAKEFILE="$(TOOL_DIR)/engine.mak"
 
 # Combine all the variables together
 SOURCES=$(SOURCES:  = )
@@ -18,18 +18,18 @@ PREFIX=[
 SUFFIX=] 
 DELIMITER=,
 
-# The following lines invoke NMAKE to run the $(ENGINE_MAKFILE) and passes to
+# The following lines invoke NMAKE to run the $(ENGINE_MAKEFILE) and passes to
 # it all the variables via command line. Along with the variables these lines
 # also pass a temporary makefile that helps to pack the lists meant to be 
 # formatted later on using the prefix and the suffix above. This trick 
 # is the only way that NMAKE allows pre-padding of items in a list. 
 clean build:
-    @$(MAKE) /nologo /C /$(MAKEFLAGS) /F$(ENGINE_MAKFILE) \
-      TOOL_DIR="$(TOOL_DIR)" \
+    @$(MAKE) /nologo /C /$(MAKEFLAGS) /F$(ENGINE_MAKEFILE) \
       DUMMIES_DIR="$(DUMMIES_DIR)" \
       OUTPUT_DIR="$(OUTPUT_DIR)" \
-      VS_TOOL="$(VS_TOOL)" \
-      NAME="$(NAME)" \
+      OUTPUT_EXEC="$(OUTPUT_EXEC)" \
+      VS_DEV="$(VS_DEV)" \
+      OUTPUT_NAME="$(OUTPUT_NAME)" \
       DUMMIES="$(DUMMY_INTERFACES)" \
       SOURCES="$(SOURCES)" \
       INCLUDES="$(INCLUDES)" \

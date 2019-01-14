@@ -1,18 +1,19 @@
+from __future__ import print_function
+
 import sys
 import os
+from shutil import rmtree
 from unittest import TestCase
 from services import isWindows
 
 try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
-try:
-    from unittest.mock import patch, call, mock_open
+    from unittest.mock import patch, call
 except ImportError:
     from mock import patch, call, mock_open
 
+import stat_attributes as attributes
+
+BUILTINS_NAME = builtinsModuleName = '__builtin__' if sys.version_info.major < 3 else 'builtins'
 
 def readFileLines(filePath):
     report = open(filePath, 'r')
@@ -28,13 +29,35 @@ class AdvancedTestCase(TestCase):
             self.skipTest("This test supported in Windows only")
 
     def patch(self, moduleName, objectName, *args, **kwargs):
-        patcher = patch('{0}.{1}'.format(moduleName, objectName), *args, **kwargs)
+        """
+        :rtype: MagicMock
+        """
+        target = '{0}.{1}'.format(moduleName, objectName)
+        patcher = patch(target, *args, **kwargs)
         self.addCleanup(patcher.stop)
         return patcher.start()
 
-    def patchOpen(self):
-        builtinsModuleName = '__builtin__' if sys.version_info.major < 3 else 'builtins'
-        return self.patch(builtinsModuleName, 'open', new_callable=mock_open())
+    def patchMultiple(self, moduleName, objectName, *args, **kwargs):
+        """
+        :rtype: Dict(str, MagicMock)
+        """
+        target = '{0}.{1}'.format(moduleName, objectName)
+        patcher = patch.multiple(target, *args, **kwargs)
+        self.addCleanup(patcher.stop)
+        return patcher.start()
+
+    def patchOpen(self, return_value=None, side_effect=None, read_data=''):
+        newCallable = mock_open(read_data=read_data) if read_data else mock_open()
+        patcher = self.patch(BUILTINS_NAME, 'open', newCallable)
+        if return_value:
+            patcher.return_value = return_value
+        if side_effect:
+            patcher.side_effect = side_effect
+        return patcher
+
+    def patchBuiltinObject(self, objectName, *args, **kwargs):
+        patcher = self.patch(BUILTINS_NAME, objectName, *args, **kwargs)
+        return patcher
 
     def patchWithSpy(self, moduleName, objectName):
         patcher = patch('{0}.{1}'.format(moduleName, objectName), SpyClass.getSpy(objectName, moduleName))
@@ -46,45 +69,33 @@ class AdvancedTestCase(TestCase):
             self.__assertSameItems = getattr(self, 'assertCountEqual', getattr(self, 'assertItemsEqual', None))
         self.__assertSameItems(first, second, msg)
 
-    def assertCalls(self, patchedObject, expectedCalls):
+    @staticmethod
+    def getMockCalls(patchedObject):
         def __isDebuggerCall(callEntry):
             callDescription = tuple(callEntry)[0]
             result = callDescription.find('__str__')
             return result >= 0
-        receivedCalls = [aCall for aCall in patchedObject.mock_calls if not __isDebuggerCall(aCall)]
+        return [aCall for aCall in patchedObject.mock_calls if not __isDebuggerCall(aCall)]
+
+    def assertCalls(self, patchedObject, expectedCalls):
+        receivedCalls = self.getMockCalls(patchedObject)
         self.assertEqual(expectedCalls, receivedCalls)
 
 class FileBasedTestCase(AdvancedTestCase):
-    __cwd = None
-    __TEST_PATH = "./files"
 
     @classmethod
     def setUpClass(cls):
-        cls.__cwd = os.getcwd()
-        os.chdir(cls.__TEST_PATH)
+        cls.rmtree(attributes.OUTPUT_DIRECTORY)
 
     @classmethod
     def tearDownClass(cls):
-        os.chdir(cls.__cwd)
+        for outputDirectory in attributes.ALL_OUTPUT_DIRECTORIES:
+            cls.rmtree(outputDirectory)
 
-class StdOutputSubstitution(object):
-    def __init__(self):
-        self.output = StringIO()
-        self.__stdOut = sys.stdout
-        self.__stdErr = sys.stderr
-        sys.stdout = self.output
-        sys.stderr = self.output
-
-    def __del__(self):
-        if self.__stdOut is not None:
-            self.restoreStdOutputs()
-        self.output.close()
-
-    def restoreStdOutputs(self):
-        sys.stdout = self.__stdOut
-        sys.stderr = self.__stdErr
-        self.__stdOut = None
-        self.__stdErr = None
+    @staticmethod
+    def rmtree(treeRoot):
+        if os.path.isdir(treeRoot):
+            rmtree(treeRoot)
 
 class SpyArguments(object):
     def __init__(self, *args, **kwargs):
@@ -210,7 +221,8 @@ class SpyModule(object):
 
     def _extractMockReturnValue(self, functionName):
         if len(self.__callMocks[functionName]) == 0:
-            raise TestingToolsException("To many calls to the function '{0}' of the spied module '{1}'".format(functionName, self.__originalSubstitutedModule))
+            raise TestingToolsException("To many calls to the function '{0}' of the spied module '{1}'".format(
+                functionName, self.__originalSubstitutedModule))
         mock = self.__callMocks[functionName][0]
         self.__callMocks[functionName] = self.__callMocks[functionName][1:]
         return mock

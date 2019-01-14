@@ -12,7 +12,7 @@
 # Dummy interfaces used to replace real ones
 
 # Preprocessor definitions
-DEFINES = STAT_MOCK=8192 $(DEFINES)
+DEFINES = 
 
 # Include the STAT build rules
 !INCLUDE ./stat_mock_base.mak

@@ -10,9 +10,9 @@ import re
 
 _STAT_FILE_NAMES_TO_IGNORE = ["stat_core.mak"]
 
-_REG_EXP_VARIABLE = r'\s*(\w+)\s*=([\w\s\./:;\(\)$=]*)\s*'
-_REG_EXP_SUBSTITUTION = r'(\$\()\s*([\w]*)\s*(\))'
-_REG_EXP_INCLUDE = r'\s*!INCLUDE\s+(<\s*)?([\w\./:\s]*)(\s*>)?\s*$'
+_REG_EXP_VARIABLE = '\s*(\w+)\s*=\s*(.+)\s*'
+_REG_EXP_SUBSTITUTION = '\$\((?P<variable>[^\(\)\$]+)\)'
+_REG_EXP_INCLUDE = '^\s*!INCLUDE\s+(<)?(?P<path>[^><]+)(?(1)>|\s*)$'
 _DEFAULT_INCLUDE = '' if os.getenv('INCLUDE') is None else os.getenv('INCLUDE')
 
 class StatMakefile(object):
@@ -24,7 +24,8 @@ class StatMakefile(object):
     INTERFACES = 'DUMMY_INTERFACES'
     DEFINES = 'DEFINES'
     INCLUDE = 'INCLUDE'
-    NAME = 'NAME'
+    NAME = 'OUTPUT_NAME'
+    EXEC = 'OUTPUT_EXEC'
 
     def __init__(self, filePath):
         self.__name = os.path.splitext(os.path.basename(filePath))[0]
@@ -33,7 +34,7 @@ class StatMakefile(object):
         self.__parse()
 
     @property
-    def fileName(self):
+    def name(self):
         return self.__name
 
     def __getitem__(self, key):
@@ -60,10 +61,7 @@ class StatMakefile(object):
     def __parseForInclude(self, currentLine):
         regexResults = re.search(_REG_EXP_INCLUDE, currentLine, re.IGNORECASE)
         if regexResults:
-            includePathSuffix, fileName, includePathPrefix = regexResults.groups()
-            if (includePathSuffix is None) ^ (includePathPrefix is None):
-                raise StatMakFileException(
-                    "Invalid inclusion '{0}' in Makefile '{1}'!".format(currentLine, self.__file.getCurrentFilePath()))
+            fileName = regexResults.group('path')
             if os.path.basename(fileName) not in _STAT_FILE_NAMES_TO_IGNORE:
                 self.__file.includeNestedFile(fileName, self[self.INCLUDE])
                 return True
@@ -78,7 +76,7 @@ class StatMakefile(object):
 
     def __interpretString(self, string):
         def interpretVariable(regMatch):
-            variable = regMatch.group(2)
+            variable = regMatch.group('variable')
             return self[variable]
         return re.sub(_REG_EXP_SUBSTITUTION, interpretVariable, string)
 

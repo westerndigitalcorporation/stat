@@ -5,13 +5,19 @@
 #
 # SPDX-License-Identifier: MIT
 
+!IF "$(PRIVATE_NAME)" == ""
+TARGET_DIR = $(OUTPUT_DIR)
+!ELSE
+TARGET_DIR = $(OUTPUT_DIR)\$(PRIVATE_NAME)
+!ENDIF
+
 # Intermediate target directories
-INCLUDES_DIR=$(OUTPUT_DIR)\inc
-OBJECTS_DIR=$(OUTPUT_DIR)\obj
-BINARY_DIR=$(OUTPUT_DIR)\bin
+INCLUDES_DIR=$(TARGET_DIR)\inc
+OBJECTS_DIR=$(TARGET_DIR)\obj
+BINARY_DIR=$(TARGET_DIR)\bin
 
 # Target executable
-EXEC=$(BINARY_DIR)\$(NAME).exe
+EXEC=$(BINARY_DIR)\$(OUTPUT_EXEC)
 
 # Prepare the original items requiring formatting for the very formatting
 LIST_INCLUDES=$(INCLUDES)
@@ -27,18 +33,16 @@ FORMATTED_DEFINES=$(FORMATTED_DEFINES:[=-D)
 # Override compiler macros...
 CFLAGS=/WX /W3 /Zi /nologo $(FORMATTED_DEFINES)
 
-rebuild: clean build
-
 # Build rule
 build: prepare
     @ECHO $@...
     call <<vswrapper.bat $(CC) $(CFLAGS) $(SOURCES) -I$(INCLUDES_DIR)\ /Fo$(OBJECTS_DIR)\ /Fe"$(EXEC)"
 @ECHO OFF
-PUSHD $(VS_TOOL:/=\)
-CALL VCVARSALL.BAT >NUL
-POPD
+if "%VSINSTALLDIR%"=="" CALL "$(VS_DEV:/=\)" >NUL
 %*
 <<NOKEEP
+
+rebuild: clean build
     
 # Rule for cleaning
 clean:
@@ -50,8 +54,7 @@ clean:
 
 # Rule for preparing to build
 prepare:
-    @ECHO $@ for [$(NAME)]...
-    IF NOT EXIST $(OUTPUT_DIR) MD $(OUTPUT_DIR)
+    @ECHO $@ for [$(OUTPUT_NAME)]...
     IF NOT EXIST $(OBJECTS_DIR) MD $(OBJECTS_DIR)
     IF NOT EXIST $(INCLUDES_DIR) MD $(INCLUDES_DIR)
     IF NOT EXIST $(BINARY_DIR) MD $(BINARY_DIR)

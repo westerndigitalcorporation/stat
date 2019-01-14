@@ -1,18 +1,19 @@
 #!/usr/bin/env python
-
 # SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
 #                             Arseniy Aharonov <arseniy.aharonov@gmail.com>
 #
 # SPDX-License-Identifier: MIT
+from __future__ import print_function
 
 import os
 import platform
 import subprocess
-from fnmatch import filter as filterFilenames
+from fnmatch import filter as filterFileNames
 from shutil import rmtree
 from time import sleep
+from json import dump as dumpJson
 
-VERSION = '2.0.5'
+import stat_attributes as attributes
 
 def isWindows():
     return True if platform.system() == "Windows" else False
@@ -23,13 +24,29 @@ def toWindowsPath(path):
 def toPosixPath(path):
     return path.replace('\\', '/')
 
-def execute(commandLine):
-    subprocess.Popen(commandLine, stdout = subprocess.PIPE, shell=True).wait()
+def toNativePath(path):
+    return toWindowsPath(path) if isWindows() else toPosixPath(path)
 
-def executeForOutput(commandArguments):
-    commandLine = " ".join(commandArguments) if isinstance(commandArguments, (list,tuple)) else commandArguments
-    items = subprocess.run(commandLine, stdout = subprocess.PIPE, shell=True).stdout
-    return items.strip().decode(encoding="utf-8")
+def mkdir(path, exist_ok=False):
+    if exist_ok and os.path.isdir(path):
+        return
+    os.makedirs(path)
+
+def execute(command, beSilent=False, **kwargs):
+    lines = []
+    arguments = dict(bufsize=1, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    arguments.update(kwargs)
+    commandLine = " ".join(command) if isinstance(command, (list, tuple)) else command
+    process = subprocess.Popen(commandLine, **arguments)
+    for line in iter(process.stdout.readline, ''):
+        if not beSilent:
+            print(line, end='')
+        lines.append(line)
+    process.wait()
+    return process.returncode,lines
+
+def executeForOutput(command):
+    return ''.join(execute(command, beSilent=True)[1]).strip()
 
 def remove(path):
     doesExist, attemptRemoval, typeName = (os.path.isdir,rmtree,'directory') if os.path.isdir(path) else (os.path.isfile, os.remove, 'file')
@@ -37,8 +54,12 @@ def remove(path):
         try:
             attemptRemoval(path)
         except OSError:
-            print("Waiting for {type} '{path}' to get unlocked (probably by AntiVirus)!".format(type=typeName,path=path))
+            print("Waiting for {type} '{path}' to find unlocked (probably by AntiVirus)!".format(type=typeName,path=path))
             sleep(1)
+
+def writeJsonFile(filePath, data):
+    with open(filePath, 'w') as fp:
+        dumpJson(data, fp, indent=3)
 
 def createLink(sourcePath, targetPath):
     source = os.path.relpath(sourcePath, os.path.dirname(targetPath))
@@ -51,7 +72,7 @@ def createLink(sourcePath, targetPath):
             commandLine = 'cmd /c mklink /D "{target}" "{source}"'
         else:
             commandLine = 'cmd /c mklink "{target}" "{source}"'
-        execute(commandLine.format(target = target, source = source))
+        subprocess.Popen(commandLine.format(target = target, source = source), shell=True).wait()
     else:
         os.symlink(source, target)
 
@@ -77,7 +98,7 @@ def getFileLocationThroughoutCurrentPath(fileName, currentPath = '.'):
     return None
 
 def listMakefiles(pathName, *patterns):
-    allFiles = filterFilenames(os.listdir(pathName), '*.mak')
+    allFiles = filterFileNames(os.listdir(pathName), '*.mak')
     if patterns:
         selected = __selectFilesByPatterns(allFiles, patterns)
     else:
@@ -94,6 +115,17 @@ def readTextFileLines(filePath):
     else:
         _file.close()
 
+def readTextFileAtOnce(filePath):
+    with open(filePath, 'r') as aFile:
+        text = aFile.read()
+    return text
+
+def locateResource(filename):
+    resource = os.path.join(attributes.TOOL_PATH, attributes.RESOURCES_DIRECTORY, filename)
+    if not os.path.isfile(resource):
+        raise ServicesException(ServicesException.RESOURCE_NOT_FOUND.format(resource))
+    return resource
+
 def __selectIgnoredFiles(makefiles, pathName):
     statIgnoreFile = os.path.join(pathName, '.statignore')
     if os.path.exists(statIgnoreFile):
@@ -107,87 +139,25 @@ def __selectIgnoredFiles(makefiles, pathName):
 def __selectFilesByPatterns(makefiles, patterns):
     filtered = []
     for pattern in patterns:
-        filtered.extend(filterFilenames(makefiles, pattern))
+        filtered.extend(filterFileNames(makefiles, pattern))
     return set(filtered)
 
-class CustomSingleton(object):
-    __instance = None
+class _Singleton(type):
+    """ A metaclass that creates a Singleton base class when called. """
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class Singleton(_Singleton('SingletonMeta', (object,), {})):
 
     @classmethod
-    def __new__(cls, *args):
-        if cls.__instance is None:
-            cls.__instance = object.__new__(cls)
-        return cls.__instance
-
-class StatConfiguration(CustomSingleton):
-    VERSION = VERSION
-    RESOURCES_DIRECTORY = 'resources'
-    DUMMIES_DIRECTORY = 'dummies'
-    PRODUCT_DIRECTORY = 'products'
-    LOGS_DIRECTORY = 'logs'
-    OUTPUT_DIRECTORY = 'output'
-    OUTPUT_SUB_DIRECTORIES = ['inc', 'obj', 'bin']
-    PACKED_DIRECTORY = OUTPUT_DIRECTORY + '/packed'
-    AV_BYPASS_DIRECTORY = OUTPUT_DIRECTORY + '/bypass'
-    REPORT_FILENAME = "report.json"
-    MASTER_INCLUDE_PATH = OUTPUT_DIRECTORY + '/inc'
-
-    __toolDirectory = None
-
-    @property
-    def autoGeneratedMakfile(self):
-        return '/'.join([self.OUTPUT_DIRECTORY, 'stat.mak'])
-
-    @staticmethod
-    def getToolDirectory():
-        return os.path.dirname(os.path.relpath(__file__))
-
-class VsTools(CustomSingleton):
-    _TOOL_PREFIX = 'VS'
-    _TOOL_SUFFIX = 'COMNTOOLS'
-    _TOOL_PREDEFINED = _TOOL_PREFIX + _TOOL_SUFFIX
-    _MAKE_TOOL = "bin\\nmake.exe"
-    _FINDER_PATH_ENVIRON = 'ProgramFiles(x86)'
-    _FINDER_TOOL = "\\Microsoft Visual Studio\\Installer\\vswhere.exe"
-    _FINDER_ARGS = ' -property "installationPath" -legacy -prerelease -latest'
-
-    _toolChainPathCache = None
-
-    NMAKE_ARGUMENTS = "/S /NOLOGO /ERRORREPORT:NONE /F"
-    PREDEFINED_TOOL_ENVIRON = _TOOL_PREFIX + _TOOL_SUFFIX
-
-    def getToolChainPath(self):
-        if self._toolChainPathCache is None:
-            self._toolChainPathCache = findSubFolderOnPath('VC', self._findInstallationPath())
-        return self._toolChainPathCache
-
-    def getMakeToolLocation(self):
-        return os.path.join(self.getToolChainPath(), self._MAKE_TOOL)
-
-    def _findInstallationPath(self):
-        toolChain = os.environ.get(self._TOOL_PREDEFINED, '')
-        if toolChain is '':
-            #toolChain = self.__attemptInstallationPathSearchWithVsTool()
-            if toolChain is '':
-                toolChain = self.__attemptInstallationPathSearchWithVsEnvironmentValues()
-                if toolChain is '':
-                    raise ServicesException(ServicesException.NO_VS_TOOLS_FOUND)
-        return toolChain
-
-    def __attemptInstallationPathSearchWithVsTool(self):
-        vsFinder = os.environ.get(self._FINDER_PATH_ENVIRON, '') + self._FINDER_TOOL
-        if os.path.isfile(vsFinder):
-            try:
-                return executeForOutput(vsFinder + self._FINDER_ARGS)
-            except subprocess.CalledProcessError:
-                return ''
-
-    def __attemptInstallationPathSearchWithVsEnvironmentValues(self):
-        toolChains = {value[len(self._TOOL_PREFIX):-len(self._TOOL_SUFFIX)]: os.environ.get(value) for value in
-                      os.environ if value.startswith(self._TOOL_PREFIX) and value.endswith(self._TOOL_SUFFIX)}
-
-        return toolChains[max(toolChains, key=int)] if toolChains else ''
-
+    def clear(cls):
+        try:
+            del cls._instances[cls]
+        except KeyError:
+            pass
 
 class ServicesException(Exception):
     """
@@ -195,7 +165,8 @@ class ServicesException(Exception):
     """
     NO_VS_TOOLS_FOUND = "No VS TOOLS were found on this PC."
     NO_NMAKE_FOUND = "No NMAKE was found on this PC."
+    RESOURCE_NOT_FOUND = "No resource by filename '{0}' was found."
 
 
-vsTools = VsTools()
-config = StatConfiguration()
+if __name__ == '__main__':
+    pass

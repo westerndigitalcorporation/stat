@@ -5,10 +5,10 @@ from directory_tree_node import DirectoryTreeNode, DirectoryTreeNodeException
 
 
 class TestDirectoryTreeNode(TestCase):
-    FILE_IN_ROOT_DIRECTORY = 'simple.mak'
-    FILE_IN_SUB_DIRECTORY = 'files/stat_test_example.c'
-    FIRST_FILE_IN_SUB_TREE = 'files/dummies/first_dummy.h'
-    SECOND_FILE_IN_SUB_TREE = 'files/dummies/second_dummy.h'
+    FILE_IN_ROOT_DIRECTORY = 'file_in_root.c'
+    FILE_IN_SUB_DIRECTORY = 'mak_examples/simple.mak'
+    FIRST_FILE_IN_SUB_TREE = 'tests/example/stat_test_example.c'
+    SECOND_FILE_IN_SUB_TREE = 'tests/example/stat_another_example.c'
 
     def test_addFileWithinCurrentDirectory(self):
         node = DirectoryTreeNode()

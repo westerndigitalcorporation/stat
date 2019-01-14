@@ -6,13 +6,18 @@
 # DEFINES - list of definitions to be invoked via command-line
 
 # Source files
+SOURCES = \
+    ./tests/example/stat_test_example.c \
 
 # Include directories
+INCLUDES = \
+    ./ \
 
 # Dummy interfaces used to replace real ones
+DUMMY_INTERFACES = first_dummy.h second_dummy.h duplicated.h
 
 # Preprocessor definitions
-DEFINES = STAT_MOCK_PERMISSIVE_VALIDATION
+DEFINES = PROJECT_EXAMPLE
 
 # Include the STAT build rules
-!INCLUDE ./stat_mock_base.mak
+!INCLUDE ./output/stat.mak
