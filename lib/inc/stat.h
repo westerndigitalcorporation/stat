@@ -1,7 +1,9 @@
 /**
 * @file
 *
-* @copyright Arseniy Aharonov
+* @copyright Copyright (c) 2020 Western Digital Corporation or its affiliates,
+*                          Arseniy Aharonov <Arseniy.Aharonov@gmail.com>
+*            SPDX-License-Identifier: MIT
 * 
 * @project   STAT Framework
 * @date      July 31, 2016
@@ -40,7 +42,8 @@
 *
 * This feature also validates the creation and the consumption of the test-doubles and 
 * of the collectables, and failes the test on exceptions. This validation can be put 
-* into a permissive mode (aborting test instead of failing) by the following define:
+* into a permissive mode (aborting test instead of failing) by the following define:
+
 *
 *       STAT_MOCK_PERMISSIVE_VALIDATION
 *
@@ -56,7 +59,8 @@
 * @param data-to-spy - a variable/structure to be spied for further verification in the test
 * @param spy-data - (see data-to-spy)
 * @param numeric-to-spy - a numeric value spied for further verification in the test
-* @param creation-index - a 0-based counter representing an order in which the item was  
+* @param creation-index - a 0-based counter representing an order in which the item was  
+
 *                         created for the declarator
 * @param call-order - an 1-based counter representing an order in which the call was issued
 *                     for this entry in reference to all other call (of all declarators)

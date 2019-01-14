@@ -1,5 +1,10 @@
 # Internal makefile for a project
 #
+# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
+#                             Arseniy Aharonov <arseniy.aharonov@gmail.com>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # PRODUCT_SOURCES - list of all source files
 # PRODUCT_INCLUDES - list of all include directories
 # PRODUCT_DUMMY_INTERFACES - list of all dummy header-files to be used instead FW-version

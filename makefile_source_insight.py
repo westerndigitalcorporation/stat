@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
+#                             Arseniy Aharonov <arseniy.aharonov@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 import os
 
 from stat_makfile_project import StatMakefileProject

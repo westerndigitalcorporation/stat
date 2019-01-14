@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+
+# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
+#                             Arseniy Aharonov <arseniy.aharonov@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 import os
 import platform
 import subprocess
@@ -18,10 +24,12 @@ def toPosixPath(path):
     return path.replace('\\', '/')
 
 def execute(commandLine):
-    subprocess.Popen(commandLine, stdout = subprocess.PIPE).wait()
+    subprocess.Popen(commandLine, stdout = subprocess.PIPE, shell=True).wait()
 
 def executeForOutput(commandArguments):
-    return subprocess.check_output(commandArguments).strip()
+    commandLine = " ".join(commandArguments) if isinstance(commandArguments, (list,tuple)) else commandArguments
+    items = subprocess.run(commandLine, stdout = subprocess.PIPE, shell=True).stdout
+    return items.strip().decode(encoding="utf-8")
 
 def remove(path):
     doesExist, attemptRemoval, typeName = (os.path.isdir,rmtree,'directory') if os.path.isdir(path) else (os.path.isfile, os.remove, 'file')

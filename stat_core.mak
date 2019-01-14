@@ -1,4 +1,9 @@
 # Standalone test (STAT) tools makefile
+#
+# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
+#                             Arseniy Aharonov <arseniy.aharonov@gmail.com>
+#
+# SPDX-License-Identifier: MIT
 
 # The path to the engine file
 ENGINE_MAKFILE="$(TOOL_DIR)/engine.mak"

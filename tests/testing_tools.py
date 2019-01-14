@@ -9,7 +9,7 @@ except ImportError:
     from io import StringIO
 
 try:
-    from unittest.mock import patch, call
+    from unittest.mock import patch, call, mock_open
 except ImportError:
     from mock import patch, call, mock_open
 

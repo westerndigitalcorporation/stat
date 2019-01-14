@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
+#                             Arseniy Aharonov <arseniy.aharonov@gmail.com>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # Makefile for a Standalone Test (STAT)
 #
 # SOURCES - list of all source files

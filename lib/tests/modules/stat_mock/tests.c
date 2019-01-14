@@ -1,7 +1,8 @@
 /**
 * @file
 * 
-* @copyright Arseniy Aharonov
+* @copyright Copyright (c) 2020 Western Digital Corporation or its affiliates,
+*                          Arseniy Aharonov <Arseniy.Aharonov@gmail.com>
 *
 * @project   STAT Framework
 * @date      February 21, 2017

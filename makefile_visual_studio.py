@@ -1,11 +1,16 @@
+# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
+#                             Arseniy Aharonov <arseniy.aharonov@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 from services import toWindowsPath
 from stat_makfile_project import StatMakefileProject
 from visual_studio_builder import VisualStudioBuilder
 
 class MakefileToVisualStudio(object):
-    def __init__(self, makefile):
-        self.__project = StatMakefileProject(makefile)
-        self.__builder = VisualStudioBuilder(self.__project.projectName, makefile, self.__project.outputName + '.exe')
+    def __init__(self, makfile):
+        self.__project = StatMakefileProject(makfile)
+        self.__builder = VisualStudioBuilder(self.__project.projectName, makfile, self.__project.outputName + '.exe')
 
     def buildSolutionFile(self):
         self.__builder.createSolutionFile()
@@ -43,4 +48,3 @@ class MakefileToVisualStudio(object):
         for fileName in fileTree.files:
             filePath = toWindowsPath(fileTree[fileName])
             self.__builder.addSourceFile(filePath)
-

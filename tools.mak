@@ -1,5 +1,10 @@
 # Internal makefile for STAT tools
 #
+# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
+#                             Arseniy Aharonov <arseniy.aharonov@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 # SOURCES - list of all source files
 # INCLUDES - list of all include directories
 # DUMMY_INTERFACES - list of all dummy header-files to be used instead FW-version

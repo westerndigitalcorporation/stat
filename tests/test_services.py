@@ -10,22 +10,17 @@ class TestServices(FileBasedTestCase):
     OUTPUT_DIRECTORY = services.config.OUTPUT_DIRECTORY
 
     def setUp(self):
-        self._fakePlatform = SpyModule('platform', 'services')
         self._fakeOs = FakeOs('services')
-        self._fakeSubprocess = FakeSubprocess('services')
         if os.path.isdir(self.OUTPUT_DIRECTORY):
             rmtree(self.OUTPUT_DIRECTORY, ignore_errors=True)
 
     def tearDown(self):
-        self._fakePlatform.restoreOriginalModule()
         self._fakeOs.restoreOriginalModule()
-        self._fakeSubprocess.restoreOriginalModule()
         if os.path.isdir(self.OUTPUT_DIRECTORY):
             rmtree(self.OUTPUT_DIRECTORY, ignore_errors=True)
 
     def test_isWindows(self):
-        self._fakePlatform.addMockForFunction('system', 'linux')
-        self._fakePlatform.addMockForFunction('system', 'Windows')
+        self.patch(CUT, 'platform.system', side_effect=['linux', 'Windows'])
         self.assertFalse(services.isWindows())
         self.assertTrue(services.isWindows())
 
@@ -42,9 +37,11 @@ class TestServices(FileBasedTestCase):
         self.assertEqual(expected, services.toPosixPath(original))
 
     def test_execute(self):
+        patcher = self.patch(CUT, 'subprocess')
         fakeExecutable = "/home/bin/executable.exe"
         services.execute(fakeExecutable)
-        self.__verifySingleExecuteCall(fakeExecutable)
+        self.assertCalls(patcher,
+                         [call.Popen('/home/bin/executable.exe', stdout=patcher.PIPE, shell=True),call.Popen().wait()])
 
     def test_executeForOutput(self):
         expected = "full_example.mak, simple.mak, simplified_example.mak"
@@ -52,37 +49,46 @@ class TestServices(FileBasedTestCase):
         self.assertEqual(expected, received)
 
     def test_createLinkOnLinux(self):
+        patcher = self.patch(CUT, 'subprocess')
+        self.patch(CUT, 'platform.system', return_value='linux')
+
         source = "/home/product/fw/inc/example.h"
-        expectedSource = os.path.join(*"../../../product/fw/inc/example.h".split('/'))
         target = "/home/tests/fw/inc/example.h"
-        self._fakePlatform.addMockForFunction('system', 'linux')
         services.createLink(source, target)
-        self.assertEqual(0, len(self._fakeSubprocess['Popen']))
+
+        self.assertCalls(patcher, [])
         self.assertEqual(1, len(self._fakeOs['symlink']))
         symlinkCall = self._fakeOs['symlink'][0]
+        expectedSource = os.path.join(*"../../../product/fw/inc/example.h".split('/'))
         self.assertEqual(expectedSource, symlinkCall.source)
         self.assertEqual(target, symlinkCall.target)
 
     def test_createLinkOnWindowsForFile(self):
+        patcher = self.patch(CUT, 'subprocess')
+        self.patch(CUT, 'platform.system', return_value='Windows')
+
         source = "/home/product/fw/inc/example.h"
-        expectedSource = services.toWindowsPath("../../../product/fw/inc/example.h")
         target = "/home/tests/fw/inc/example.h"
-        self._fakePlatform.addMockForFunction('system', 'Windows')
         services.createLink(source, target)
+
+        commandLine = 'cmd /c mklink "{target}" "{source}"'.format(target = services.toWindowsPath(target),
+            source = services.toWindowsPath("../../../product/fw/inc/example.h"))
+        self.assertCalls(patcher, [call.Popen(commandLine, stdout=patcher.PIPE, shell=True),call.Popen().wait()])
         self.assertEqual(0, len(self._fakeOs['symlink']))
-        self.__verifySingleExecuteCall('cmd /c mklink "{target}" "{source}"'.format(target = services.toWindowsPath(target),
-                                                                                    source = expectedSource))
 
     def test_createLinkOnWindowsForDirectory(self):
-        source = "/home/product/fw/inc"
-        expectedSource = services.toWindowsPath("../../product/fw/inc")
-        target = "/home/tests/fw/inc"
-        self._fakePlatform.addMockForFunction('system', 'Windows')
+        patcher = self.patch(CUT, 'subprocess')
+        self.patch(CUT, 'platform.system', return_value='Windows')
         self._fakeOs.path.addMockForFunction('isdir', True)
+
+        source = "/home/product/fw/inc"
+        target = "/home/tests/fw/inc"
         services.createLink(source, target)
+
         self.assertEqual(0, len(self._fakeOs['symlink']))
-        self.__verifySingleExecuteCall('cmd /c mklink /D "{target}" "{source}"'.format(target = services.toWindowsPath(target),
-                                                                                       source = expectedSource))
+        commandLine = 'cmd /c mklink /D "{target}" "{source}"'.format(target = services.toWindowsPath(target),
+            source = services.toWindowsPath("../../product/fw/inc"))
+        self.assertCalls(patcher, [call.Popen(commandLine, stdout=patcher.PIPE, shell=True), call.Popen().wait()])
 
     def test_findSubFolderOnPathOfCurrentWorkingDirectory(self):
         currentPath = '/system/tools/bin'
@@ -210,13 +216,6 @@ class TestServices(FileBasedTestCase):
         self.assertFalse(rmTreePatcher.called)
         self.assertEqual([call(filePath)] * (retries + 1), osRemovePatcher.call_args_list)
 
-    def __verifySingleExecuteCall(self, pathToExecute):
-        self.assertEqual(1, len(self._fakeSubprocess['Popen']))
-        popenCall = self._fakeSubprocess['Popen'][0]
-        process = self._fakeSubprocess.processes[0]
-        self.assertEqual(pathToExecute, popenCall.args[0])
-        self.assertEqual(FakeSubprocess.PIPE, popenCall.stdout)
-        self.assertEqual(1, len(process['wait']))
 
     def _patchRmtree(self, retries = 0):
         self.__rmtreeRetries = retries

@@ -1,8 +1,8 @@
 /**
 * @file
 * 
-* @copyright Copyright 2018 SanDisk Corporation | All rights reserved
-*            SanDisk Confidential Information
+* @copyright Copyright (c) 2020 Western Digital Corporation or its affiliates,
+*                          Arseniy Aharonov <Arseniy.Aharonov@gmail.com>
 * 
 * @project   STAT-Framework
 * @date      September 01, 2018

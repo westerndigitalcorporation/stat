@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
+#                             Arseniy Aharonov <arseniy.aharonov@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 from services import config, vsTools
 
 
@@ -155,4 +160,3 @@ EndGlobal
     FILE_NODE = r'                  <File RelativePath="{filePath}"></File>'
 
     DEFAULT_DEFINITIONS = ['WIN32','_DEBUG']
-
