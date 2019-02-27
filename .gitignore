@@ -1,0 +1,13 @@
+*.pyc
+.gitlog
+.idea
+*.ncb
+*.suo
+*.vcproj.*
+*.json
+*.pdb
+*.sln
+*.vcproj
+**/output/*
+**/logs/*
+*.si4project*
