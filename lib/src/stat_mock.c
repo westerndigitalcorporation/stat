@@ -58,8 +58,9 @@ static void* Stat_AllocateMockEntry(const char *declarator_p, _UU32 size, _UU32 
 static void* Stat_AllocateMockEntryWithoutCallback(const char *declarator_p, _UU32 size, _UU32 isExtended);
 static void* Stat_AllocateMockEntryWithCallback(const char *declarator_p, _UU32 size, _UU32 isExtended, STAT_MOCK_CALLBACK_T callback);
 static _StatMockBasicEntry_t* Stat_AllocateEntry(const char *declarator_p, _UU32 size, _UU32 isExtended, _UU32 hasCallback);
-static _UU32 Stat_HasExtendedMockMetadata(const _StatMockBasicEntry_t *entry_p);
-static _UU32 Stat_IsThisExtendedEntryPrimitive(const _StatMockBasicEntry_t *entry_p);
+static _UU32 Stat_IsExtendedWithMockMetadata(const _StatMockBasicEntry_t *entry_p);
+static _UU32 Stat_HasExtendedEntryAnExtendedMockMetadata(const _StatMockBasicEntry_t *entry_p);
+static _UU32  Stat_IsBasicTestDouble(const _StatMockBasicEntry_t *entry_p);
 static _UU32 Stat_IsPureSpy(const _StatMockBasicEntry_t *entry_p);
 static _UU32 Stat_IsMockOverridden(const _StatMockBasicEntry_t *entry_p);
 static _StatMockBasicEntry_t* Stat_PopNextMockEntry(const char *declarator_p);
@@ -329,7 +330,7 @@ void* Stat_GetMockData(const char *declarator_p, _UU32 creationIndex)
     data_p += sizeof(STAT_MOCK_CALLBACK_T);
   }
   
-  if (Stat_HasExtendedMockMetadata(entry_p))
+  if (Stat_IsExtendedWithMockMetadata(entry_p))
   {
     data_p += sizeof(_StatReusableMockMetadata_t);
   }
@@ -387,7 +388,7 @@ _UU32 Stat_CountCalls(const char *declarator_p)
   {
     if (Stat_AreStringsEqual(entry_p->declarator_p, declarator_p))
     {
-      if ((entry_p->metadata.callOrder) && !entry_p->metadata.isExtended)
+      if ((entry_p->metadata.callOrder) && Stat_IsBasicTestDouble(entry_p))
       {
         count++;
       }
@@ -422,7 +423,7 @@ _UU32 Stat_CountCallables(const char *declarator_p)
   {
     if (Stat_AreStringsEqual(entry_p->declarator_p, declarator_p))
     {
-      if (Stat_HasExtendedMockMetadata(entry_p))
+      if (Stat_IsExtendedWithMockMetadata(entry_p))
       {
         count += Stat_CountExtendedMockExpectedUses(entry_p);
       }
@@ -495,7 +496,7 @@ void* Stat_GetMockHandle(const char *declarator_p, _UU32 creationIndex)
   {
     if (Stat_AreStringsEqual(entry_p->declarator_p, declarator_p))
     {
-      if (Stat_HasExtendedMockMetadata(entry_p))
+      if (Stat_IsExtendedWithMockMetadata(entry_p))
       {
         callCount = Stat_CountExtendedMockEntryCalls(entry_p);
         if (callCount > countDown)
@@ -588,16 +589,21 @@ static _StatMockBasicEntry_t* Stat_AllocateEntry(const char *declarator_p, _UU32
   return entry_p;
 }
 
-static _UU32 Stat_HasExtendedMockMetadata(const _StatMockBasicEntry_t *entry_p)
+static _UU32 Stat_IsExtendedWithMockMetadata(const _StatMockBasicEntry_t *entry_p)
 {
-  return (entry_p->metadata.isExtended) && !Stat_IsThisExtendedEntryPrimitive(entry_p);
+  return (entry_p->metadata.isExtended) && !Stat_HasExtendedEntryAnExtendedMockMetadata(entry_p);
 }
 
-static _UU32 Stat_IsThisExtendedEntryPrimitive(const _StatMockBasicEntry_t *entry_p)
+static _UU32 Stat_HasExtendedEntryAnExtendedMockMetadata(const _StatMockBasicEntry_t *entry_p)
 {
   STAT_MOCK_HANDLER_T *handler_p = (void*)(entry_p + 1);
   void *extendedData_p = (entry_p->metadata.hasCallback) ? (handler_p + 1): handler_p;
   return (extendedData_p == Stat_GetNextMockEntry(entry_p));
+}
+
+static _UU32  Stat_IsBasicTestDouble(const _StatMockBasicEntry_t *entry_p)
+{
+  return !entry_p->metadata.isExtended || ((entry_p + 1) == Stat_GetNextMockEntry(entry_p));
 }
 
 static _UU32 Stat_IsPureSpy(const _StatMockBasicEntry_t *entry_p)
@@ -852,7 +858,7 @@ static _UU32 Stat_CountExtendedMockExpectedUses(const _StatMockBasicEntry_t *ent
 
 static _UU32 Stat_HasCallDataNoExtendedMetadata(const _StatMockBasicEntry_t *entry_p)
 {
-  return (STAT_MOCK_CALL_ORDER_NATURAL_MAX > entry_p->metadata.callOrder) && !Stat_HasExtendedMockMetadata(entry_p);
+  return (STAT_MOCK_CALL_ORDER_NATURAL_MAX > entry_p->metadata.callOrder) && !Stat_IsExtendedWithMockMetadata(entry_p);
 }
 
 #endif

@@ -79,6 +79,7 @@ static void Test_TestGetMockHandle(void);
 static void Test_TestSpyOn(void);
 static void Test_TestMultipleSpyOn(void);
 static void Test_TestCountCallables(void);
+static void Test_TestCountCalls(void);
 static void Test_TestHasMocks(void);
 static void Test_TestHasUnconsumedMocks(void);
 static void Test_TestFindUnconsumedMock(void);
@@ -167,6 +168,7 @@ _UU32 Test_RunMockMainTests(void)
   RUN_TEST(Test_TestSpyOn);
   RUN_TEST(Test_TestMultipleSpyOn);
   RUN_TEST(Test_TestCountCallables);
+  RUN_TEST(Test_TestCountCalls);
   RUN_TEST(Test_TestHasMocks);
   RUN_TEST(Test_TestHasUnconsumedMocks);
   RUN_TEST(Test_TestFindUnconsumedMock);
@@ -363,8 +365,7 @@ static void Test_TestMocksWithCallbacks(void)
 static void Test_TestPopMockWithSpying(void)
 {
   const _UU32 mocks[] = {0xFEED1011, 0xFEED2022, 0xFEED3033};
-  const _UU8 dataA[] = {0xAA
-};
+  const _UU8 dataA[] = {0xAA};
   const _UU8 dataB[] = {0xB0, 0xB1, 0xB2, 0xB3};
   const _UU8 dataC[] = {0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8};
   const _UU8 *datas[] = {dataA, dataB, dataC};
@@ -383,6 +384,7 @@ static void Test_TestPopMockWithSpying(void)
   TEST_ASSERT_EQUAL_HEX(mocks[0], *(_UU32*)STAT_POP_MOCK_WITH_SPYING(Test_TestPopMockWithSpying, dataA));
   TEST_ASSERT_EQUAL_HEX(mocks[1], *(_UU32*)STAT_POP_MOCK_WITH_SPYING(Test_TestPopMockWithSpying, dataB));
   TEST_ASSERT_EQUAL_HEX(mocks[2], *(_UU32*)STAT_POP_MOCK_WITH_SPYING(Test_TestPopMockWithSpying, dataC));
+  TEST_ASSERT_EQUAL(mockCount, STAT_COUNT_CALLS(Test_TestPopMockWithSpying));
 
   TEST_ASSERT_EQUAL(STAT_MOCK_ALIGNED_SIZE - (allMocksSize + allSpiesSize),  Stat_GetMockFreeSpace());
   for (index = 0; index < mockCount; index++)
@@ -410,10 +412,12 @@ static void Test_TestPopMocksWithSpyingAndCallbacks(void)
 
   for (index = 0; index < mockCount; index++)
   {
+    TEST_ASSERT_EQUAL(index, STAT_COUNT_CALLS(Test_TestMocksWithCallbacks));
     received_p = STAT_POP_MOCK_WITH_SPYING_NUMERIC(Test_TestMocksWithCallbacks, spyData[index]);
     TEST_ASSERT_EQUAL_HEX(mocks[index], *received_p);
   }
 
+  TEST_ASSERT_EQUAL(mockCount, STAT_COUNT_CALLS(Test_TestMocksWithCallbacks));
   TEST_ASSERT_EQUAL(STAT_MOCK_ALIGNED_SIZE - (allMocksSize + allSpiesSize),  Stat_GetMockFreeSpace());  
   TEST_ASSERT_EQUAL(2, Test_statMock.callbackA.callCount);
   TEST_ASSERT_EQUAL(1, Test_statMock.callbackB.callCount);
@@ -586,6 +590,7 @@ static void Test_TestSpyOn(void)
 
   TEST_ASSERT_EQUAL(STAT_MOCK_ALIGNED_SIZE - allocatedSize,  Stat_GetMockFreeSpace());
   TEST_ASSERT_EQUAL(1, Stat_CountAllCalls());
+  TEST_ASSERT_EQUAL(1, STAT_COUNT_CALLS(Test_TestSpyOn));
 
   TEST_ASSERT_NOT_NULL(_STAT_GET_MOCK_HANDLE(Test_TestSpyOn, 0));
   TEST_ASSERT_EQUAL(1, STAT_GET_CALL_ORDER(Test_TestSpyOn, 0));
@@ -609,6 +614,7 @@ static void Test_TestMultipleSpyOn(void)
 
   TEST_ASSERT_EQUAL(STAT_MOCK_ALIGNED_SIZE - allocatedSize,  Stat_GetMockFreeSpace());
   TEST_ASSERT_EQUAL(count, Stat_CountAllCalls());
+  TEST_ASSERT_EQUAL(count, STAT_COUNT_CALLS(Test_TestMultipleSpyOn));
 
   for (index = 0; index < count; index++)
   {
@@ -637,6 +643,15 @@ static void Test_TestCountCallables(void)
   STAT_ADD_EMPTY_MOCK(Test_TestCountCallables);
   STAT_ADD_CALLBACK_MOCK(Test_TestCountCallables, Test_HandleMockCallbackA);
   TEST_ASSERT_EQUAL(5, STAT_COUNT_TEST_CALLABLES(Test_TestCountCallables));
+}
+
+static void Test_TestCountCalls(void)
+{
+  TEST_ASSERT_EQUAL(0, STAT_COUNT_CALLS(Test_TestCountCalls));
+  STAT_SPY_ON_NUMERIC_WITHOUT_MOCK(Test_TestCountCalls, (_UU32)(-1));
+  TEST_ASSERT_EQUAL(1, STAT_COUNT_CALLS(Test_TestCountCalls));
+  STAT_SPY_ON_NUMERIC_WITHOUT_MOCK(Test_TestCountCalls, 0);
+  TEST_ASSERT_EQUAL(2, STAT_COUNT_CALLS(Test_TestCountCalls));
 }
 
 static void Test_TestHasMocks(void)
