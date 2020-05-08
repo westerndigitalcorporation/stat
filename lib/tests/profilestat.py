@@ -1,3 +1,5 @@
+from __future__  import print_function
+
 import os
 import sys
 
@@ -25,8 +27,14 @@ if __name__ == "__main__":
         cmd = [sys.executable, "-m", "cProfile", statTool]
         cmd.extend(sys.argv[1:])
         try:
-            returnCode = subprocess.call(cmd)
-            sys.exit(returnCode)
+            process = subprocess.Popen(cmd, bufsize=1, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            with open('_stat_profiling.txt', 'w') as fp:
+                for line in iter(process.stdout.readline, ''):
+                    print(line, end='')
+                    fp.write(line)
+                    fp.flush()
+                process.wait()
+            sys.exit(process.returncode)
         except OSError as e:
             print("fatal: unable to start STAT")
             print("fatal: %s" % e)

@@ -13,7 +13,6 @@ _STAT_FILE_NAMES_TO_IGNORE = ["stat_core.mak"]
 _REG_EXP_VARIABLE = '\s*(\w+)\s*=\s*(.+)\s*'
 _REG_EXP_SUBSTITUTION = '\$\((?P<variable>[^\(\)\$]+)\)'
 _REG_EXP_INCLUDE = '^\s*!INCLUDE\s+(<)?(?P<path>[^><]+)(?(1)>|\s*)$'
-_DEFAULT_INCLUDE = '' if os.getenv('INCLUDE') is None else os.getenv('INCLUDE')
 
 class StatMakefile(object):
     """
@@ -23,14 +22,13 @@ class StatMakefile(object):
     INCLUDES = 'INCLUDES'
     INTERFACES = 'DUMMY_INTERFACES'
     DEFINES = 'DEFINES'
-    INCLUDE = 'INCLUDE'
     NAME = 'OUTPUT_NAME'
     EXEC = 'OUTPUT_EXEC'
 
     def __init__(self, filePath):
         self.__name = os.path.splitext(os.path.basename(filePath))[0]
         self.__file = _MakefileReader(filePath)
-        self.__items = {self.INCLUDE: _DEFAULT_INCLUDE}
+        self.__items = {}
         self.__parse()
 
     @property
@@ -63,7 +61,7 @@ class StatMakefile(object):
         if regexResults:
             fileName = regexResults.group('path')
             if os.path.basename(fileName) not in _STAT_FILE_NAMES_TO_IGNORE:
-                self.__file.includeNestedFile(fileName, self[self.INCLUDE])
+                self.__file.includeNestedFile(fileName)
                 return True
         else:
             return False
@@ -91,11 +89,14 @@ class _MakefileReader(object):
         self.__filePath = filePath
         self.__nested = None
 
-    def includeNestedFile(self, filename, includePaths):
+    def includeNestedFile(self, filename):
         if self.__nested is not None:
-            self.__nested.includeNestedFile(filename, includePaths)
+            self.__nested.includeNestedFile(filename)
+        elif os.path.isfile(filename):
+            self.__nested = _MakefileReader(filename)
         else:
-            self.__nested = _MakefileReader(self.__findFilePath(filename, includePaths))
+            raise StatMakFileException(
+                "Attempt to include not existing file '{0}' within '{1}'.".format(filename, self.__filePath))
 
     def getCurrentFilePath(self):
         if self.__nested is not None:
@@ -135,22 +136,6 @@ class _MakefileReader(object):
             yield line.rstrip()
         else:
             _file.close()
-
-    def __findFilePath(self, filename, includePaths):
-        filePath = os.path.join(os.path.dirname(self.__filePath), filename)
-        if os.path.isfile(filePath):
-            return filePath
-        else:
-            return self.__findFileWithinIncludePaths(filename, includePaths)
-
-    def __findFileWithinIncludePaths(self, filename, includePaths):
-        for filePath in includePaths.split(';'):
-            filePath = os.path.join(filePath, filename)
-            if os.path.isfile(filePath):
-                return filePath
-        else:
-            raise StatMakFileException(
-                "Attempt to include not existing file '{0}' within '{1}'.".format(filename, self.__filePath))
 
 
 class StatMakFileException(Exception):

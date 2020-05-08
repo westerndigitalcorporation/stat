@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-from services import executeForOutput
+from mock import PropertyMock
+
+from services import executeForOutput, execute
 from vs_tools import VsToolsException, MsvsTools, NMAKE_ARGUMENTS
 from testing_tools import *
 
@@ -194,16 +196,18 @@ class TestMsvsTools(AdvancedTestCase):
                 tools = MsvsTools.find(year)
                 self.assertEqual(_format, tools.solutionFormat)
 
-    def test_composeCompilationCommand(self):
+    def test_getCommandToCompile(self):
         makeExecutor = "./tools/common/nmake.exe"
         self.patch(CUT, 'os.environ', DUMMY_ENVIRONMENT)
         self.patch(CUT, 'os.path.isfile', return_value=True)
         self.patch(CUT, executeForOutput.__name__, return_value=makeExecutor)
 
         tools = MsvsTools.find()
-        receivedCommand = tools.getCompilationCommand(USER_MAKE_FILE)
-        expectedCommand = '"{0}" {1} {2}'.format(makeExecutor, NMAKE_ARGUMENTS, USER_MAKE_FILE)
+
+        receivedCommand = tools.getCommandToCompile()
+        expectedCommand = '"{0}" {1} {{0}}'.format(makeExecutor, NMAKE_ARGUMENTS)
         self.assertEqual(expectedCommand, receivedCommand)
+
 
 
 

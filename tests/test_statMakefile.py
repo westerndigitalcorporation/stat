@@ -25,7 +25,6 @@ class TestStatMakFile(AdvancedTestCase):
             StatMakefile.INCLUDES: ['tests/inc'],
             StatMakefile.INTERFACES: [],
             StatMakefile.DEFINES: ['SIMPLE_DEFINE', 'ANOTHER_DEFINE', 'ADDITIONAL_DEFINE', 'EXTRA_DEFINE', 'SPARE_DEFINE', 'LAST_DEFINE', 'DEFINITION_VALUED=7', 'DEFINITION_SIMPLE'],
-            StatMakefile.INCLUDE: [] if os.getenv('INCLUDE') is None else [os.getenv('INCLUDE')]
         }
         parser = StatMakefile(self.SIMPLE_MAKEFILE)
         self.assertEqual(parser.name, os.path.basename(self.SIMPLE_MAKEFILE).split('.')[0])
@@ -68,7 +67,7 @@ class TestStatMakFile(AdvancedTestCase):
 
     def test_regexForSubstitution(self):
         pattern = '\$\((?P<variable>[^\(\)\$]+)\)'
-        text = "$(correct) value (param1) param2) $(data1 $(valid1) $(good)"
-        expected = "substituted value (param1) param2) $(data1 substituted substituted"
+        text = "$(correct) results (param1) param2) $(data1 $(valid1) $(good)"
+        expected = "substituted results (param1) param2) $(data1 substituted substituted"
         received = re.sub(pattern, 'substituted', text)
         self.assertEqual(expected, received)

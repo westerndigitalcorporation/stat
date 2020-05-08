@@ -2,21 +2,14 @@
 import os
 
 from stat_attributes import TOOL_PATH, RESOURCES_DIRECTORY
-from services import executeForOutput
+from services import executeForOutput, execute
+from stat_tool_chain import StatToolchain
 
 NMAKE_ARGUMENTS = "/S /NOLOGO /ERRORREPORT:NONE /F"
 SUPPORTED = {8.0 : 2005, 9.0 : 2008, 10.0: 2010, 11.0: 2012, 12.0: 2013, 14.0: 2015, 15.0: 2017, 16.0: 2019}
 SOLUTION_FORMATS = {8.0 : 9.0, 9.0 : 10.0, 10.0: 11.0, 11.0: 11.0, 12.0: 12.0, 14.0: 12.0, 15.0: 12.0, 16.0: 12.0}
 
 TO_FIND_LATER_ON_DEMAND = None
-
-
-class StatToolchain(object):
-
-    def getCompilationCommand(self, userMakefile):
-        raise NotImplementedError('Method "{0}" is not implemented'.format(self.getCompilationCommand.__name__))
-
-
 
 
 class MsvsTools(StatToolchain):
@@ -58,6 +51,8 @@ class MsvsTools(StatToolchain):
             self.__findLatestVersion()
         self.__devBatchFile = TO_FIND_LATER_ON_DEMAND
         self.__nmakeFile = TO_FIND_LATER_ON_DEMAND
+        self.__environment = TO_FIND_LATER_ON_DEMAND
+        #print("Toolchain: MSVS (v.{0})".format(self.year))
 
     @property
     def path(self):
@@ -89,9 +84,8 @@ class MsvsTools(StatToolchain):
     def solutionFormat(self):
         return SOLUTION_FORMATS[self.versionId]
 
-    def getCompilationCommand(self, userMakefile):
-        return '"{nmake}" {arguments} {user_makefile}'.format(
-            nmake=self.nmakeFilePath, arguments=NMAKE_ARGUMENTS, user_makefile=userMakefile)
+    def getCommandToCompile(self):
+        return '"{nmake}" {arguments} {{0}}'.format(nmake=self.nmakeFilePath, arguments=NMAKE_ARGUMENTS)
 
     def __findSpecificVersion(self, version):
         self.__versionId = version
@@ -168,7 +162,6 @@ class VsToolsException(Exception):
     INCOMPATIBLE_TOOLS = "MSVS Tools are not operable."
 
 if __name__ == '__main__':
-    for _tools in (MsvsTools.find(2013), MsvsTools.find()):
-        print (_tools.path)
-        print (_tools.nmakeFilePath)
-        print (_tools.versionId)
+    for _tools in (MsvsTools.find(2008), MsvsTools.find()):
+        print(_tools.nmakeFilePath)
+        print(_tools.versionId)

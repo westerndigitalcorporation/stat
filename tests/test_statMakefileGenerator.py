@@ -1,5 +1,4 @@
 import os
-import shutil
 
 import stat_attributes as attributes
 from stat_makefile_generator import StatMakefileGenerator, StatMakefileGeneratorException

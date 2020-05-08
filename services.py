@@ -45,8 +45,8 @@ def execute(command, beSilent=False, **kwargs):
     process.wait()
     return process.returncode,lines
 
-def executeForOutput(command):
-    return ''.join(execute(command, beSilent=True)[1]).strip()
+def executeForOutput(command, **kwargs):
+    return ''.join(execute(command, beSilent=True, **kwargs)[1]).strip()
 
 def remove(path):
     doesExist, attemptRemoval, typeName = (os.path.isdir,rmtree,'directory') if os.path.isdir(path) else (os.path.isfile, os.remove, 'file')

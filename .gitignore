@@ -10,4 +10,5 @@
 *.vcproj
 **/output/*
 **/logs/*
+**/ide/*
 *.si4project*

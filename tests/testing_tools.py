@@ -28,6 +28,10 @@ class AdvancedTestCase(TestCase):
         if not isWindows():
             self.skipTest("This test supported in Windows only")
 
+    @staticmethod
+    def getModuleName(*args):
+        return '.'.join([obj.__name__ for obj in args])
+
     def patch(self, moduleName, objectName, *args, **kwargs):
         """
         :rtype: MagicMock

@@ -366,10 +366,10 @@ class TestExecute(AdvancedTestCase):
         command = 'ls -m *.mak'
         execute = self.patch(CUT, services.execute.__name__, return_value=(0, [expected]))
 
-        received = services.executeForOutput(command)
+        received = services.executeForOutput(command, shell=True)
 
         self.assertEqual(expected, received)
-        self.assertCalls(execute, [call(command, beSilent=True)])
+        self.assertCalls(execute, [call(command, beSilent=True, shell=True)])
 
 class TestWriteJsonFile(AdvancedTestCase):
 
@@ -379,7 +379,7 @@ class TestWriteJsonFile(AdvancedTestCase):
 
     def test_writeJsonFile(self):
         fileName = 'some_file.json'
-        data = {'Level-A': {'Level-B': ['value-1', 'value-2']}}
+        data = {'Level-A': {'Level-B': ['results-1', 'results-2']}}
 
         services.writeJsonFile(fileName, data)
 

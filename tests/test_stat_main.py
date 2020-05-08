@@ -1,10 +1,15 @@
+from multiprocessing import Pool
+from time import sleep
+
 from mock import PropertyMock, call, Mock
 
 import stat_attributes as attributes
 from ide_writer import IdeWorkspaceWriter
 from msvs_ide_writer import MsvsWriter
-from stat_main import StatMain, STAT_RESULT_SUMMARY, STAT_RESULT_DELIMITER, STAT_SILENT_OUTPUT, StatException
+from stat_main import StatMain, STAT_SUMMARY, STAT_OUTPUT_DELIMITER, STAT_SILENT_OUTPUT, StatException, runTestPackage, \
+    MAKEFILE_CORRUPTION
 from stat_makefile_generator import StatMakefileGenerator
+from stat_tool_chain import StatToolchain
 from testing_tools import AdvancedTestCase
 from stat_configuration import StatConfiguration
 from stat_argument_parser import StatArgumentParser
@@ -25,35 +30,40 @@ SINGLE_MAKE_FILE = "simple.mak"
 MANY_MAKE_FILES = ['simplified_example.mak', SINGLE_MAKE_FILE, 'full_example.mak']
 MANY_LOG_FILES = [filename[:-4] + '.log' for filename in MANY_MAKE_FILES]
 
+COMPILATION_COMMAND = 'command to compile a makefile'
+
 LOG_LINES = ['First line', 'second line', '3rd line']
 
 FAKE_MSVS_TOOLS = Mock(spec=MsvsTools)
+FAKE_EXCEPTION_MESSAGE = 'This is exception emulator'
+FAKE_SUCCESSFUL_RUNS = [(filename, 'PASSED', '') for filename in MANY_MAKE_FILES] * len(MANY_PRODUCTS)
+FAKE_FAILED_RUNS = [(filename, 'FAILED', FAKE_EXCEPTION_MESSAGE) for filename in MANY_MAKE_FILES] * len(MANY_PRODUCTS)
 
-
-class TestStatMain(AdvancedTestCase):
-
-    def setUp(self):
+class TestStatMainBase(AdvancedTestCase):
+    def setupCommon(self):
         self.statMakefileGenerator = self.patch(CUT, StatMakefileGenerator.__name__)
         self.remove = self.patch(CUT, remove.__name__)
         self.mkdir = self.patch(CUT, mkdir.__name__)
-        self.testsRunner = self.patch(CUT, TestsRunner.__name__, autospec=True)
-        self.testsRunner.return_value.getLog.return_value = LOG_LINES
         self.open = self.patchOpen()
         self.writeJsonFile = self.patch(CUT, writeJsonFile.__name__)
         self.ideWorkspaceWriter = self.patch(CUT, IdeWorkspaceWriter.__name__, autospec=True)
+
+        self.toolchain = Mock(spec=StatToolchain)
+        self.toolchain.getCommandToCompile.return_value = COMPILATION_COMMAND
 
         self.statConfiguration = self.patch(CUT, StatConfiguration.__name__, autospec=True)
         configuration = self.statConfiguration.return_value
         type(configuration).defaultProduct = PropertyMock(return_value=DEFAULT_PRODUCT)
         type(configuration).products = PropertyMock(return_value=MANY_PRODUCTS)
         configuration.isStale.return_value = True
+        configuration.getToolchain.return_value = self.toolchain
 
-
-    def _patchArgumentParser(self, targetProducts, userMakefiles):
+    def _patchArgumentParser(self, targetProducts, userMakefiles, processes=0):
         self.statArgumentParser = self.patch(CUT, StatArgumentParser.__name__, autospec=True)
         parser = self.statArgumentParser.return_value
         type(parser).targetProducts = PropertyMock(return_value=targetProducts)
         type(parser).makeFiles = PropertyMock(return_value=userMakefiles)
+        type(parser).processes = PropertyMock(return_value=processes)
         return parser
 
     def _mockParserResults(self, ide=None, shallExecute=True, shallBeVerbose=True):
@@ -64,6 +74,12 @@ class TestStatMain(AdvancedTestCase):
         parser.shallRun.return_value = shallCompile and shallExecute
         parser.shallBeVerbose.return_value = shallCompile and shallBeVerbose
 
+class TestStatMain(TestStatMainBase):
+
+    def setUp(self):
+        self.setupCommon()
+        self.runTestPackage = self.patch(CUT, runTestPackage.__name__, side_effect=FAKE_SUCCESSFUL_RUNS)
+
     def test_run_withNoArgumentsForSingleTarget(self):
         self._patchArgumentParser(targetProducts=[DEFAULT_PRODUCT], userMakefiles=MANY_MAKE_FILES)
         self._mockParserResults()
@@ -72,16 +88,14 @@ class TestStatMain(AdvancedTestCase):
 
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(None)])
         self.assertCalls(self.remove, [call(attributes.LOGS_DIRECTORY)])
-        self.assertCalls(self.mkdir, [])
+        self.assertCalls(self.mkdir, [call('logs'), call('output', exist_ok=True)])
         self.assertCalls(self.open, [])
 
         expected = [call(ALL_PRODUCT_FILES[DEFAULT_PRODUCT]), call().generate()]
         self.assertCalls(self.statMakefileGenerator, expected)
 
-        expected = [item for makeFile in MANY_MAKE_FILES for item in
-                    [call(makeFile, True), call().compile(), call().run()]
-                    ]
-        self.assertCalls(self.testsRunner, expected)
+        expected = [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES]
+        self.assertCalls(self.runTestPackage, expected)
 
         expected = {makeFile: {"Status": "PASSED", "Info": ""} for makeFile in MANY_MAKE_FILES}
         self.assertCalls(self.writeJsonFile, [call(attributes.REPORT_FILENAME, {DEFAULT_PRODUCT: expected})])
@@ -94,13 +108,13 @@ class TestStatMain(AdvancedTestCase):
 
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(None)])
 
-        expected = [item for product in MANY_PRODUCTS for item in  [call(ALL_PRODUCT_FILES[product]), call().generate()]]
+        expected = \
+            [item for product in MANY_PRODUCTS for item in  [call(ALL_PRODUCT_FILES[product]), call().generate()]]
         self.assertCalls(self.statMakefileGenerator, expected)
 
-        expected = [item for makeFile in MANY_MAKE_FILES for item in
-                    [call(makeFile, True), call().compile(), call().run()]
-                    ] * len(MANY_PRODUCT_FILES)
-        self.assertCalls(self.testsRunner, expected)
+        expected = \
+            [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES] * len(MANY_PRODUCT_FILES)
+        self.assertCalls(self.runTestPackage, expected)
 
         expected = {makeFile: {"Status": "PASSED", "Info": ""} for makeFile in MANY_MAKE_FILES}
         expected = {product: expected for product in MANY_PRODUCTS}
@@ -118,11 +132,9 @@ class TestStatMain(AdvancedTestCase):
         expected = [item for product in MANY_PRODUCTS for item in  [call(ALL_PRODUCT_FILES[product]), call().generate()]]
         self.assertCalls(self.statMakefileGenerator, expected)
 
-        expected = [item for makeFile in MANY_MAKE_FILES for item in
-                    [call(makeFile, True), call().compile(), call().run()]
-                    ] * len(MANY_PRODUCT_FILES)
-        self.assertCalls(self.testsRunner, expected)
-
+        expected = \
+            [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES] * len(MANY_PRODUCT_FILES)
+        self.assertCalls(self.runTestPackage, expected)
 
     def test_run_withCompileOnlyArguments(self):
         self._patchArgumentParser(targetProducts=[TARGET_PRODUCT], userMakefiles=MANY_MAKE_FILES)
@@ -131,10 +143,8 @@ class TestStatMain(AdvancedTestCase):
         StatMain.run(['-c'])
 
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-c'])])
-        expected = [item for makeFile in MANY_MAKE_FILES for item in
-                    [call(makeFile, True), call().compile()]
-                    ]
-        self.assertCalls(self.testsRunner, expected)
+        expected = [call(makeFile, COMPILATION_COMMAND, False, True) for makeFile in MANY_MAKE_FILES]
+        self.assertCalls(self.runTestPackage, expected)
 
     def test_run_withSilentArguments(self):
         self._patchArgumentParser(targetProducts=[TARGET_PRODUCT], userMakefiles=MANY_MAKE_FILES)
@@ -144,73 +154,37 @@ class TestStatMain(AdvancedTestCase):
         StatMain.run(['-s'])
 
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-s'])])
-        expected = [item for makeFile in MANY_MAKE_FILES for item in
-                    [call(makeFile, False), call().compile(), call().run()]
-                    ]
-        self.assertCalls(self.testsRunner, expected)
+        expected = [call(makeFile, COMPILATION_COMMAND, True, False) for makeFile in MANY_MAKE_FILES]
+        self.assertCalls(self.runTestPackage, expected)
         count = len(MANY_MAKE_FILES)
         expected = [call(STAT_SILENT_OUTPUT.format(makeFile, 'PASSED')) for makeFile in MANY_MAKE_FILES] + \
-                   [call(STAT_RESULT_DELIMITER), call(STAT_RESULT_SUMMARY.format(total=count, passed=count, failed=0))]
+                   [call(STAT_OUTPUT_DELIMITER), call(STAT_SUMMARY.format(total=count, passed=count, failed=0))]
         self.assertCalls(printMock, expected)
 
-    def test_run_withTestException(self):
-        ERROR_MESSAGE = "Fake exception to test error-handling"
-        def fakeRunMethod():
-            raise TestsRunnerException(ERROR_MESSAGE)
-        self.testsRunner.return_value.run.side_effect = fakeRunMethod
+    def test_run_withException(self):
+        self.runTestPackage.side_effect = FAKE_FAILED_RUNS
         self._patchArgumentParser(targetProducts=[TARGET_PRODUCT], userMakefiles=MANY_MAKE_FILES)
         self._mockParserResults()
         printMock = self.patchBuiltinObject('print')
 
         try:
             StatMain.run()
-        except StatException as e:
+        except StatException:
             pass
         else:
             self.fail("The framework shall fire system error.")
 
-        count = len(MANY_MAKE_FILES)
+        expected = [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES]
+        self.assertCalls(self.runTestPackage, expected)
+
         self.assertCalls(self.remove, [call(attributes.LOGS_DIRECTORY)])
-        self.assertCalls(self.mkdir, [call(attributes.LOGS_DIRECTORY, exist_ok=True)]*count)
+        self.assertCalls(self.mkdir, [call(attributes.LOGS_DIRECTORY), call(attributes.OUTPUT_DIRECTORY,exist_ok=True)])
 
-        expected = [item for logFile in MANY_LOG_FILES for item in
-                    [call('/'.join([attributes.LOGS_DIRECTORY, logFile]), 'w'),
-                     call().__enter__(),
-                     call().writelines(LOG_LINES),
-                     call().__exit__(None, None, None)]]
-        self.assertCalls(self.open, expected)
-
-        expected = {makeFile: {"Status": "FAILED", "Info": ERROR_MESSAGE} for makeFile in MANY_MAKE_FILES}
+        expected = {makeFile: {"Status": "FAILED", "Info": FAKE_EXCEPTION_MESSAGE} for makeFile in MANY_MAKE_FILES}
         self.assertCalls(self.writeJsonFile, [call(attributes.REPORT_FILENAME, {TARGET_PRODUCT: expected})])
 
-        expected = [call(STAT_RESULT_DELIMITER), call(STAT_RESULT_SUMMARY.format(total=count, passed=0, failed=count))]
-        self.assertCalls(printMock, expected)
-
-    def test_run_withAbnormalTestException(self):
-        exception = Exception("This is abnormal exception emulation")
-        def fakeRunMethod():
-            raise exception
-        self.testsRunner.return_value.run.side_effect = fakeRunMethod
-        self._patchArgumentParser(targetProducts=[TARGET_PRODUCT], userMakefiles=MANY_MAKE_FILES)
-        self._mockParserResults()
-        printMock = self.patchBuiltinObject('print')
-
-        try:
-            StatMain.run()
-        except StatException as e:
-            pass
-        else:
-            self.fail("The framework shall fire system error.")
-
         count = len(MANY_MAKE_FILES)
-        self.assertCalls(self.remove, [call(attributes.LOGS_DIRECTORY)])
-        self.assertCalls(self.mkdir, [])
-        self.assertCalls(self.open, [])
-
-        expected = {makeFile: {"Status": "CRASHED", "Info": str(exception)} for makeFile in MANY_MAKE_FILES}
-        self.assertCalls(self.writeJsonFile, [call(attributes.REPORT_FILENAME, {TARGET_PRODUCT: expected})])
-
-        expected = [call(STAT_RESULT_DELIMITER), call(STAT_RESULT_SUMMARY.format(total=count, passed=0, failed=count))]
+        expected = [call(STAT_OUTPUT_DELIMITER), call(STAT_SUMMARY.format(total=count, passed=0, failed=count))]
         self.assertCalls(printMock, expected)
 
     def test_run_withNonStaleConfigurationSameProduct(self):
@@ -221,27 +195,21 @@ class TestStatMain(AdvancedTestCase):
         StatMain.run()
 
         self.assertCalls(self.statMakefileGenerator, [])
-
-        expected = [item for makeFile in MANY_MAKE_FILES for item in
-                    [call(makeFile, True), call().compile(), call().run()]
-                    ]
-        self.assertCalls(self.testsRunner, expected)
+        expected = [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES]
+        self.assertCalls(self.runTestPackage, expected)
 
     def test_run_withNonStaleConfigurationAnotherProduct(self):
         self.statConfiguration.return_value.isStale.return_value = False
         self._patchArgumentParser(targetProducts=[TARGET_PRODUCT], userMakefiles=MANY_MAKE_FILES)
         self._mockParserResults()
-
         arguments = ['-p', DEFAULT_PRODUCT]
+
         StatMain.run(arguments)
 
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(arguments)])
         self.assertCalls(self.statMakefileGenerator, [call(ALL_PRODUCT_FILES[TARGET_PRODUCT]), call().generate()])
-
-        expected = [item for makeFile in MANY_MAKE_FILES for item in
-                    [call(makeFile, True), call().compile(), call().run()]
-                    ]
-        self.assertCalls(self.testsRunner, expected)
+        expected = [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES]
+        self.assertCalls(self.runTestPackage, expected)
 
     def test_run_uponVisualStudioRequest(self):
         self._patchArgumentParser(targetProducts=[TARGET_PRODUCT], userMakefiles=[SINGLE_MAKE_FILE])
@@ -251,5 +219,103 @@ class TestStatMain(AdvancedTestCase):
 
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-vs'])])
         self.assertCalls(self.statMakefileGenerator, [call(ALL_PRODUCT_FILES[TARGET_PRODUCT]), call().generate()])
-        self.assertCalls(self.testsRunner, [])
-        self.assertCalls(self.ideWorkspaceWriter, [call(MsvsWriter.IDE, SINGLE_MAKE_FILE), call().write()])
+        self.assertCalls(self.runTestPackage, [])
+        self.assertCalls(self.ideWorkspaceWriter, [call(MsvsWriter.IDE, SINGLE_MAKE_FILE), call().write()])\
+
+
+TEST_INFO_FORMAT = 'cmd:"{0}"; run:"{1}"; verbose:"{2}"'
+
+def runFake(makefile, commandToCompile, shallRun, shallBeVerbose):
+    sleep(1)
+    return makefile, 'PASSED', TEST_INFO_FORMAT.format(commandToCompile, shallRun, shallBeVerbose)
+
+class TestStatMainGear(TestStatMainBase):
+
+    def setUp(self):
+        self.setupCommon()
+        self.runTestPackage = self.patch(CUT, runTestPackage.__name__, new=runFake)
+
+    def test_run_uponGearBoost(self):
+        expectedCores = 8
+        receivedCores = []
+        def spyPool(cores, *args, **kwargs):
+            receivedCores.append(cores)
+            return Pool(cores, *args, **kwargs)
+        self._patchArgumentParser(targetProducts=MANY_PRODUCTS, userMakefiles=MANY_MAKE_FILES, processes=expectedCores)
+        self._mockParserResults(shallBeVerbose=False)
+        self.patch(CUT, Pool.__name__, new=spyPool)
+
+        StatMain.run(['-g'])
+
+        self.assertEqual([expectedCores]*len(MANY_PRODUCTS), receivedCores)
+
+        expected = {makeFile: {"Status": "PASSED", "Info": TEST_INFO_FORMAT.format(COMPILATION_COMMAND, True, False)}
+                    for makeFile in MANY_MAKE_FILES}
+        expected = {product: expected for product in MANY_PRODUCTS}
+        self.assertCalls(self.writeJsonFile, [call(attributes.REPORT_FILENAME, expected)])
+
+
+class TestRunTestPackage(AdvancedTestCase):
+
+    def setUp(self):
+        self.testsRunner = self.patch(CUT, TestsRunner.__name__, autospec=True)
+
+    def test_runTestPackage_fullTestRun(self):
+        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=True)
+
+        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True), call().compile(), call().run()]
+        self.assertCalls(self.testsRunner, expected)
+        self.assertEqual((SINGLE_MAKE_FILE, 'PASSED', ''), results)
+
+    def test_runTestPackage_compileOnly(self):
+        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=False, shallBeVerbose=True)
+
+        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True), call().compile()]
+        self.assertCalls(self.testsRunner, expected)
+        self.assertEqual((SINGLE_MAKE_FILE, 'PASSED', ''), results)
+
+    def test_runTestPackage_withSilentArguments(self):
+        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=False)
+
+        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, False), call().compile(), call().run()]
+        self.assertCalls(self.testsRunner, expected)
+        self.assertEqual((SINGLE_MAKE_FILE, 'PASSED', ''), results)
+
+    def test_runTestPackage_withTestException(self):
+        ERROR_MESSAGE = "Fake exception to test error-handling"
+        def fakeRunMethod():
+            raise TestsRunnerException(ERROR_MESSAGE)
+        self.testsRunner.return_value.run.side_effect = fakeRunMethod
+
+        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=True)
+
+        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True),
+                     call().compile(), call().run(), call().writeLog(ERROR_MESSAGE)]
+        self.assertCalls(self.testsRunner, expected)
+        self.assertEqual((SINGLE_MAKE_FILE, 'FAILED', ERROR_MESSAGE), results)
+
+    def test_runTestPackage_withAbnormalTestException(self):
+        exception = Exception("This is abnormal exception emulation")
+        def fakeRunMethod():
+            raise exception
+        self.testsRunner.return_value.run.side_effect = fakeRunMethod
+
+        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=True)
+
+        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True),
+                    call().compile(), call().run(), call().writeLog(str(exception))]
+        self.assertCalls(self.testsRunner, expected)
+        self.assertEqual((SINGLE_MAKE_FILE, 'CRASHED', str(exception)), results)
+
+    def test_runTestPackage_withExceptionUponInitialization(self):
+        exception = Exception("This is an emulation of exception upon makefile processing")
+        def initFakeRunner(*args, **kwargs):
+            raise exception
+        self.testsRunner.side_effect = initFakeRunner
+
+        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=True)
+
+        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True)]
+        self.assertCalls(self.testsRunner, expected)
+        self.assertEqual((SINGLE_MAKE_FILE, 'CRASHED',
+                          MAKEFILE_CORRUPTION.format(filename=SINGLE_MAKE_FILE, exception=str(exception))), results)

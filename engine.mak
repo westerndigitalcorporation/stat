@@ -36,7 +36,7 @@ CFLAGS=/WX /W3 /Zi /nologo $(FORMATTED_DEFINES)
 # Build rule
 build: prepare
     @ECHO $@...
-    call <<vswrapper.bat $(CC) $(CFLAGS) $(SOURCES) -I$(INCLUDES_DIR)\ /Fo$(OBJECTS_DIR)\ /Fe"$(EXEC)"
+    call <<vswrapper_$(PRIVATE_NAME).bat $(CC) $(CFLAGS) $(SOURCES) -Fd$(TARGET_DIR)\ -I$(INCLUDES_DIR)\ /Fo$(OBJECTS_DIR)\ /Fe"$(EXEC)"
 @ECHO OFF
 if "%VSINSTALLDIR%"=="" CALL "$(VS_DEV:/=\)" >NUL
 %*
@@ -48,15 +48,18 @@ rebuild: clean build
 clean:
     @ECHO $@...
     IF EXIST $(INCLUDES_DIR) @DEL /Q /F $(INCLUDES_DIR)\*.* >nul
-    IF EXIST $(OBJECTS_DIR) @RMDIR /Q /S $(OBJECTS_DIR)
-    IF EXIST $(BINARY_DIR) @RMDIR /Q /S $(BINARY_DIR)
-    IF EXIST *.pdb del *.pdb
+    IF EXIST $(OBJECTS_DIR) @DEL /Q /F $(OBJECTS_DIR)\*.* >nul
 
 # Rule for preparing to build
 prepare:
     @ECHO $@ for [$(OUTPUT_NAME)]...
+    @SETLOCAL ENABLEEXTENSIONS
     IF NOT EXIST $(OBJECTS_DIR) MD $(OBJECTS_DIR)
     IF NOT EXIST $(INCLUDES_DIR) MD $(INCLUDES_DIR)
     IF NOT EXIST $(BINARY_DIR) MD $(BINARY_DIR)
-    FOR %%d IN ($(DUMMIES_DIR)) DO @FOR %%f IN ($(DUMMIES:/=\)) DO @IF NOT EXIST "$(INCLUDES_DIR)\%%~nxf" @MKLINK "$(INCLUDES_DIR)\%%~nxf" "%%~dpnd\%%f" >nul
-    FOR %%d IN ($(INCLUDES:/=\)) DO @FOR %%f IN (%%d\*.*) DO @IF NOT EXIST "$(INCLUDES_DIR)\%%~nxf" (@MKLINK "$(INCLUDES_DIR)\%%~nxf" "%%~dpnxf" >nul)
+    IF "$(PRIVATE_NAME)" == "" FOR %%d IN ($(DUMMIES_DIR)) DO @FOR %%f IN ($(DUMMIES:/=\)) DO @IF NOT EXIST "$(INCLUDES_DIR)\%%~nxf" @MKLINK "$(INCLUDES_DIR)\%%~nxf" "%%~dpnd\%%f" >nul
+    IF "$(PRIVATE_NAME)" == "" FOR %%d IN ($(INCLUDES:/=\)) DO @FOR %%f IN (%%d\*.*) DO @IF NOT EXIST "$(INCLUDES_DIR)\%%~nxf" (@MKLINK "$(INCLUDES_DIR)\%%~nxf" "%%~dpnxf" >nul)
+    IF NOT "$(PRIVATE_NAME)" == "" FOR %%d IN ($(DUMMIES_DIR)) DO @FOR %%f IN ($(DUMMIES:/=\)) DO @IF NOT EXIST "$(INCLUDES_DIR)\%%~nxf" @COPY /Y "%%~dpnd\%%f" "$(INCLUDES_DIR)\%%~nxf" >nul
+    REM IF NOT "$(PRIVATE_NAME)" == "" FOR %%d IN ($(INCLUDES:/=\)) DO @FOR %%f IN (%%d\*.*) DO @IF NOT EXIST "$(INCLUDES_DIR)\%%~nxf" @copy "%%~dpnxf" "$(INCLUDES_DIR)\%%~nxf">nul
+    REM IF NOT "$(PRIVATE_NAME)" == "" FOR %%d IN ($(INCLUDES:/=\)) DO @echo n | @xcopy /q /-y "%%d" "$(INCLUDES_DIR)" >nul
+    IF NOT "$(PRIVATE_NAME)" == "" FOR %%d IN ($(INCLUDES:/=\)) DO @echo n | @copy /-Y "%%d\*.*" "$(INCLUDES_DIR)" >nul

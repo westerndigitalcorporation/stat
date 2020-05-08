@@ -7,18 +7,46 @@
 from __future__  import print_function
 
 import sys
+from multiprocessing import Pool
 
 import stat_attributes as attributes
 from stat_argument_parser import StatArgumentParser
 from stat_configuration import StatConfiguration
+from stat_debug import Profiler
 from stat_makefile_generator import StatMakefileGenerator
 from services import writeJsonFile, remove, mkdir
 from ide_writer import IdeWorkspaceWriter
 from tests_runner import TestsRunner, TestsRunnerException
 
-STAT_RESULT_DELIMITER = "=" * 70
-STAT_RESULT_SUMMARY = "Total:  {total} Runs  {passed} Passed  {failed} Failed"
+STAT_OUTPUT_DELIMITER = "=" * 70
+STAT_SUMMARY = "Total:  {total} Runs  {passed} Passed  {failed} Failed"
 STAT_SILENT_OUTPUT = "{0:50}:{1}"
+MAKEFILE_CORRUPTION = 'Processing "{filename}" failed with exception: \n{exception}'
+
+def runTestPackage(makefile, commandToCompile, shallRun, shallBeVerbose):
+    try:
+        runner = TestsRunner(makefile, commandToCompile, shallBeVerbose)
+        try:
+            runner.compile()
+            if shallRun:
+                runner.run()
+        except TestsRunnerException as exception:
+            runner.writeLog(exception.message)
+            status, description = 'FAILED', exception.message
+        except Exception as exception:
+            runner.writeLog(exception.message)
+            status, description = 'CRASHED', str(exception)
+        else:
+            status, description = 'PASSED', ''
+    except Exception as exception:
+        status, description = 'CRASHED', MAKEFILE_CORRUPTION.format(filename=makefile, exception=str(exception))
+    return makefile, status, description
+
+def prepareOutputDirectories():
+    remove(attributes.LOGS_DIRECTORY)
+    mkdir(attributes.LOGS_DIRECTORY)
+    mkdir(attributes.OUTPUT_DIRECTORY, exist_ok=True)
+
 
 class StatMain(object):
 
@@ -33,8 +61,9 @@ class StatMain(object):
     def __init__(self):
         self.__config = StatConfiguration()
         self.__parser = StatArgumentParser(self.__config.products, self.__config.defaultProduct)
-        self.__failures = []
+        self.__commandToCompile = self.__config.getToolchain().getCommandToCompile()
         self.__report = StatReport()
+
 
     def _run(self, manualArguments):
         self.__parser.parse(manualArguments)
@@ -44,28 +73,43 @@ class StatMain(object):
             self.__runTests()
 
     def __runTests(self):
-        remove(attributes.LOGS_DIRECTORY)
-        total = 0
-        for testFile in self.__packageFiles():
-            total += 1
-            self.__runTestPackage(testFile)
-        failures = len(self.__failures)
+        prepareOutputDirectories()
+        for target in self.__parser.targetProducts:
+            self.__runTestsOnTarget(target)
         self.__report.write()
-        print(STAT_RESULT_DELIMITER)
-        print(STAT_RESULT_SUMMARY.format(total=total, passed=total - failures, failed=failures))
-        if self.__failures:
-            raise StatException('The following packages failed:\n\t{0}'.format('\n\t'.join(set(self.__failures))))
+        print(STAT_OUTPUT_DELIMITER)
+        print(STAT_SUMMARY.format(total=self.__report.total, passed=self.__report.passed, failed=self.__report.failed))
+        if self.__report.failed:
+            raise StatException('The following packages failed:\n\t{0}'.format('\n\t'.join(self.__report.failedList)))
+
+    def __runTestsOnTarget(self, target):
+        if self.__parser.processes:
+            self.__runTestsOnTargetInParallel(target)
+        else:
+            self.__runTestsOnTargetInSerial(target)
+
+    def __runTestsOnTargetInSerial(self, target):
+        self.__prepareTarget(target)
+        for testPackageFile in self.__parser.makeFiles:
+            result = runTestPackage(testPackageFile, self.__commandToCompile, self.__parser.shallRun(),
+                                    self.__parser.shallBeVerbose())
+            self.__log(*result)
+
+    def __runTestsOnTargetInParallel(self, target):
+        def handleResult(result):
+           self.__log(*result)
+        self.__prepareTarget(target)
+        pool = Pool(self.__parser.processes)
+        for makefile in self.__parser.makeFiles:
+           args = (makefile, self.__commandToCompile, self.__parser.shallRun(), self.__parser.shallBeVerbose())
+           pool.apply_async(runTestPackage, args, callback=handleResult)
+        pool.close()
+        pool.join()
 
     def __createIdeWorkspace(self):
         self.__prepareTarget(self.__parser.targetProducts[0])
         writer = IdeWorkspaceWriter(self.__parser.ide, self.__parser.makeFiles[0])
         writer.write()
-
-    def __packageFiles(self):
-        for target in self.__parser.targetProducts:
-            self.__prepareTarget(target)
-            for makeFile in self.__parser.makeFiles:
-                yield makeFile
 
     def __prepareTarget(self, name):
         self.__report.logTarget(name)
@@ -73,30 +117,10 @@ class StatMain(object):
             targetMakefile = StatMakefileGenerator(name + ".mak")
             targetMakefile.generate()
 
-    def __runTestPackage(self, testPackageFile):
-        runner = TestsRunner(testPackageFile, self.__parser.shallBeVerbose())
-        try:
-            runner.compile()
-            if self.__parser.shallRun():
-                runner.run()
-        except TestsRunnerException as exception:
-            self.__log(testPackageFile, 'FAILED', exception.message, runner.getLog())
-        except Exception as exception:
-            self.__log(testPackageFile, 'CRASHED', str(exception), [])
-        else:
-            self.__log(testPackageFile, 'PASSED', '', [])
-
-    def __log(self, testPackageFile, status, exception, screenLog):
-        self.__report[testPackageFile] = {'Status': status, 'Info': exception}
-        if exception:
-            self.__failures.append(testPackageFile)
-            if screenLog:
-                mkdir(attributes.LOGS_DIRECTORY, exist_ok=True)
-                logFilePath = '/'.join([attributes.LOGS_DIRECTORY, testPackageFile[:-4] + '.log'])
-                with open(logFilePath, 'w') as fp:
-                    fp.writelines(screenLog)
+    def __log(self, makefile, status, info):
+        self.__report[makefile] = status, info
         if not self.__parser.shallBeVerbose():
-            print(STAT_SILENT_OUTPUT.format(testPackageFile, status))
+            print(STAT_SILENT_OUTPUT.format(makefile, status))
 
 class StatReport(object):
 
@@ -104,15 +128,37 @@ class StatReport(object):
         self.__finalReport = {}
         self.__targetReport = self.__finalReport
 
+    @property
+    def total(self):
+        return len([makefile for target in self.__finalReport for makefile in self.__finalReport[target]])
+
+    @property
+    def passed(self):
+        return self.total - self.failed
+
+    @property
+    def failed(self):
+        return len(self.__extractFailedOnes())
+
+    @property
+    def failedList(self):
+        return set(self.__extractFailedOnes())
+
     def logTarget(self, name):
         self.__targetReport = {}
         self.__finalReport[name] = self.__targetReport
 
-    def __setitem__(self, key, value):
-        self.__targetReport[key] = value
-
     def write(self):
         writeJsonFile(attributes.REPORT_FILENAME, self.__finalReport)
+
+    def __setitem__(self, makefile, results):
+        status, info = results
+        self.__targetReport[makefile] = {'Status': status, 'Info': info}
+
+    def __extractFailedOnes(self):
+        return [makefile for target in self.__finalReport for makefile in self.__finalReport[target]
+                if not self.__finalReport[target][makefile]['Status'] == 'PASSED']
+
 
 class StatException(Exception):
     """
@@ -121,10 +167,16 @@ class StatException(Exception):
 
 if __name__ == '__main__':
     try:
-        StatMain.run()
+        if '--debug=profile' in sys.argv:
+            with Profiler():
+                StatMain.run()
+        else:
+            StatMain.run()
     except Exception as e:
         print(e)
         print("\n=== FAILED ===")
         sys.exit(-1)
     else:
         print("\n=== PASSED ===")
+
+# TODO: Consider StatWarning without failure in case of obsolete arguments, e.g. -p for a single product configuration
