@@ -5,11 +5,11 @@ from mock import Mock, PropertyMock, call
 
 import stat_attributes as attributes
 from ide_writer import IdeXmlWriter
-from msvs_ide_writer import MsvsSolutionWriter, MsvsLegacyWriter, MsvsWriter
+from msvs_ide_writer import MsvsSolutionWriter, MsvsLegacyWriter, MsvsWriter, Msvs2010ProjectWriter
 from services import locateResource, readTextFileAtOnce, toNativePath
 from stat_configuration import StatConfiguration
 from stat_makefile_project import StatMakefileProject
-from testing_tools import AdvancedTestCase
+from testing_tools import AdvancedTestCase, convertXmlToDictionary
 from vs_tools import MsvsTools
 
 CUT = MsvsSolutionWriter.__module__
@@ -20,23 +20,24 @@ TEST_PROJECT_NAME = TEST_MAKEFILE[:-4]
 TEST_PROJECT_FILE_PATH = '/root/projects/project/file.project'
 TEMPLATE_IMITATION = "format={format},version={version},year={year},name={name},project={project_file},guid={guid}"
 TEST_SOLUTION_FORMAT = 11.0
-TEST_VERSION = 117
-TEST_YEAR = 2037
+TEST_VERSION = 15
+TEST_YEAR = 2013
 TEST_TOOL_PATH = '/root/tools/'
 TEST_DEV_BATCH_FILE = '/root/tools/common/dev.bat'
 TEST_NMAKE_FILE = '/root/tools/bin/nmake.exe'
 TEST_VCPROJ_TEMPLATE_FILE = './extra/template.vcproj'
-
+TEST_VCXPROJ_TEMPLATE_FILE = './extra/template.vcxproj'
 
 class MsvsWriterTestCase(AdvancedTestCase):
 
     def mockCommonObjects(self):
         self.tools = Mock(spec=MsvsTools)
+        self.year = PropertyMock(return_value=TEST_YEAR)
         type(self.tools).path = PropertyMock(return_value=TEST_TOOL_PATH)
         type(self.tools).devBatchFile = PropertyMock(return_value=TEST_DEV_BATCH_FILE)
         type(self.tools).nmakeFilePath = PropertyMock(return_value=TEST_NMAKE_FILE)
         type(self.tools).versionId = PropertyMock(return_value=TEST_VERSION)
-        type(self.tools).year = PropertyMock(return_value=TEST_YEAR)
+        type(self.tools).year = self.year
         type(self.tools).solutionFormat = PropertyMock(return_value=TEST_SOLUTION_FORMAT)
         self.makefileProject = StatMakefileProject(TEST_MAKEFILE)
 
@@ -47,11 +48,18 @@ class TestMsvsWriter(MsvsWriterTestCase):
         getMsvsTools = '.'.join([StatConfiguration.__name__, StatConfiguration.getMsvsTools.__name__])
         self.getMsvsTools = self.patch(CUT, getMsvsTools, return_value=self.tools)
         self.msvsLegacyWriter = self.patch(CUT, MsvsLegacyWriter.__name__)
+        self.msvs2010ProjectWriter = self.patch(CUT, Msvs2010ProjectWriter.__name__)
 
-    def test_factory(self):
+    def test_factory_uponLegacyToolsVersion(self):
+        self.year.return_value = 2008
         writer = MsvsWriter(MsvsWriter.IDE, self.makefileProject)
         self.assertEqual(0, len(writer.writers))
         self.assertCalls(self.msvsLegacyWriter, [call(MsvsWriter.IDE, self.makefileProject, self.tools)])
+
+    def test_factory_uponNewerToolsVersion(self):
+        writer = MsvsWriter(MsvsWriter.IDE, self.makefileProject)
+        self.assertEqual(0, len(writer.writers))
+        self.assertCalls(self.msvs2010ProjectWriter, [call(MsvsWriter.IDE, self.makefileProject, self.tools)])
 
 
 class TestMsvsSolutionWriter(MsvsWriterTestCase):
@@ -92,14 +100,15 @@ class TestMsvsLegacyWriter(MsvsWriterTestCase):
         self.writer = MsvsLegacyWriter('msvs', self.makefileProject, self.tools)
 
     def test_init(self):
-        actual = self.writer._doc.toprettyxml()
-        output = os.path.join('..', attributes.OUTPUT_DIRECTORY, "bin",
-                              "{0}.exe".format(self.makefileProject.outputName))
-        expected = parseXmlString(self.PROJECT_TEMPLATE.format(
-            version=TEST_VERSION, name=self.makefileProject.projectName, guid=self.writer._PROJECT_GUID,
-            nmake=TEST_NMAKE_FILE, filename=TEST_MAKEFILE, output=output,
-            definitions=";".join(self.makefileProject.definitions)
-        )).toprettyxml()
+        actual = convertXmlToDictionary(self.writer._doc)
+        output = os.path.join('..', attributes.OUTPUT_DIRECTORY)
+        expected = convertXmlToDictionary(
+            parseXmlString(self.PROJECT_TEMPLATE.format(
+                version=TEST_VERSION, name=self.makefileProject.projectName, guid=self.writer._PROJECT_GUID,
+                nmake=TEST_NMAKE_FILE, filename=TEST_MAKEFILE, output=output,
+                executable="{0}.exe".format(self.makefileProject.outputName),
+                definitions=";".join(self.makefileProject.definitions)
+        )))
         self.assertEqual(expected, actual)
 
     def test_createRootToken(self):
@@ -157,3 +166,60 @@ class TestMsvsLegacyWriter(MsvsWriterTestCase):
                     break
             else:
                 yield tag
+
+class TestMsvs2010ProjectWriter(MsvsWriterTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.PROJECT_TEMPLATE = re.sub(r">[\s\n\r]+<", '><', readTextFileAtOnce(TEST_VCXPROJ_TEMPLATE_FILE))
+
+    def setUp(self):
+        self.mockCommonObjects()
+        self.msvsSolutionWriter = self.patch(CUT, MsvsSolutionWriter.__name__, autospec=True)
+        self.ideXmlWriter_write = self.patch(CUT, '{0}.{1}'.format(IdeXmlWriter.__name__, IdeXmlWriter.write.__name__))
+
+        self.writer = Msvs2010ProjectWriter('msvs', self.makefileProject, self.tools)
+
+    def test_init(self):
+        actual = convertXmlToDictionary(self.writer._doc)
+        output = os.path.join('..', attributes.OUTPUT_DIRECTORY)
+        expected = convertXmlToDictionary(parseXmlString(self.PROJECT_TEMPLATE.format(
+            version=TEST_VERSION, name=self.makefileProject.projectName, guid=self.writer._PROJECT_GUID,
+            nmake=TEST_NMAKE_FILE, filename=TEST_MAKEFILE, output=output,
+            executable="{0}.exe".format(self.makefileProject.outputName),
+            definitions=";".join(self.makefileProject.definitions)
+        )))
+        self.assertEqual(expected, actual)
+
+    def test_addFile_forSourceFiles(self):
+        sources = ['./root_main.c', './sub_directory/file_a.c', './sub_directory/file_b.c']
+
+        for source in sources:
+            self.writer.addFile(source, None)
+
+        tags = self.writer._doc.getElementsByTagName("ClCompile")
+        received = [tag.getAttribute("Include") for tag in tags]
+        expected = [os.path.join("..", source) for source in sources]
+        self.assertItemsEqual(expected, received)
+
+    def test_addFile_forHeaderFiles(self):
+        sources = ['./main_api.h', './sub_directory/inc/header_a.h', './inc/sub_api.h']
+
+        for source in sources:
+            self.writer.addFile(source, None)
+
+        tags = self.writer._doc.getElementsByTagName("ClInclude")
+        received = [tag.getAttribute("Include") for tag in tags]
+        expected = [os.path.join("..", source) for source in sources]
+        self.assertItemsEqual(expected, received)
+
+
+    def test_write(self):
+        writer = self.writer
+
+        writer.write()
+
+        self.assertCalls(self.ideXmlWriter_write, [call()])
+        expected = [call(self.makefileProject, self.tools, MsvsLegacyWriter._PROJECT_GUID,
+                         "vs_" + self.makefileProject.projectName + ".vcxproj"), call().write()]
+        self.assertCalls(self.msvsSolutionWriter, expected)

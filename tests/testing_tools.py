@@ -2,8 +2,11 @@ from __future__ import print_function
 
 import sys
 import os
+from collections import defaultdict
 from shutil import rmtree
 from unittest import TestCase
+from xml.dom.minidom import Text
+
 from services import isWindows
 
 try:
@@ -20,6 +23,21 @@ def readFileLines(filePath):
     lines = report.readlines()
     report.close()
     return lines
+
+def convertXmlToDictionary(xml):
+    def recursive_dict(element):
+        if isinstance(element, Text):
+            return "#text", str(element.data)
+        contents = {}
+        if element.attributes is not None:
+            for name, value in element.attributes.items():
+                contents.setdefault(str(name), []).append(str(value))
+        children = map(recursive_dict, element.childNodes)
+        if children:
+            for name, value in children:
+                contents.setdefault(str(name), []).append(value)
+        return str(element.nodeName), contents
+    return dict(map(recursive_dict, xml.childNodes))
 
 class AdvancedTestCase(TestCase):
     __assertSameItems = None
@@ -81,9 +99,12 @@ class AdvancedTestCase(TestCase):
             return result >= 0
         return [aCall for aCall in patchedObject.mock_calls if not __isDebuggerCall(aCall)]
 
-    def assertCalls(self, patchedObject, expectedCalls):
+    def assertCalls(self, patchedObject, expectedCalls, ordered=True):
         receivedCalls = self.getMockCalls(patchedObject)
-        self.assertEqual(expectedCalls, receivedCalls)
+        if ordered:
+            self.assertEqual(expectedCalls, receivedCalls)
+        else:
+            self.assertItemsEqual(expectedCalls, receivedCalls)
 
 class FileBasedTestCase(AdvancedTestCase):
 

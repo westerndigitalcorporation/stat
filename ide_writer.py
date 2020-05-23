@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+
+# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
+#                             Arseniy Aharonov <arseniy@aharonov.icu>
+#
+# SPDX-License-Identifier: MIT
+
 from xml.dom.minidom import Document
 
 import stat_attributes as attributes
@@ -80,10 +86,17 @@ class IdeXmlWriter(IdeWriter):
         self._doc = Document()
         self._filename = None
 
-    def composeElement(self, name, **xmlAttributes):
+    def composeElement(self, name, context=(), **xmlAttributes):
         element = self._doc.createElement(name)
         for attribute, value in xmlAttributes.items():
             element.setAttribute(attribute, value)
+        if context and not isinstance(context, dict):
+            element.appendChild(self._doc.createTextNode(context))
+        else:
+            for childName in context:
+                childElement = self._doc.createElement(childName)
+                childElement.appendChild(self._doc.createTextNode(context[childName]))
+                element.appendChild(childElement)
         return element
 
     def write(self):

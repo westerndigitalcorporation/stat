@@ -1,12 +1,24 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: stat
+Upstream-Contact: Arseniy Aharonov <arseniy@aharonov.icu>
+Source: https://github.com/westerndigitalcorporation/stat
 
+Files: README.md
+Copyright: (c) 2020 Western Digital Corporation or its affiliates
+               2020 Arseniy Aharonov
+License: MIT
+			   
 Files: unity/*
 Copyright: 2014 Mike Karlesky
            2014 Mark VanderVoord
            2014 Greg Williams
 License: MIT
 
-Files: tests/* lib/tests/* .gitignore resources/si4project.zip
+FIles: resources/vswhere.exe
+Copyright: Copyright (C) Microsoft Corporation
+License: MIT
+
+Files: tests/* lib/tests/* .gitignore resources/si4project.zip resources/*.tsln
 Copyright: (c) 2020 Western Digital Corporation or its affiliates
-               2020 Arseniy AHaronov
+               2020 Arseniy Aharonov
 License: CC0-1.0

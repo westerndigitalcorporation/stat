@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
+#                             Arseniy Aharonov <arseniy@aharonov.icu>
+#
+# SPDX-License-Identifier: MIT
+
 VERSION = '2.1.31'
 
 ########################################################################################################################

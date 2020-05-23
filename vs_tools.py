@@ -1,8 +1,13 @@
 #!/usr/bin/env python
+# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
+#                             Arseniy Aharonov <arseniy@aharonov.icu>
+#
+# SPDX-License-Identifier: MIT
+
 import os
 
 from stat_attributes import TOOL_PATH, RESOURCES_DIRECTORY
-from services import executeForOutput, execute
+from services import executeForOutput
 from stat_tool_chain import StatToolchain
 
 NMAKE_ARGUMENTS = "/S /NOLOGO /ERRORREPORT:NONE /F"

@@ -99,7 +99,7 @@ class TestIdeXmlWriter(AdvancedTestCase):
         self.assertEqual(None, self.writer._filename)
         self.assertCalls(self.mdomDocument, [call()])
 
-    def test_compose_element(self):
+    def test_composeElement(self):
         elementMock = Mock(spec=Element)
         self.mdomDocument.return_value.createElement.return_value = elementMock
         elementAttributes = {'first': 1111, 'second': 2222, 'another': 'some text', 'boolean': True}
@@ -109,6 +109,41 @@ class TestIdeXmlWriter(AdvancedTestCase):
         self.mdomDocument.assert_has_calls([call(), call().createElement("nameOfElement")])
         expected = [call.setAttribute(attribute, elementAttributes[attribute]) for attribute in elementAttributes]
         self.assertCalls(elementMock, expected)
+
+    def test_composeElement_withContextValue(self):
+        elementMock = Mock(spec=Element)
+        self.mdomDocument.return_value.createElement.return_value = elementMock
+        self.mdomDocument.return_value.createTextNode.side_effect = lambda x: "value is {0}".format(x)
+        elementAttributes = {'first-attribute': 101010, 'second-one': 'some text'}
+
+        element = self.writer.composeElement("nameOfElement", context=17, **elementAttributes)
+        self.assertEqual(elementMock, element)
+        self.mdomDocument.assert_has_calls([call(), call().createElement("nameOfElement")])
+        expected = [call.appendChild("value is {0}".format(17))]
+        expected.extend([call.setAttribute(attribute, elementAttributes[attribute]) for attribute in elementAttributes])
+        self.assertCalls(elementMock, expected, ordered=False)
+
+    def test_composeElement_withContextOfElements(self):
+        elements = [Mock(spec=Element) for x in range(4)]
+        self.mdomDocument.return_value.createElement.side_effect = elements
+        self.mdomDocument.return_value.createTextNode.side_effect = lambda x: "value is {0}".format(x)
+        elementAttributes = {'the-attribute': 'the attribute value', 'another-one': 'the text of the another one'}
+        contextElements = {'elementA': 'the A text', 'elementB': 57, 'elementC': 'the C text'}
+
+        element = self.writer.composeElement("nameOfElement", context=contextElements, **elementAttributes)
+
+        self.assertEqual(elements[0], element)
+        expected = [call(), call().createElement("nameOfElement")]
+        expected.extend([call().createElement(name) for name in contextElements])
+        self.mdomDocument.assert_has_calls(expected, any_order=True)
+
+        expected = [call.setAttribute(attribute, elementAttributes[attribute]) for attribute in elementAttributes]
+        expected.extend([call.appendChild(child) for child in elements[1:]])
+        self.assertCalls(element, expected, ordered=False)
+
+        for element, contents in zip(elements[1:], contextElements):
+            expected = [call.appendChild("value is {0}".format(contextElements[contents]))]
+            self.assertCalls(element, expected, ordered=False)
 
     def test_write(self):
         FILENAME_MOCK = 'example_filename.ext'

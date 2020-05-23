@@ -2,7 +2,7 @@
 * @file
 *
 * @copyright Copyright (c) 2020 Western Digital Corporation or its affiliates,
-*                          Arseniy Aharonov <Arseniy.Aharonov@gmail.com>
+*                          Arseniy Aharonov <arseniy@aharonov.icu>
 *            SPDX-License-Identifier: MIT
 * 
 * @project   STAT Framework
@@ -31,17 +31,17 @@
 /******************************************************************************/
 
 /***************************************/
-/* STAT-Mock :: Light-weigth Mock APIs */
+/* STAT-Mock :: Light-weight Mock APIs */
 /***************************************
 * 
 * These APIs represent a built-in feature of STAT that allows a convenient way
 * to create, manipulate and utilize test-doubles (e.g. mocks, spies). To compile 
-* this feature into a STAT-based test-package add the following define to a makfile:
+* this feature into a STAT-based test-package add the following define to a makefile:
 *
 *       STAT_MOCK=<size of RAM to use>
 *
 * This feature also validates the creation and the consumption of the test-doubles and 
-* of the collectables, and failes the test on exceptions. This validation can be put 
+* of the collectibles, and fails the test on exceptions. This validation can be put
 * into a permissive mode (aborting test instead of failing) by the following define:
 
 *
@@ -78,8 +78,8 @@
 * Every data (i.e. mock, data-to-spy) passed to these macros is passed by value and copied
 * into the internal database of STAT-Mock. When it is retrieved back, this copy is passed
 * to the caller by pointer. If one wants to prevent the copying, he/she should pass a pointer
-* to the data instead of the data itself. It is importent to note, though, that in this case that 
-* upon retreieval a pointer to a pointer is returned.
+* to the data instead of the data itself. It is important to note, though, that in this case that
+* upon retrieval a pointer to a pointer is returned.
 */
 
 // STAT-Mock APIs to control its behavior
@@ -120,6 +120,8 @@
 #define STAT_ADD_MANY_MOCKS_WITH_CALLBACK(_declarator_, _mocks_ptr_, _mock_amount_, _callback_) \
   _STAT_ADD_MANY_MOCKS(_declarator_, _mocks_ptr_, _mock_amount_, _callback_)
 
+#ifdef STAT_FUTURE
+
 #define STAT_ADD_INFINITE_EMPTY_MOCK(_declarator_) \
   _STAT_ADD_INFINITE_EMPTY_MOCK(_declarator_, NULL)
 
@@ -137,6 +139,8 @@
 
 #define STAT_ADD_INFINITE_NUMERIC_MOCK_WITH_CALLBACK(_declarator_, _mock_, _callback_) \
   _STAT_ADD_INFINITE_MOCK_WITH_CALLBACK(_declarator_, _mock_, _callback_)
+
+#endif // STAT_FUTURE
 
 #define STAT_ADD_REUSABLE_EMPTY_MOCK(_declarator_, _use_count_) \
   _STAT_ADD_REUSABLE_EMPTY_MOCK(_declarator_, _use_count_, NULL)
@@ -156,6 +160,8 @@
 #define STAT_ADD_REUSABLE_NUMERIC_MOCK_WITH_CALLBACK(_declarator_, _mock_, _use_count_, _callback_) \
   _STAT_ADD_REUSABLE_NUMERIC_MOCK(_declarator_, _mock_, _use_count_, _callback_)
 
+#ifdef STAT_FUTURE
+
 #define STAT_ADD_IDENTICAL_MOCKS(_declarator_, _mock_, _amount_) \
   TEST_FAIL_MESSAGE("STAT: Not supported yet.")
 
@@ -167,6 +173,8 @@
 
 #define STAT_ADD_IDENTICAL_NUMERIC_MOCKS_WITH_CALLBACK(_declarator_, _mock_, _amount_, _callback_) \
   TEST_FAIL_MESSAGE("STAT: Not supported yet.")
+
+#endif // STAT_FUTURE
 
 #define STAT_OVERRIDE_MOCK(_declarator_, _handler_) \
   _STAT_OVERRIDE_MOCK(_declarator_, _handler_)
