@@ -2,194 +2,390 @@
 
 ## Introduction
 
-STAT stands for <u>**St**</u>and<u>**a**</u>lone unit-<u>**t**</u>esting 
+STAT stands for <u>**ST**</u>and<u>**A**</u>lone unit-<u>**T**</u>esting 
 framework. It was designed to support and encourage TDD with emphasis 
-on embedded environments.    
-The idea behind its design is to enable TDD methodology in ad-hock 
-conditions of a heavy-legacy code-base, with minimum integration 
-requirements and a very quick setup.  
+on embedded environments. This framework forks from an open source  
+project [Unity](http://www.throwtheswitch.org/unity). The latter one can 
+be found also on [GitHub](https://github.com/ThrowTheSwitch/Unity).  
 
-STAT is a unit-testing framework that forks from an open source unit-testing 
-framework [Unity](http://www.throwtheswitch.org/unity), which also can
-be found on [GitHub](https://github.com/ThrowTheSwitch/Unity).
+The idea behind the design of STAT was to enable the TDD methodology 
+in ad-hock conditions of a heavy-legacy codebase, with minimum 
+requirements that are needed to integrate into the codebase, which 
+originally neither comply with TDD nor practices its methods. 
 
-## STAT-Mock Library {#statmock}
+### Terminology
 
-### Overview
+* **CUT** - Code Under Test
+    * a portion of production code, which has a 
+    finite functional purpose and is being currently under test in the
+    scope of referred unit-tests
+* **DOC** - Dependent-On Component/Code  
+    * another component (either SW or HW) that represents a dependency for
+the given CUT
+* **FW** - Firmware
+* **TDD** - [Test-Driven Development](https://www.agilealliance.org/glossary/tdd)
+    * see also [TDD](https://martinfowler.com/bliki/TestDrivenDevelopment.html)
+    for more details
 
-STAT-Mock is a built-in library of the STAT framework, which allows a 
-convenient way to create, manipulate and utilize test-doubles (e.g. 
-mocks, spies) along with collection of related statistics. 
-The library provides a very simple API set. It can be used to create a 
-variety of test-double types, to program mock-driven to build specific 
-test flows and of course to assert the validity of captured statistics. 
-Each of the specified operations can be achieved by a simple macro-call.   
-STAT-Mock was designed with mindset set to follow the _Four-Phase Test_ 
-testing pattern:
+### Justification
+It's quite common in the industry that a codebase does not change 
+dramatically in a time-frame of a single project. The changes are rather 
+local in nature and tones of legacy code are dragged from one project 
+to another.  
+With the embedded products the challenge gets even harder, since
+these are not pure software solutions, but include many HW cores 
+with interfaces that don't act exactly the same way as of software.  
+In addition, these systems usually have many constraints, like memory, 
+code-size, low CPU power and more. And these ones are known as not 
+getting along that well with the best programming practices such as TDD. 
+At least, we found it hard to convince some embedded-SW developers that 
+TDD is even possible in such conditions, not to mention whether it is 
+beneficial or not. Convincing managers is even harder. To prove added 
+value of TDD, one needs to practice TDD before getting the approval and 
+the support, which are required to practice it. What's a conundrum?  
 
-1. Setup test
-2. Exercise CUT
-3. Verify results/outputs
-4. Teardown  
+We also found out that there were already several attempts in some other
+groups to assimilate the TDD methodology. And these were not successful. 
+Even, just unit-testing (not mandatory TDD) was quite tough. 
+The unit-tests became overcomplicated with time, which made them
+too fragile and sensitive to changes. Changing code or unit-test in one
+place, was always breaking unit-tests in a completely different 
+part of the code. These resulted from dependencies of the modules, 
+which usually are much bigger in numbers than one could originally think.
 
-The fist three phases are straightforward and intuitive and for each
-one STAT-Mock provides a dedicated set of API macros:
+If these was not enough, please note the following nuances that produce
+really hard problems in addition to those mentioned above:
 
-* A set of macros to program mock-objects for the Setup phase
-* A set of macros to implement test-doubles for the Exercise-CUT phase
-* A set of macros to extract the spied data and the collected statistics
+* It takes time to accept the mindset of "*tests drive the development*"
+* It takes time to educate and to assimilate TDD into the workflow
+* In big complex projects, it would take eternity to get rid of all 
+legacy code
+* Not everybody is willing to commit and/or to follow the methodology
+    * Many teams &rArr; many ideologies/approaches/opinions
+* Not all developers are equally skilled at unit-testing, 
+at least not at the very beginning
 
-The forth phase like in many other unit-testing frameworks is resolved
-by the STAT-Mock library implicitly. The state of the library database 
-always gets cleared between any two adjacent unit-tests. 
-However, in STAT-Mock the forth phase is implemented instead of 
-the teardown stage during the setup stage before each test.
+We understood that the best way to make others follow is to start our 
+own initiative without requesting from the rest of the system to comply.
+To achieve this goal, first, we need to ensure some sort of isolation  
+for the development of the TDD-compliant "isles" within the "sea" of 
+the legacy non-compliant codebase.  
+Even after the isles will take over and "dry out" the sea,
+with only few lakes of legacy-code left, still such "isolation"
+would provide flexibility and independence of development efforts.
+Actually, if one follows the idea, one can see that it's not that
+far from the concept of [***microservices***](https://microservices.io/). 
 
-#### Enabling STAT-Mock
+So, how does one do it under the constraints of the embedded environment 
+and in the following conditions of the programming language like C: 
 
-Enabling of STAT-Mock library is quite simple and straightforward. 
-One needs simply to add the following definition to the makefile:
-```c
-STAT_MOCK = <byte-size of RAM to use>
-```
+* no inherent tools like Interface to formalize and fixate APIs
+* no function overloading (or default argument-values) to extend 
+the existing APIs
+* (and perhaps most important) no real support of dynamic polymorphism 
+or any kind for that matter 
 
->Note that STAT-Mock can be enabled either on the product level (i.e. 
->in the product makefile) or on the test-package level (i.e. in 
->the test-package makefile). The latter allows different RAM-size
->allocations, per test-package.
-  
-STAT-Mock library is optimized for the minimal resource requirements to 
-suite possible migration to embedded environment in future to support 
-unit-testing on the target platform. Therefore, the framework allows to 
-define the RAM allocation that is allowed to spend on STAT-Mock database.
-    
->It is important to note that if the user chooses to define the size 
->above ***8 KByte***, the database will consume more memory for the 
->metadata of each entry in order to be able to deal with the bigger RAM 
->space.
+Though the latter perhaps could be resolved with the callbacks, which
+requires strong commitment from all the development teams involved.
+But the worst thing with the callbacks that one might find it very  
+difficult to persuade especially those veteran embedded-developers that 
+FW-overhead of callbacks does totally worth the benefit of having TDD.  
+Please remember, all these has to come before we have actually persuaded 
+the system (the management) to support TDD. Moreover, one shall 
+recall and take into account that there are lots of legacy code, 
+which yet comply, and there is no one yet willing to allow 
+touching it seemingly for no justifiable reason.  
+Now, one can imagine how deep the whole really is! 
 
-#### Mock-Usage Validation
+### Goals
 
-STAT-Mock by default validates the creation and the consumption of the 
-test-doubles and of the collectibles, and fails the test upon related 
-exceptions. For instance, if a test declares a mock-object creation but 
-the tested CUT doesn't produce a call that shall consume the mock-object, 
-the test will fail. The framework also prints an error message that 
-refers to the unconsumed mock-object. This validation can be put into a 
-permissive mode (aborting test instead of failing) by the following 
-definition:
-```c
-STAT_MOCK_PERMISSIVE_VALIDATION
-```     
+We tried several unit-test frameworks, and there are quite a few
+really great products. So, we stated the following goals for the 
+framework we were looking for:
 
-#### Terms and Parameters
+* *Simplicity* – test-setup shall be simple, fast and intuitive
+* *Speed* – compilation and execution shall be fast and focused 
+  to support TDD short cycles and encourage refactoring
+* *Lightweight* – it shall enable portability to embedded platforms 
+  (we plan to support it in the future)
+* *Comprehensive feedback* – better logging &rArr; 
+  lesser step-by-step debugging &rArr; greater efficiency
+  * R&D should really stand for Research and Development, 
+    rather than for Research and Debugging  
+* *Reproducibility*– tests shall be reproducible
+  * Non-reproducible tests are nothing but annoying reminder for
+  an existing bug that we fail to identify
+* *Test-code sharing* – reduce the inevitable code-duplication 
+  * Test-doubles contain word duplication in their very name.  
+  * It'd be better to enable easy sharing of such components
+* *Automation* – test automation shall be very simple to achieve
+* <u>***CUT-Isolation***</u> – pure unit-testing without noise of 
+  other FW-code, HW or OS
+  * achieving static polymorphism to substitute the need of dynamic
+  * reduction of DOC-s (dependent-on components)
+  * standalone (per CUT) development
 
-The following terms for STAT-Mock parameters are used throughout the sources of this framework 
-(including this documentation):
-- @param **declarator** - a string with the name of the related declaration (e.g.function-name);
-                          used as a key to distinguish objects of different test-doubles
-- @param **mock** - a variable/structure representing a Mock-object
-- @param **numeric-mock** - a numeric value (e.g. constant) representing a Mock-object
-- @param **callback** - a function to be called when a related Mock object is popped
-- @param **handler** - a function called instead of Mock-engine to produce a Mock object and to spy
-- @param **data-to-spy** - a variable/structure to be spied for further verification in the test
-- @param **spy-data** - (see data-to-spy)
-- @param **numeric-to-spy** - a numeric value spied for further verification in the test
-- @param **creation-index** - a 0-based counter representing an order in which the item was  created for the declarator
-- @param **call-order** - an 1-based counter representing an order in which the call was issued
-                          for this entry in reference to all other call (of all declarators)
-- @param **call-count** - an amount of accesses made to the object during the test
-- @param **test-callable** - any callable object, including mocks and pure spy-data (without a mock)
+_The last one we found as most critical one for our needs due 
+to constraints mentioned in the previous chapter._ This is 
+were most of the evaluated solutions failed so far. But, there
+were some simply technical reasons that also made frameworks
+existing at that time less suitable. Our lab machines were
+beyond control of our team, and they were equipped with 
+Python 2.7, MS Visual Studio and our target build toolchain.
+No Rubi, lua, CMake or any other things of that kind.
 
-#### Callbacks
+### Unity Harness
 
-API set of STAT-Mock assumes two types of possible callbacks that the user might feed the framework with.  
+Eventually, we decided to build our own framework that will fit
+the bill. Despite that decision we also understood that though
+the evaluated frameworks couldn't fit all of our requirements,  
+there are still those ones that are very close. 
+[Unity](http://www.throwtheswitch.org/unity) harness was 
+that great almost-match, and thus we decided to build ours 
+based on it due to the following clear advantages of 
+the Unity harness:
 
-The first type of callbacks is used a complimentary operation that the user asks 
-the framework to invoke upon consumption of a certain mock-object. 
-The goal of such callback is only to observe/modify the data that the framework has collected 
-at that moment of consumption. Such callback shall have the following signature:
+* Minimalistic in size and dependencies on system libraries
+* Can be compiled almost on any platform
+* Provides rich and strong assertion mechanism
+* Prints very comprehensive logging and results
+* Tolerant to test-failures
+    * Failing test (if properly built) doesn't crash the
+    subsequent tests 
 
-```c
-void (*STAT_MOCK_CALLBACK_T)(_UU32 callOrder, void* mock_p, void* dataToSpy_p);
-```
+An additional advantage worthy of a separate discussion is
+the very fact that Unity is written in C. This is the same
+language we use to write our production code.  
+It is  better to prevent developers from constantly 
+switching between different language paradigms. 
+In addition, writing in the same language gives a developer 
+the same sense of experience whether writing production code or 
+unit-test code. 
 
-The second type is not meant just to process the data collected by the framework, 
-but to override the behavior of a test-double that was originally defined
-as mock-object. The data that is passed by the framework to this callback is not
-a copy of the CUT data (like it is in the case with the previous callback). 
-It receives the original data of the caller and thus is passed as constant. 
-Such handler shall have the following signature:
+## Theoretical Background
 
-```c
-void* (*STAT_MOCK_HANDLER_T)(_UU32 callOrder, _UU32 callCount, const void* dataToSpy_p);
-```
+### Reverse Polymorphism by Compilation
 
-Every data (i.e. mock, data-to-spy) passed to these macros is passed by value and copied
-into the internal database of STAT-Mock. When it is retrieved back, this copy is passed
-to the caller by pointer. If one wants to prevent the copying, he/she should pass a pointer
-to the data instead of the data itself. It is important to note, though, that in this case that 
-upon retrieval a pointer to a pointer is returned.
+Unlike many OO languages, C doesn't have an inherent methods
+of implementing dynamic polymorphism. But, dynamic polymorphism 
+is a strong tool that allows substitution of product versions 
+of DOCs with test-doubles.   
+Of course we can achieve the same effect with the manual 
+workaround. We can implicitly implement the `vTable` and 
+initialize it with callback functions either of production 
+code or of test-doubles. Sounds like a good solution, but 
+there are several problems with this method though:
+* In embedded environment function pointers many times are not an option 
+    * It might produce unacceptable overhead penalty
+    * It forces limits on the usage of inline functions and macros
+* This method also assumes that all DOCs comply 
+    * It is not the cases for us, and it canned be enforced 
+    (as it was explained above)
+* The stated conditions also assume tones of legacy code,
+which doesn't comply by definition
+* And in general, any method that cannot be forced by language
+might become a fragile liability 
 
-### STAT-Mock APIs 
+Then, the next best thing would be static polymorphism. But it has many
+of the weak-points that we already pointed out for the dynamic 
+polymorphism.
 
-#### Behavioral Macros
+Eventually, we solved the issue with some sort of *Reverse Polymorphism 
+by Compilation*.  
+Many header files (that in C serve some sort of interfaces) are 
+"contaminated" with partial implementations, e.g. 
+inline functions, macros. Even if had enforced a methodology of 
+constraining the header files from having any implementation-specific
+data, still we would have had a problem with the legacy headers.
+There are too many of those and we can't touch them in our case.
+Moreover, this is not something that you can enforce in C and thus,
+it would be hard to maintain and to ensure especially in a big-scale
+projects with a cross-sites team.
 
-This set of APIs is intended to control the behavior of the STAT-Mock library.
+#### *Dummy Interfaces*
 
-* `STAT_RESET()` - clears the entire database of STAT-Mock
-* `STAT_ENFORCE_CALL_ORDER_TRACKING` and `STAT_CEASE_CALL_ORDER_TRACKING`
-    * These two macros define a scope in which all calls made by CUT 
-    to mock-driven test-doubles are expected to be in order, 
-    in which the mock-objects where created.
-    * It's useful in testing of pieces of code that implement a sequence
-    of actions. It allows a simple validation of the order of calls
-  
-#### Setup-Phase Macros
+Instead of constraining the header files we instruct developers
+to create a header-file prototype for DOC API header-files
+if needed. The former would be a very simplified version of the latter.
+We named it *Dummy Interface*. It works as if a *Dummy Interface* 
+was a real Interface from which the related DOC derives its 
+implementation. *Dummy Interface* contains no implementation, e.g.:
 
-This set of APIs is designed for the Setup phase of the Four-Phase Test pattern.
-It comprises the macros which allow creation of different types of Mock-objects.
+* Each inline is substituted with non-inline prototype
+* Each macro is redirected to a non-inline function of similar name
 
-* `STAT_ADD_MOCK(_declarator_, _mock_)` 
-* `STAT_ADD_MOCK_WITH_CALLBACK(_declarator_, _mock_, _callback_)` 
-* `STAT_ADD_NUMERIC_MOCK(_declarator_, _numeric_mock_)` 
-* `STAT_ADD_NUMERIC_MOCK_WITH_CALLBACK(_declarator_, _numeric_mock_, _callback_)` 
-* `STAT_ADD_EMPTY_MOCK(_declarator_)` 
-* `STAT_ADD_CALLBACK_MOCK(_declarator_, _callback_)` 
-* `STAT_ADD_MANY_MOCKS(_declarator_, _mocks_ptr_, _mock_amount_)` 
-* `STAT_ADD_MANY_MOCKS_WITH_CALLBACK(_declarator_, _mocks_ptr_, _mock_amount_, _callback_)` 
-* `STAT_ADD_REUSABLE_EMPTY_MOCK(_declarator_, _use_count_)` 
-* `STAT_ADD_REUSABLE_CALLBACK_MOCK(_declarator_, _use_count_, _callback_)` 
-* `STAT_ADD_REUSABLE_MOCK(_declarator_, _mock_, _use_count_)` 
-* `STAT_ADD_RESUABLE_MOCK_WITH_CALLBACK(_declarator_, _mock_, _use_count_, _callback_)` 
-* `STAT_ADD_REUSABLE_NUMERIC_MOCK(_declarator_, _mock_, _use_count_)` 
-* `STAT_ADD_REUSABLE_NUMERIC_MOCK_WITH_CALLBACK(_declarator_, _mock_, _use_count_, _callback_)` 
-* `STAT_OVERRIDE_MOCK(_declarator_, _handler_)` 
+Note that the *Dummy Interface* doesn't have to contain every object
+that the original function does. The developers are instructed to
+work similar to open-source community - each developer adds to
+a given *Dummy Interface* only what he/she needed. The other 
+developers will add the rest upon demand.
 
-#### 'Exercise-CUT'-Phase Macros
+STAT framework has built-in mechanisms that allow simple overriding
+of original header files with their *Dummy Interface* versions, 
+either for all test-packages at once, or for each test-package 
+separately.
 
-This set of APIs is designed for the Exercise-CUT phase of the Four-Phase Test pattern.
-As the matter of fact, though officially this phase is a second one in this test-pattern,
-the set of this phase is the first one to be used by the developer.
-These macros are used to implement the test-doubles themselves, 
-which are usually implemented before the tests and CUT.
+### CUT Isolation
 
-* `STAT_POP_MOCK(_declarator_)` 
-* `STAT_POP_MOCK_WITH_SPYING(_declarator_, _data_to_spy_)` 
-* `STAT_POP_MOCK_WITH_SPYING_NUMERIC(_declarator_, _numeric_to_spy_)` 
-* `STAT_SPY_ON_WITHOUT_MOCK(_declarator_, _data_to_spy_)` 
-* `STAT_SPY_ON_NUMERIC_WITHOUT_MOCK(_declarator_, _numeric_to_spy_)` 
+#### *Dependencies/DOC*
 
-#### Verification-Phase Macros
+One of the problems in unit-testing is resolving the dependencies
+of the given CUT. In embedded environment the problem gets even more
+complicated by the fact that the product is not pure software.
+However, the challenge is not only limited to HW-related issues.
 
-This set of APIs is designed for the Verify phase of the Four-Phase Test pattern.
-These macros are used by the developer to extract the collected data (e.g. spied-data) 
-and the statistics (e.g different counters).
+Without substituting the DOCs with test-doubles, unit-testing might
+become a real nightmare in many aspects, e.g. complexity, timing,
+maintainability. Such tests would be very fragile and hardly 
+scalable.
 
-* `STAT_GET_MOCK_DATA(_declarator_, _creation_index_)` 
-* `STAT_GET_MOCK_SPY_DATA(_declarator_, _creation_index_)` 
-* `STAT_GET_CALL_ORDER(_declarator_, _creation_index_)` 
-* `STAT_COUNT_CALLS(_declarator_)` 
-* `STAT_COUNT_TEST_CALLABLES(_declarator_)` 
-* `STAT_HAS_MOCKS(_declarator_)` 
-* `STAT_HAS_UNCONSUMED_MOCKS(_declarator_)` 
+Another challenge is the amount of DOCs. One might say that with 
+appropriate design really noticeable DOCs shall be few in number.
+While it's correct regarding the key DOCs, many times there are 
+lots of insignificant dependencies, usually dispersed over 
+many system components (e.g. logging, system calls).  
+
+If the product architecture comprises more then on CPU, in 
+embedded most likely it would be AMP architecture 
+(Asymmetric Multiprocessing). It complicates things even more. 
+If the product has OS, it also adds extra challenges to unit-testing.
+
+#### *'Noise' Dependencies*
+
+Not all of the dependencies are equal from perspective of each
+given CUT: 
+
+* There are key dependencies, which define the end-to-end
+use-cases/flows of CUT
+* There are non-key dependencies, which do not define
+the major functionality of CUT
+* There are also 'inconvenient' dependencies, which might
+serve as key dependency, but are hard to deal with
+    * Usually, these are heavy-legacy components, e.g. overloaded
+      with things like macros, strongly coupled APIs
+
+The latter two types of DOC are usually responsible for 
+fragile nature of unit-test packages, if not dealt with correctly.
+We call these '***Noise***' dependencies.  
+Let's see the following example of CUT relationships with 
+its DOCs in a production code.  
+
+![CUT Relationships](./docs/media/cut_in_legacy.png)  
+
+>On the figure above, one can see that the CUT has six DOCs:
+>A,B and C are key dependencies and D, E, and F got 
+>identified as 'noise' dependencies. In C there are no
+>built-in interfaces. Even header files (especially legacy)
+>might contain partial implementation. In embedded 
+>environment, performance consideration might drive in
+>favor of such decision (e.g. inline API functions). 
+>Therefore, the interfaces are denoted virtually on 
+>the figure (highlighted with dashed lines). 
+ 
+#### *Noise Reduction/Decoupling*
+
+Decoupling a given CUT from its '*Noise*' DOCs improves 
+its testability. The following figure shows how 
+design-pattern '*Facade*' can be used to achieve this 
+goal.
+
+![CUT Relationships](./docs/media/cut_isolation.png) 
+
+>We simply put a header files between CUT and all
+>its '*Noise*' DOCs. Now, it can be seen by looking
+>at interface items on the figure that CUT now 
+>depends only on four interfaces, rather then six.
+>By the way, '*Facade*' is not the only design-pattern
+>suitable for the job. 
+>
+>>The '*Adapter*' design-pattern can be used to 
+>>simplify or convert complicated DOC APIs.  
+>>The '*Strategy*' design-pattern can be used
+>>to resolve a use-case when different DOC APIs
+>>shall be called depending on strategy (which
+>>might appear in a form of enumeration).  
+>
+>For the sake of simplicity, let's name all
+>these substitutions after the name of '*Facade*'.
+
+#### *Unit-test Package*
+
+Now, when dependencies have been reduce to a 
+reasonable minimum the test-package for the CUT
+would have the following view.
+
+![CUT Relationships](./docs/media/unit_test_package.png)  
+
+>Please note that real DOC headers got replaced with
+>dummy interfaces and DOCs with test-doubles.  
+>Moreover, the test-package environment seems much 
+>simpler then it could have without '*Facade*'. 
+
+### Summary
+
+The technique described above we call '*CUT-Isolation*'. 
+Along with the concept of '*Dummy Interfaces*' it proved
+itself throughout the years, during which we honed and 
+polished this methodology.  
+STAT-framework evolved along this entire process, 
+deriving its design from the experience we gained.
+It is built to ensure very simple and quick setup of 
+unit-tests and to be very convenient for practicing TDD.
+And all this in conditions of heavy legacy code-base and
+with minimal requirements (if any) for integration to
+the development environment.  
+It helped us to establishing the isles of TDD in our 
+code-base and to start gradual expansion of TDD over 
+the entire code-base.
+
+## Overview
+### Order of Inclusion
+
+#### *Public Dummy Interfaces*
+
+STAT supports this approach by providing a dedicated method
+of maintaining *Dummy Interfaces* in a centralized location
+(to prevent excessive duplication) and overrides a real 
+header file, if such one appear on an include path of the unit-test
+package.
+
+As noted above, each dummy interface explicitly declared for 
+the given test-package overrides any other instance of the
+header files of the same name, whether such one can or cannot
+be located on the include path.
+
+#### *Private Dummy Interfaces*
+
+In addition to DOC public APIs, there is a need to substitute 
+certain internal header-files too. For instance, this could be
+a header-file designed as a *facade* intended to decouple the
+given CUT from certain system components.  
+It makes sense to place dummy interfaces of public APIs in 
+a single central location which is accessible to all 
+test-packages, as it helps to reduce duplication. 
+Whereas, dummy interfaces of internal APIs should be kept 
+locally for each test package, as these are less likely 
+to be accessed by other test-packages. 
+ 
+For that purpose, STAT framework is enhanced with a dedicated 
+mechanism. For each header-file it insures to include that 
+instance, which appears first on the include-patch. The order
+is defined to the one the directories are mentioned for
+the given test-package. It works even if the header-file 
+is included by other header files that are located in the 
+same directory. It is achieved by symbol-linking or copying
+the header-files into a dedicated single directory.
+
+
+
+
+
+
+<!--
+Notes: 
+- Shared Test Doubles
+- Product makefiles vs. test-package makefiles
+ - System Headers and Common Dependencies
+
+
+//-->

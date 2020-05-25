@@ -853,7 +853,7 @@ static void Test_TestCallOrderBeyondNaturalLimitForSpys(void)
     TEST_ASSERT_EQUAL(spyData, *(_UU32*)STAT_GET_MOCK_SPY_DATA(Test_TestCallOrderBeyondNaturalLimitForSpys, index));
   }
 #else
-  TEST_IGNORE_MESSAGE("The test is not relevant for jumbo configurations of STAT-Mock!")
+  TEST_IGNORE_MESSAGE("The test is not relevant for jumbo configurations of STAT-Mock!");
 #endif
 }
 
@@ -881,7 +881,7 @@ static void Test_TestCallOrderBeyondNaturalLimitForMocks(void)
   TEST_ASSERT_NULL(STAT_GET_MOCK_SPY_DATA(Test_TestCallOrderBeyondNaturalLimitForMocks, index));
   TEST_ASSERT_NULL(Test_statMock.callbackA.dataToSpy_p);
 #else
-  TEST_IGNORE_MESSAGE("The test is not relevant for jumbo configurations of STAT-Mock!")
+  TEST_IGNORE_MESSAGE("The test is not relevant for jumbo configurations of STAT-Mock!");
 #endif
 }
 

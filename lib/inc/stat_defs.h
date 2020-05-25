@@ -9,13 +9,13 @@
 * @date      July 31, 2016
 * @brief     Declares internal prototypes of STAT
 *******************************************************************************/
-#ifndef _STAT_I_H
-#define _STAT_I_H
+#ifndef _STAT_DEFS_H
+#define _STAT_DEFS_H
 
 /******************************************************************************/
 /**    INCLUDE FILES                                                         **/
 /******************************************************************************/
-#include <stat_defs.h>
+#include <unity.h>
 
 /******************************************************************************/
 /**    DEFINITIONS                                                           **/
@@ -36,6 +36,19 @@
 /**    TYPES                                                                 **/
 /******************************************************************************/
 
+/*************************/
+/* Basic primitive types */
+/*************************/
+
+typedef UNITY_UINT8	 _UU8;
+typedef UNITY_UINT16 _UU16;
+typedef UNITY_UINT32 _UU32;
+//typedef UNITY_UINT64 _UU64;
+typedef UNITY_INT8	 _US8;
+typedef UNITY_INT16	 _US16;
+typedef UNITY_INT32	 _US32;
+//typedef UNITY_INT64	 _US64;
+
 /******************************************************************************/
 /**    EXPORTED GLOBALS                                                      **/
 /******************************************************************************/
@@ -43,44 +56,6 @@
 /******************************************************************************/
 /**    FUNCTION PROTOTYPES                                                   **/
 /******************************************************************************/
-
-/**
-* Implements the user main routine that shall be implemented in every STAT 
-* package
-*
-* @return status depicting success or failure returned by the Unity harness
-*
-* @remarks Shall be implemented in every STAT package
-*/
-_UU32 Stat_Main(void);
-
-/**
-* Initializes the RNG engine
-*
-* @return None
-*/
-void Stat_InitRng(void);
-
-/**
-* Product setup routine
-*
-* @return None
-*/
-void Stat_SetupProductTest(void);
-
-/**
-* Product tear-down routine
-*
-* @return None
-*/
-void Stat_TeardownProductTest(void);
-
-// Standard mem-operations
-void Stat_Memcpy(void *target_p, const void *source_p, _UU32 size);
-void Stat_Memset(void *target_p, _UU32 value, _UU32 size);
-
-// String operations
-_UU32 Stat_AreStringsEqual(const char *first_p, const char *second_p);
 
 #endif /* This is actually EOF */
 

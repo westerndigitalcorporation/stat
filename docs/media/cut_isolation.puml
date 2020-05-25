@@ -1,0 +1,67 @@
+@startuml
+
+!definelong SET_DOC(_name_, _type_, _id_, _direction_='up')
+interface "DOC _name_" as _name_ <<API>>
+class "**_type_** DOC-**_name_**" as _id_ <<Production Code>>
+{
+API-header
+..
+source files
+}
+_id_ ._direction_.|> _name_
+!enddefinelong
+
+skinparam class {
+    borderColor<<API>> gray
+    borderStyle<<API>> dashed
+    BackgroundColor<<Production Code>> skyblue
+    borderColor<<Production Code>> navy
+}
+
+class       "                    \n\n\n\n\n<size:18>**CUT**</size>\n\n\n\n\n" as cut #orange
+interface   "    CUT    " as cutApi <<API>>
+class		"**Facade**" as facade <<Production Code>> #orange-skyblue {
+	.....//to decouple from **'noise'**//.....
+}
+interface   "    Facade    " as facadeApi <<API>>
+
+together {
+	SET_DOC(A, "Key", docA)
+	SET_DOC(B, "Key", docB)
+	SET_DOC(C, "Key", docC)
+}
+
+together {
+	SET_DOC(D, "'Noise'", docD, down)
+	SET_DOC(E, "'Noise'", docE, down)
+	SET_DOC(F, "'Noise'", docF, down)
+}
+
+class "CUT Callers" as callers <<Production Code>>
+{
+Caller X
+..
+Caller Y
+..
+Caller Z
+..
+...
+}
+
+cut -up-> docA
+cut -up-> docB
+cut -up-> docC
+cut -down-> facade
+facade .right.|>facadeApi : "     "
+facade -down-> docD
+facade -down-> docE
+facade -down-> docF
+callers -right-> cut : "     "
+cut .right.|> cutApi : "               "
+
+hide members 
+hide circle
+show <<API>> circle
+show <<Production Code>> members
+
+@enduml

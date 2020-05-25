@@ -14,10 +14,10 @@
 /*     INCLUDE FILES                                                          */
 /******************************************************************************/
 #include <unity.h>
-#include "stat.h"
-#include "stat_i.h"
-#include "stat_mock.h"
-#include "stat_mock_i.h"
+#include <stat.h>
+#include <stat_i.h>
+#include <stat_mock.h>
+#include <stat_mock_i.h>
 
 /******************************************************************************/
 /*     DEFINITIONS                                                            */

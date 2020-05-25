@@ -1,0 +1,64 @@
+@startuml
+
+!definelong SET_DOC(_name_, _type_, _id_, _direction_='up')
+interface "DOC _name_" as _name_ <<API>>
+class "**_type_** DOC-**_name_**" as _id_ <<Test-Doubles>>
+{
+Public '//Dummy Interface//'
+..
+Test-double code
+}
+_id_ ._direction_.|> _name_
+!enddefinelong
+
+skinparam class {
+    borderColor<<API>> gray
+    borderStyle<<API>> dashed
+    BackgroundColor<<Test-Doubles>> yellowgreen
+    borderColor<<Test-Doubles>> darkgreen
+    BackgroundColor<<Test-Runner>> yellowgreen
+    borderColor<<Test-Runner>> darkgreen
+}
+
+class       "                    \n\n\n\n\n<size:18>**CUT**</size>\n\n\n\n\n" as cut #orange
+interface   "    CUT    " as cutApi <<API>>
+class		"**Facade**" as facade <<Test-Doubles>> #orange-yellowgreen {
+Private '//Dummy Interface//'
+..
+Test-double code
+}
+interface   "    Facade    " as facadeApi <<API>>
+
+together {
+	SET_DOC(A, "Key", docA)
+	SET_DOC(B, "Key", docB)
+	SET_DOC(C, "Key", docC)
+}
+
+
+class "  CUT **Unit-tests**  " as callers <<Test-Runner>>
+{
+Test 1 ...
+..
+Test 2 ...
+..
+Test 3 ...
+..
+...
+}
+
+cut -up-> docA
+cut -up-> docB
+cut -up-> docC
+cut -down-> facade
+facade .right.|>facadeApi : "     "
+callers -right-> cut : "               "
+cut .right.|> cutApi : "               "
+
+hide members 
+hide circle
+show <<API>> circle
+show <<Test-Doubles>> members
+show <<Test-Runner>> members
+
+@enduml
