@@ -3,10 +3,14 @@ Upstream-Name: stat
 Upstream-Contact: Arseniy Aharonov <arseniy@aharonov.icu>
 Source: https://github.com/westerndigitalcorporation/stat
 
-Files: README.md
+
+
+Files: *.md docs/*.md docs/media/*.puml
 Copyright: (c) 2020 Western Digital Corporation or its affiliates
                2020 Arseniy Aharonov
 License: MIT
+
+
 			   
 Files: unity/*
 Copyright: 2014 Mike Karlesky
@@ -14,11 +18,15 @@ Copyright: 2014 Mike Karlesky
            2014 Greg Williams
 License: MIT
 
-FIles: resources/vswhere.exe
+
+
+Files: resources/vswhere.exe
 Copyright: Copyright (C) Microsoft Corporation
 License: MIT
 
-Files: tests/* lib/tests/* .gitignore resources/si4project.zip resources/*.tsln
+
+
+Files: tests/* lib/tests/* .gitignore resources/si4project.zip resources/*.tsln docs/media/*.png
 Copyright: (c) 2020 Western Digital Corporation or its affiliates
                2020 Arseniy Aharonov
 License: CC0-1.0
