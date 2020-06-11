@@ -72,6 +72,8 @@ class StatMain(object):
             self.__createIdeWorkspace()
         else:
             self.__runTests()
+        if self.__parser.redundant:
+            raise StatWarning('WARNING: The arguments {0} are redundant!'.format(self.__parser.redundant))
 
     def __runTests(self):
         prepareOutputDirectories()
@@ -160,10 +162,14 @@ class StatReport(object):
         return [makefile for target in self.__finalReport for makefile in self.__finalReport[target]
                 if not self.__finalReport[target][makefile]['Status'] == 'PASSED']
 
+class StatWarning(Exception):
+    """
+    Custom exception for the STAT-framework managed warnings
+    """
 
 class StatException(Exception):
     """
-    Custom exception for the STAT framework managed failures
+    Custom exception for the STAT-framework managed failures
     """
 
 if __name__ == '__main__':
@@ -173,6 +179,10 @@ if __name__ == '__main__':
                 StatMain.run()
         else:
             StatMain.run()
+    except StatWarning as w:
+        print("\n")
+        print(w)
+        print("\n=== PASSED ===")
     except Exception as e:
         print(e)
         print("\n=== FAILED ===")

@@ -7,7 +7,7 @@ import stat_attributes as attributes
 from ide_writer import IdeWorkspaceWriter
 from msvs_ide_writer import MsvsWriter
 from stat_main import StatMain, STAT_SUMMARY, STAT_OUTPUT_DELIMITER, STAT_SILENT_OUTPUT, StatException, runTestPackage, \
-    MAKEFILE_CORRUPTION
+    MAKEFILE_CORRUPTION, StatWarning
 from stat_makefile_generator import StatMakefileGenerator
 from stat_tool_chain import StatToolchain
 from testing_tools import AdvancedTestCase
@@ -64,6 +64,8 @@ class TestStatMainBase(AdvancedTestCase):
         type(parser).targetProducts = PropertyMock(return_value=targetProducts)
         type(parser).makeFiles = PropertyMock(return_value=userMakefiles)
         type(parser).processes = PropertyMock(return_value=processes)
+        self.redundantArguments = PropertyMock(return_value=None)
+        type(parser).redundant = self.redundantArguments
         return parser
 
     def _mockParserResults(self, ide=None, shallExecute=True, shallBeVerbose=True):
@@ -161,6 +163,22 @@ class TestStatMain(TestStatMainBase):
                    [call(STAT_OUTPUT_DELIMITER), call(STAT_SUMMARY.format(total=count, passed=count, failed=0))]
         self.assertCalls(printMock, expected)
 
+    def test_run_withRedundantArguments(self):
+        self._patchArgumentParser(targetProducts=[TARGET_PRODUCT], userMakefiles=MANY_MAKE_FILES)
+        self._mockParserResults(shallExecute=False)
+        self.redundantArguments.return_value = ['-run', '--redundant']
+
+        try:
+            StatMain.run(['-c'])
+        except StatWarning:
+            pass
+        else:
+            self.fail("The framework shall fire a STAT Warning.")
+
+        self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-c'])])
+        expected = [call(makeFile, COMPILATION_COMMAND, False, True) for makeFile in MANY_MAKE_FILES]
+        self.assertCalls(self.runTestPackage, expected)
+
     def test_run_withException(self):
         self.runTestPackage.side_effect = FAKE_FAILED_RUNS
         self._patchArgumentParser(targetProducts=[TARGET_PRODUCT], userMakefiles=MANY_MAKE_FILES)
@@ -172,7 +190,7 @@ class TestStatMain(TestStatMainBase):
         except StatException:
             pass
         else:
-            self.fail("The framework shall fire system error.")
+            self.fail("The framework shall fire a STAT Exception.")
 
         expected = [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)

@@ -29,22 +29,6 @@ class TestStatArgumentParser_UponSingleProduct(TestStatArgumentParser):
         self.setupCommon()
         self.parser = StatArgumentParser([SINGLE_PRODUCT])
 
-    def test_parse_uponAllProducts(self):
-        try:
-            self.parser.parse(['-a'])
-        except SystemExit:
-            pass
-        else:
-            self.fail("Upon single product '-a' option is invalid")
-
-    def test_parse_uponExplicitProduct(self):
-        try:
-            self.parser.parse(['-p', SINGLE_PRODUCT])
-        except SystemExit:
-            pass
-        else:
-            self.fail("Upon single product '-p <product>' option is invalid")
-
     def __verifyCanonicalExecutionOutcomes(self):
         parser = self.parser
         self.assertTrue(parser.shallRun())
@@ -61,6 +45,26 @@ class TestStatArgumentParser_UponSingleProduct(TestStatArgumentParser):
 
         parser.parse([])
 
+        self.assertEqual(MANY_MAKEFILES, parser.makeFiles)
+        self.assertCalls(self.listMakefiles, [call('.')])
+        self.__verifyCanonicalExecutionOutcomes()
+
+    def test_parse_uponAllProducts(self):
+        self.listMakefiles.return_value = MANY_MAKEFILES
+        parser = self.parser
+
+        parser.parse(['-a'])
+
+        self.assertEqual(['-a/--all-products'], parser.redundant)
+        self.__verifyCanonicalExecutionOutcomes()
+
+    def test_parse_uponExplicitProduct(self):
+        self.listMakefiles.return_value = MANY_MAKEFILES
+        parser = self.parser
+
+        parser.parse(['-p', SINGLE_PRODUCT])
+
+        self.assertEqual(['-p/--product'], parser.redundant)
         self.assertEqual(MANY_MAKEFILES, parser.makeFiles)
         self.assertCalls(self.listMakefiles, [call('.')])
         self.__verifyCanonicalExecutionOutcomes()
@@ -180,6 +184,17 @@ class TestStatArgumentParser_UponSingleProduct(TestStatArgumentParser):
         self.verifyCanonicalCompilationOutcomes(parser)
         self.assertEqual([SINGLE_PRODUCT], parser.targetProducts)
 
+    def test_parse_withRedundantArgument(self):
+        fakeWildcard = '*single*'
+        self.listMakefiles.return_value = [SINGLE_MAKEFILE]
+        parser = self.parser
+
+        parser.parse([fakeWildcard, '-run', '-a'])
+
+        self.assertEqual(['-run', '-a/--all-products'], parser.redundant)
+        self.assertEqual([SINGLE_MAKEFILE], parser.makeFiles)
+        self.__verifyCanonicalExecutionOutcomes()
+
     def test_processesUponNoGear(self):
         self.listMakefiles.return_value = SINGLE_PRODUCT * (TEST_MAXIMAL_PARALLELISM + 1)
         parser = self.parser
@@ -207,18 +222,24 @@ class TestStatArgumentParser_UponSingleProduct(TestStatArgumentParser):
         self.assertEqual(expected, parser.processes)
         self.assertFalse(parser.shallBeVerbose())
 
-        self.assertEqual(expected, parser.processes)
+    def test_runOnSmallCpuCount(self):
+        self.cpuCount.return_value = STAT_MINIMAL_PARALLELISM - 1
+        parser = StatArgumentParser([SINGLE_PRODUCT])
+        self.listMakefiles.return_value = SINGLE_PRODUCT * (TEST_MAXIMAL_PARALLELISM + 1)
+
+        parser.parse([])
+
+        self.assertEqual(0, parser.processes)
 
     def test_processesGearWithTooSmallCpuCount(self):
         self.cpuCount.return_value = STAT_MINIMAL_PARALLELISM - 1
         parser = StatArgumentParser([SINGLE_PRODUCT])
+        self.listMakefiles.return_value = SINGLE_PRODUCT * (TEST_MAXIMAL_PARALLELISM + 1)
 
-        try:
-            parser.parse(['-g'])
-        except SystemExit:
-            pass
-        else:
-            self.fail("The gear option shall not be allowed with only single CPU")
+        parser.parse(['-g'])
+
+        self.assertEqual(['-g/--gear'], parser.redundant)
+        self.assertEqual(0, parser.processes)
 
     def test_processesGearWithMinimalCpuCount(self):
         self.listMakefiles.return_value = SINGLE_PRODUCT * (TEST_MAXIMAL_PARALLELISM + 1)
@@ -235,6 +256,26 @@ class TestStatArgumentParser_UponSingleProduct(TestStatArgumentParser):
         self.parser.parse(['-g'])
 
         self.assertEqual(len(MANY_MAKEFILES), self.parser.processes)
+
+    def test_processesGearAboveMaximalCpuCount(self):
+        self.listMakefiles.return_value = SINGLE_PRODUCT * (TEST_MAXIMAL_PARALLELISM + 1)
+        parser = self.parser
+
+        parser.parse(['-g', str(TEST_MAXIMAL_PARALLELISM + 1)])
+
+        self.assertEqual(TEST_MAXIMAL_PARALLELISM, parser.processes)
+        self.assertFalse(parser.shallBeVerbose())
+
+    def test_processesGearBelowMinimalCpuCount(self):
+        self.listMakefiles.return_value = SINGLE_PRODUCT * (TEST_MAXIMAL_PARALLELISM + 1)
+        parser = self.parser
+
+        try:
+            parser.parse(['-g', str(STAT_MINIMAL_PARALLELISM - 1)])
+        except SystemExit:
+            pass
+        else:
+            self.fail("Minimal acceptable gear below minimum shall fail")
 
 
 class TestStatArgumentParser_UponManyProducts(TestStatArgumentParser):

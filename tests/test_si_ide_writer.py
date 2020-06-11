@@ -8,8 +8,9 @@ from stat_makefile_project import StatMakefileProject
 from testing_tools import AdvancedTestCase
 
 TEST_MAKEFILE = 'simplified_example.mak'
+TEST_TARGET_NAME = TEST_MAKEFILE[:-len('.mak')]
 TEST_WORKSPACE_PATH = \
-    WORKSPACE_PATH.format(basePath=attributes.IDE_DIRECTORY, name=TEST_MAKEFILE[:-len('.mak')])
+    WORKSPACE_PATH.format(basePath=attributes.IDE_DIRECTORY, name=TEST_TARGET_NAME)
 SOURCE_INSIGHT_FILE_LIST = "{path}/si_filelist.txt".format(path=TEST_WORKSPACE_PATH)
 
 class TestSourceInsightWriter(AdvancedTestCase):
@@ -32,7 +33,10 @@ class TestSourceInsightWriter(AdvancedTestCase):
     def test_write(self):
         self.writer.write()
 
-        projectFile = '{path}/{fileName}'.format(path=TEST_WORKSPACE_PATH, fileName='stat.siproj')
+        actual = [fn.split('.')[0] for fn in os.listdir(TEST_WORKSPACE_PATH) if fn not in ['si_filelist.txt']]
+        expected = [TEST_TARGET_NAME] * len(actual)
+        self.assertEqual(expected, actual)
+        projectFile = '{path}/{fileName}.siproj'.format(path=TEST_WORKSPACE_PATH, fileName=TEST_TARGET_NAME)
         self.assertTrue(os.path.isfile(projectFile))
         self.assertEqual(TEST_MAKEFILE, readTextFileAtOnce(SOURCE_INSIGHT_FILE_LIST))
 

@@ -14,6 +14,7 @@ from ide_writer import IdeWriter
 WORKSPACE_PATH = "{basePath}/{name}.si4project"
 SOURCE_INSIGHT_4 = "si4project.zip"
 FILE_LIST_FILENAME = "{path}/si_filelist.txt"
+SI_FILES_PREFIX = 'stat'
 
 class SourceInsightWriter(IdeWriter):
     IDE = 'SourceInsight'
@@ -46,7 +47,9 @@ class SourceInsightWriter(IdeWriter):
         os.makedirs(self.__workspacePath)
         zipSource = os.path.join(attributes.TOOL_PATH, attributes.RESOURCES_DIRECTORY, SOURCE_INSIGHT_4)
         with ZipFile(zipSource, "r") as source:
-            source.extractall(self.__workspacePath)
+            for member in source.filelist:
+                member.filename = member.filename.replace(SI_FILES_PREFIX, self._contents.projectName)
+                source.extract(member, self.__workspacePath)
 
     def __writeProjectFileList(self):
         fileName = FILE_LIST_FILENAME.format(path=self.__workspacePath)
