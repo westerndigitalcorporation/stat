@@ -1,7 +1,4 @@
-# SPDX-FileCopyrightText: (c) 2020 Western Digital Corporation or its affiliates,
-#                             Arseniy Aharonov <arseniy@aharonov.icu>
-#
-# SPDX-License-Identifier: MIT
+#!/usr/bin/env python
 
 import os
 import sys

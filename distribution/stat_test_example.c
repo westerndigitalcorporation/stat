@@ -2,8 +2,6 @@
 * @file
 * 
 * @copyright Copyright (c) 2020 Western Digital Corporation or its affiliates,
-*                          Arseniy Aharonov <arseniy@aharonov.icu>
-*            SPDX-License-Identifier: MIT
 *
 * @project   STAT Framework
 * @date      July 31, 2016

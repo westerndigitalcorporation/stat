@@ -1,120 +1,62 @@
-# STAT <small>*(Unit-test Framework)*</small>
+# STAT _(Unit-test Framework)_ <!-- omit in toc -->
 
-STAT stands for <u>**ST**</u>and<u>**A**</u>lone unit-<u>**T**</u>esting 
-framework. It is based on a really great open-source project named
-[Unity](http://www.throwtheswitch.org/unity) (can be found also on 
-[GitHub](https://github.com/ThrowTheSwitch/Unity)).  
+![Programming C](https://img.shields.io/badge/programming-TDD-orange.svg?style=flat&logo=c&logoColor=white)
+![MSVS](https://img.shields.io/badge/MSVS-2005--2008%20|%202010--2019-blue?style=flat&logo=Visual-Studio&logoColor=white)
+![Windows](https://img.shields.io/badge/Windows-7%20|%2010-blue?style=flat&logo=Windows&logoColor=white)
+![python](https://img.shields.io/badge/python-2.7-blue?style=flat&logo=Python&logoColor=white)  
+[![standard-readme compliant](https://img.shields.io/badge/readme_style-standard-brightgreen?style=plastic)](https://github.com/RichardLitt/standard-readme)
 
-STAT was designed to promote an instant assimilation of the TDD 
-methodology in ad-hock conditions of a heavy-legacy codebase, 
-and with emphasis on embedded environments.
+<u>**St**</u>and<u>**A**</u>lone unit-<u>**T**</u>esting framework for software written in C
 
-##### *The motto is:* 
->"*Don't wait for everything to align and coincide
->and for everybody to commit!  
->Start TDD today - one piece of the code at a time!*"
+STAT is designed to promote an instant assimilation of Test-Driven Development in conditions of large-scale codebases that are constrained with *heavy load of legacy code*. 
+The framework was conceived with special regard to limitations of embedded environments and to implementation-concepts widely accepted in embedded programming.
+It is based on a really great open-source project named [Unity](http://www.throwtheswitch.org/unity) (which can be found also on [GitHub](https://github.com/ThrowTheSwitch/Unity)).
 
-##### *Disclaimer*
+## Table of Contents <!-- omit in toc -->
 
->*It is highly recommended to get acquainted with chapter
->"Problem Statement" and the
->[theoretical background](docs/stat_theoretical_background.md)
->that underlies the design of STAT-Framework. It will provide an 
->essential advantage for working with the framework and maximize 
->the benefit from it.* 
+- [1. Background](#1-background)
+  - [1.1. Unity Harness](#11-unity-harness)
+- [2. Install](#2-install)
+- [3. Usage](#3-usage)
+- [4. Integration](#4-integration)
+  - [4.1. OS](#41-os)
+  - [4.2. Build Tools](#42-build-tools)
+  - [4.3. IDEs](#43-ides)
+- [5. Maintainer](#5-maintainer)
+- [6. Contributing](#6-contributing)
+- [7. License](#7-license)
+  - [7.1. Imported Components](#71-imported-components)
+- [8. Definitions](#8-definitions)
 
-### Terminology
+## 1. Background
 
-* **STAT** – stands for standalone testing framework
-* **CUT** – means Code Under Test; 
-    usually it is a module or a submodule that is tested
-* **DOC** – means Depended-on Component; 
-    in the literature this term is used to describe 
-    external dependencies that our CUT depends on
-* **CUT-Isolation** – is a method of decoupling the CUT 
-    from the other parts of FW-Code for unit-testing purposes, 
-    meaning how we deal with DOCs in our unit-tests
-* **FW** - Firmware
-* **Test-Double** – is a substitution of an operational version of DOC 
-    with a test-version that emulates a real interface, 
-    but serves testing goals
-* **Test-package** – in terms of STAT-framework, it represents 
-    a group of unit-tests that run as a single executable; 
-    it usually covers a specific CUT
-* **TDD** - [Test-Driven Development](https://www.agilealliance.org/glossary/tdd)
-    * see also [TDD](https://martinfowler.com/bliki/TestDrivenDevelopment.html)
-    for more details
-
-### Guides and Help-Documentation
-
-It is highly recommended initially to get acquainted with 
-[**Theoretical Background**](docs/stat_theoretical_background.md) underlying
-the design of the STAT framework.  
-Please also refer the guides of the framework and its comprising components:
-1. [**Getting Started**](./docs/stat_getting_started.md) -
-user-guide describing how to setup the framework and unit-test packages
-2. [**Commandline**](docs/stat_commandline.md) -
-full description of all possible commandline arguments to control behavior of STAT
-3. [***Unity*** **Assertions Reference**](./unity/docs/UnityAssertionsReference.md) - 
-the original '*Unity*' user-guide with usage-description of assertion macros
-4. [**STAT-Mock Library**](./docs/stat_mock.md) -
-user-guide describing how to use built-in Mock library of STAT framework
-
-Here is additional helpful documentation:
-* [Unity Assertions Cheat Sheet](./unity/docs/UnityAssertionsCheatSheetSuitableforPrintingandPossiblyFraming.pdf) - 
-a cook-book with Unity macros worth printing and framing
-* [Unity Configuration Guide](./unity/docs/UnityConfigurationGuide.md) - 
-the default configuration of Unity defined within STAT can be overwritten
-
-### Goals
-
-We tried several unit-test frameworks, and there are quite a few
-really great products. So, we stated the following goals for the 
-framework we were looking for:
+We tried several unit-test frameworks, and there are quite a few really great products. 
+So, we stated the following principles for the framework we were looking for:
 
 * *Simplicity* – test-setup shall be simple, fast and intuitive
-* *Speed* – compilation and execution shall be fast and focused 
-  to support TDD short cycles and encourage refactoring
-* *Lightweight* – it shall enable portability to embedded platforms 
-  (we plan to support it in the future)
-* *Comprehensive feedback* – better logging &rArr; 
-  lesser step-by-step debugging &rArr; greater efficiency
-  * R&D should really stand for Research and Development, 
-    rather than for Research and Debugging  
-* *Reproducibility*– tests shall be reproducible
-  * Non-reproducible tests are nothing but annoying reminder for
-  an existing bug that we fail to identify
-* *Test-code sharing* – reduce the inevitable code-duplication 
-  * Test-doubles contain word duplication in their very name.  
-  * It'd be better to enable easy sharing of such components
+* *Speed* – execution shall be fast and focused to support TDD short cycles
+* *Lightweight* – portability to embedded platforms shall be simple (planned for the future)
+* *Comprehensive feedback* – better logging &rArr; lesser step-by-step debugging &rArr; better efficiency  
+* *Reproducibility*– tests shall be reproducible and deterministic
+* *Test-code sharing* – reduce the inevitable code-duplication (e.g. test-doubles)
 * *Automation* – test automation shall be very simple to achieve
-* <u>***CUT-Isolation***</u> – pure unit-testing without noise of 
-  other FW-code, HW or OS
-  * achieving static polymorphism to substitute the need of dynamic
-  * reduction of DOC-s (dependent-on components)
-  * standalone (per CUT) development
+* <u>***CUT-Isolation***</u> – decouple from noise-impact of other FW-components, HW or OS
 
-_The last one we found as most critical one for our needs due 
-to constraints mentioned in "Problem Statement" chapter._ This is 
-were most of the evaluated solutions failed so far. But, there
-were some simply technical reasons that also made frameworks
-existing at that time less suitable. Our lab machines were
-beyond control of our team, and they were equipped with 
-*Windows* OS, *Python* 2.7, *MS Visual Studio* and our target build 
-toolchain.
+_The last one we found most critical for our needs due to constraints described in [Conceptual Model](./docs/conceptual_model.md)._ 
+
+The *CUT-Isolation* principle was the one where most of the evaluated solutions failed to meet our expectations. 
+In addition, there were some simply technical reasons that also made frameworks existing at that time less suitable. 
+Our lab machines were beyond control of our team, and those were equipped with *Windows* OS, *Python* 2.7, *MS Visual Studio* and our target build tool-chain.
   
->No Rubi, lua, CMake or any other things of that kind.
+>No Ruby, lua, CMake or any other things of that kind.
 
-### Unity Harness
+Eventually, it was decided to build our own framework that will fit the bill. 
 
-Eventually, we decided to build our own framework that will fit
-the bill. Despite that decision we also understood that though
-the evaluated frameworks couldn't fit all of our requirements,  
-there are still those ones that are very close. 
-[***Unity***](http://www.throwtheswitch.org/unity) harness was 
-that great almost-match, and thus we decided to build ours 
-based on it due to the following clear advantages of 
-the Unity harness:
+### 1.1. Unity Harness
+
+Though we couldn't find the framework that will answer all our requirements, still there are those ones that are very close.
+[*Unity harness*](http://www.throwtheswitch.org/unity) was that great "almost"-match.
+Therefore, we decided to build our framework based on it, due to the following clear advantages of the Unity harness:
 
 * Minimalistic in size and dependencies on system libraries
 * Can be compiled almost on any platform
@@ -124,11 +66,94 @@ the Unity harness:
     * Failing test (if properly built) doesn't crash the
     subsequent tests 
 
-An additional advantage worthy of a separate discussion is
-the very fact that Unity is written in C. This is the same
-language we use to write our production code.  
-It is  better to prevent developers from constantly 
-switching between different language paradigms. 
-In addition, writing in the same language gives a developer 
-the same sense of experience whether writing production code or 
-unit-test code. 
+An additional advantage worthy of a separate discussion is the very fact that Unity is written in C. 
+This is the same language we use to write our production code.  
+It is  better to prevent developers from constantly switching between different language paradigms. 
+In addition, writing in the same language gives a developer the same sense of experience whether writing production code or unit-test code. 
+
+## 2. Install
+
+Please refer the [*Getting Started*](./docs/stat_getting_started.md) user-guide describing how to install and to setup the framework and unit-test packages.
+
+## 3. Usage
+
+Please refer the following user-guides describing how to work with STAT framework:
+
+1. [*Command-line*](docs/stat_commandline.md) - full description of all possible command-line arguments to control behavior of STAT
+2. [*Unity Assertions Reference*](./unity/docs/UnityAssertionsReference.md) - the original '*Unity*' user-guide with usage-description of assertion macros
+3. [*STAT-Mock Library*](./docs/stat_mock.md) - user-guide describing how to use built-in Mock library of STAT framework
+
+Here is additional helpful Unity documentation:
+* [*Underlying Theory*](./docs/underlying_theory.md) - theoretical background that lead the design of the framework, a critical knowledge to become Pro with STAT
+* [*Unity Assertions Cheat Sheet*](./unity/docs/UnityAssertionsCheatSheetSuitableforPrintingandPossiblyFraming.pdf) - a cook-book with macros worth printing and framing
+* [*Unity Configuration Guide*](./unity/docs/UnityConfigurationGuide.md) - the default configuration of Unity defined within STAT can be overwritten
+
+## 4. Integration
+
+### 4.1. OS
+
+STAT-framework is built to run on Windows. 
+
+>The support for Linux is still in the process.
+
+### 4.2. Build Tools
+
+STAT-framework has an integrated support for build-tools that include _Microsoft Visual Studio_ of any version starting from 2008 up to 2019 and of any edition (i.e. Community, Professional and Enterprise editions).  
+
+>There is an effort to add support for some other built-tools (like GCC).
+
+STAT is designed to minimize its requirements from the system. Therefore, it uses integral make-file infrastructure of build-tools (e.g. NMAKE for MSVS) instead of complimentary ones like CMake. This decision was dictated by restrictions of our lab machines to install additional software.
+
+***MSVS Versioning***
+
+If not explicitly specified in file "[.statconfig](./docs/statconfig.md)", the latest MSVS version on the machine gets identified and gets set as active build-tools. Otherwise, the specified version is selected instead. The latter is useful to fixate on common single version for all developer and lab machines.
+
+### 4.3. IDEs
+
+Framework provides services to generate project files for certain IDEs, by the means of [command-line](docs/stat_commandline.md). The following IDEs are currently supported:
+* _Microsoft Visual Studio_ of version corresponding to the selected [build-tools](#build-tools).
+  * The generated project file for this IDE support step-by-step debugging 
+* _Source Insight 4.0_ - it is a unique IDE, which also is a code-analyzer, actually one of a kind.
+
+>There is an effort to add support for some additional IDEs.
+
+## 5. Maintainer
+
+[![GitHub](https://img.shields.io/badge/GitHub-@Arseniy%20Aharonov-blue.svg?style=social&logo=GitHub)](https://github.com/are-scenic)
+
+## 6. Contributing
+
+Feel free to impact! [Open an issue](#TBD)<!--https://github.com/are-scenic/issues/new//-->.  
+
+<!--
+STAT framework follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
+-->
+
+## 7. License
+
+The base-code of the STAT framework is licensed under [MIT license](LICENSES/MIT.txt).
+
+### 7.1. Imported Components
+
+STAT wasn't build from scratch. Several valuable components underly the framework:
+
+* Unity harness source-files - a [key component](#unity-harness) for the framework
+  * License: [MIT](./unity/LICENSE.txt)
+  * Source: [on GitHub](https://github.com/ThrowTheSwitch/Unity)
+* Visual Studio Locator (a.k.a. `vswhere`) - a utility to locate Visual Studio in newer versions of MSVS. 
+  * Licesnse: [MIT](https://github.com/microsoft/vswhere/blob/ded0fdd04473772af1dd001d82b6e3c871731788/LICENSE.txt)
+  * Source: [on GitHub](https://github.com/Microsoft/vswhere/releases)
+
+
+## 8. Definitions
+
+_These definitions are provided to clarify terms used above._
+
+* **STAT** – stands for standalone testing framework
+* **CUT** – means Code Under Test; usually it is a module or a sub-module that is tested
+* **DOC** – means Depended-on Component; in the literature this term is used to describe external dependencies that our CUT depends on
+* **CUT-Isolation** – is a method of decoupling the CUT from the other parts of FW-Code for unit-testing purposes, meaning how we deal with DOCs in our unit-tests
+* **FW** - Firmware
+* **Test-Double** – is a substitution of an operational version of DOC with a test-version that emulates a real interface, but serves testing goals
+* **Test-package** – in terms of STAT-framework, it represents a group of unit-tests that run as a single executable; it usually covers a specific CUT
+* **TDD** - [Test-Driven Development](https://www.agilealliance.org/glossary/tdd), see also [TDD](https://martinfowler.com/bliki/TestDrivenDevelopment.html) for more details

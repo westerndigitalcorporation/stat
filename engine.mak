@@ -35,10 +35,11 @@ CFLAGS=/WX /W3 /Zi /nologo $(FORMATTED_DEFINES)
 
 # Build rule
 build: prepare
-    @ECHO $@...
+    @ECHO $@ for [$(OUTPUT_NAME)]...
     call <<vswrapper_$(PRIVATE_NAME).bat $(CC) $(CFLAGS) $(SOURCES) -Fd$(TARGET_DIR)\ -I$(INCLUDES_DIR)\ /Fo$(OBJECTS_DIR)\ /Fe"$(EXEC)"
 @ECHO OFF
 if "%VSINSTALLDIR%"=="" CALL "$(VS_DEV:/=\)" >NUL
+@ECHO (tools: %VSINSTALLDIR%)
 %*
 <<NOKEEP
 
@@ -52,7 +53,6 @@ clean:
 
 # Rule for preparing to build
 prepare:
-    @ECHO $@ for [$(OUTPUT_NAME)]...
     @SETLOCAL ENABLEEXTENSIONS
     IF NOT EXIST $(OBJECTS_DIR) MD $(OBJECTS_DIR)
     IF NOT EXIST $(INCLUDES_DIR) MD $(INCLUDES_DIR)

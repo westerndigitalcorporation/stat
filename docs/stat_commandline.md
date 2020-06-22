@@ -1,20 +1,20 @@
-## STAT Commandline
+# STAT Command-line
 
-Each STAT instance root directory contains a file `makestat.py`.
-This is the execution script of the STAT framework, see 
-['Getting Started'](stat_getting_started.md).  
-It has quite a few commandline arguments.
+Each STAT instance root directory contains a file `makestat.py`. This is the execution script of the STAT framework, see ['Getting Started'](stat_getting_started.md).  
+It has quite a few command-line arguments.
 
-```commandline
+```shell
 makestat.py [-h] [-c | -run | -vs | -si] [-s | -g [{2-12}]]
             [-p <product> | -a]
             [<mak file> [<mak file> ...]]
 ```
 
-##### positional arguments:
+## positional arguments:
+
 * `<mak file>`           - a list of makefile names/wildcards to process
 
-##### optional arguments:
+## optional arguments:
+
 *  `-h`, `--help` -           show help message
 *  `-c`, `--compile-only` -   only compile, don not run the executables
 *  `-run` -                   a deprecated method, has no impact
