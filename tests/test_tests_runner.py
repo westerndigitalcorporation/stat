@@ -5,7 +5,7 @@ from mock import call
 import stat_attributes as attributes
 from services import execute, remove, mkdir
 from stat_makefile import StatMakefile
-from testing_tools import AdvancedTestCase
+from testing_tools import FileBasedTestCase
 from tests_runner import TestsRunner, TestsRunnerException
 
 CUT = TestsRunner.__module__
@@ -20,7 +20,7 @@ TEST_ENVIRONMENT_MOCK = dict(user='Arseniy Aharonov', path='/the/right/way', enc
 def createRunner(isVerbose=True):
     return TestsRunner(TEST_MAKEFILE_NAME, TEST_COMMAND_TO_COMPILE, isVerbose)
 
-class TestTestsRunner(AdvancedTestCase):
+class TestTestsRunner(FileBasedTestCase):
 
     def setUp(self):
         self.makefile = StatMakefile(TEST_MAKEFILE_NAME)
@@ -79,7 +79,7 @@ class TestTestsRunner(AdvancedTestCase):
 
         try:
             runner.compile()
-        except TestsRunnerException as e:
+        except TestsRunnerException:
             self.assertEqual(['output of compilation execution'], runner.getLog())
         else:
             self.fail('The code was supposed to fire an exception!')
@@ -91,7 +91,7 @@ class TestTestsRunner(AdvancedTestCase):
 
         try:
             runner.run()
-        except TestsRunnerException as e:
+        except TestsRunnerException:
             self.assertEqual([
                 'output of execution run',
                 'The executable of package "{0}" failed with error-code 0X11.\n'.format(TEST_MAKEFILE_NAME)],

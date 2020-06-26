@@ -220,8 +220,8 @@ class Msvs2010ProjectWriter(IdeXmlWriter):
                                              Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'",
                                              Label="PropertySheets")
         propertySheets.appendChild(self.composeElement("Import",
-                                                       Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props",
-                                                       Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')",
+                                                       Project=r"$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props",
+                                                       Condition=r"exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')",
                                                        Label="LocalAppDataPlatform"))
         return propertySheets
 

@@ -75,7 +75,7 @@ def createLink(sourcePath, targetPath):
             commandLine = 'cmd /c mklink "{target}" "{source}"'
         subprocess.Popen(commandLine.format(target = target, source = source), shell=True).wait()
     else:
-        os.symlink(source, target)
+        os.symlink(source, target) # pylint: disable=no-member
 
 def findSubFolderOnPath(subFolder, path='.'):
     currentPath = os.getcwd() if path=='.' else path
@@ -146,6 +146,7 @@ def __selectFilesByPatterns(makefiles, patterns):
 class _Singleton(type):
     """ A metaclass that creates a Singleton base class when called. """
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
@@ -156,7 +157,7 @@ class Singleton(_Singleton('SingletonMeta', (object,), {})):
     @classmethod
     def clear(cls):
         try:
-            del cls._instances[cls]
+            del cls._instances[cls] # pylint: disable=no-member
         except KeyError:
             pass
 

@@ -3,7 +3,7 @@ import os
 import stat_attributes as attributes
 from mock import Mock, PropertyMock, call
 
-from services import readTextFileAtOnce
+from services import readTextFileAtOnce, toPosixPath
 from stat_configuration import StatConfiguration
 from stat_makefile import StatMakefile
 from testing_tools import FileBasedTestCase
@@ -37,9 +37,9 @@ class TestStatConfigurationDefault(TestStatConfiguration):
     def test___init__basics(self):
         config = StatConfiguration()
         self.assertEqual(attributes.VERSION, config['TOOL_VERSION'])
-        self.assertEqual(attributes.OUTPUT_DIRECTORY, config['OUTPUT_DIR'])
-        self.assertEqual(attributes.TOOL_PATH, config['TOOL_DIR'])
-        self.assertEqual(attributes.DUMMIES_DIRECTORY, config['DUMMIES_DIR'])
+        self.assertEqual(toPosixPath(attributes.OUTPUT_DIRECTORY), toPosixPath(config['OUTPUT_DIR']))
+        self.assertEqual(toPosixPath(attributes.TOOL_PATH), toPosixPath(config['TOOL_DIR']))
+        self.assertEqual(toPosixPath(attributes.DUMMIES_DIRECTORY), toPosixPath(config['DUMMIES_DIR']))
 
     def test_products(self):
         config =StatConfiguration()

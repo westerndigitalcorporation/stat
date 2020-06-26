@@ -9,7 +9,7 @@ from msvs_ide_writer import MsvsSolutionWriter, MsvsLegacyWriter, MsvsWriter, Ms
 from services import locateResource, readTextFileAtOnce, toNativePath
 from stat_configuration import StatConfiguration
 from stat_makefile_project import StatMakefileProject
-from testing_tools import AdvancedTestCase, convertXmlToDictionary
+from testing_tools import convertXmlToDictionary, FileBasedTestCase
 from vs_tools import MsvsTools
 
 CUT = MsvsSolutionWriter.__module__
@@ -28,7 +28,7 @@ TEST_NMAKE_FILE = '/root/tools/bin/nmake.exe'
 TEST_VCPROJ_TEMPLATE_FILE = './extra/template.vcproj'
 TEST_VCXPROJ_TEMPLATE_FILE = './extra/template.vcxproj'
 
-class MsvsWriterTestCase(AdvancedTestCase):
+class MsvsWriterTestCase(FileBasedTestCase):
 
     def mockCommonObjects(self):
         self.tools = Mock(spec=MsvsTools)
@@ -90,6 +90,7 @@ class TestMsvsLegacyWriter(MsvsWriterTestCase):
 
     @classmethod
     def setUpClass(cls):
+        MsvsWriterTestCase.setUpClass()
         cls.PROJECT_TEMPLATE = re.sub(r">[\s\n\r]+<", '><', readTextFileAtOnce(TEST_VCPROJ_TEMPLATE_FILE))
 
     def setUp(self):
@@ -171,6 +172,7 @@ class TestMsvs2010ProjectWriter(MsvsWriterTestCase):
 
     @classmethod
     def setUpClass(cls):
+        MsvsWriterTestCase.setUpClass()
         cls.PROJECT_TEMPLATE = re.sub(r">[\s\n\r]+<", '><', readTextFileAtOnce(TEST_VCXPROJ_TEMPLATE_FILE))
 
     def setUp(self):

@@ -2,10 +2,10 @@ import os
 import re
 
 from stat_makefile import StatMakefile, StatMakFileException, _REG_EXP_INCLUDE
-from testing_tools import AdvancedTestCase
+from testing_tools import FileBasedTestCase
 
 
-class TestStatMakFile(AdvancedTestCase):
+class TestStatMakFile(FileBasedTestCase):
     SIMPLE_MAKEFILE = './mak_examples/simple.mak'
     DYNAMIC_MAKEFILE = './mak_examples/dynamic.mak'
     COMPOUND_MAKEFILE = './mak_examples/compound.mak'
@@ -66,7 +66,7 @@ class TestStatMakFile(AdvancedTestCase):
         self.assertEqual(["good/url/to/catch", "another/very/good/url/to/catch"], results)
 
     def test_regexForSubstitution(self):
-        pattern = '\$\((?P<variable>[^\(\)\$]+)\)'
+        pattern = r'\$\((?P<variable>[^\(\)\$]+)\)'
         text = "$(correct) results (param1) param2) $(data1 $(valid1) $(good)"
         expected = "substituted results (param1) param2) $(data1 substituted substituted"
         received = re.sub(pattern, 'substituted', text)

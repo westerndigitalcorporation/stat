@@ -3,17 +3,16 @@
 #
 # SPDX-License-Identifier: MIT
 
-*.pyc
+# Git artifacts
 .gitlog
+
+# Python artifacts
+*.pyc
+
+# IDEA files (e.g PyCharm)
 .idea
-*.ncb
-*.suo
-*.vcproj.*
-*.json
-*.pdb
-*.sln
-*.vcproj
-**/output/*
-**/logs/*
-**/ide/*
-*.si4project*
+
+# Framework artifacts/output-directories
+**/output/**
+**/logs/**
+**/ide/**

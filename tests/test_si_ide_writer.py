@@ -5,7 +5,7 @@ import stat_attributes as attributes
 from services import readTextFileAtOnce
 from si_ide_writer import WORKSPACE_PATH, SourceInsightWriter
 from stat_makefile_project import StatMakefileProject
-from testing_tools import AdvancedTestCase
+from testing_tools import FileBasedTestCase
 
 TEST_MAKEFILE = 'simplified_example.mak'
 TEST_TARGET_NAME = TEST_MAKEFILE[:-len('.mak')]
@@ -13,7 +13,7 @@ TEST_WORKSPACE_PATH = \
     WORKSPACE_PATH.format(basePath=attributes.IDE_DIRECTORY, name=TEST_TARGET_NAME)
 SOURCE_INSIGHT_FILE_LIST = "{path}/si_filelist.txt".format(path=TEST_WORKSPACE_PATH)
 
-class TestSourceInsightWriter(AdvancedTestCase):
+class TestSourceInsightWriter(FileBasedTestCase):
 
     def setUp(self):
         if not os.path.isdir(attributes.IDE_DIRECTORY):

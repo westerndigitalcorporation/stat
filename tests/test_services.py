@@ -5,7 +5,7 @@ from shutil import copyfile
 from mock import Mock, PropertyMock
 
 from stat_attributes import OUTPUT_DIRECTORY, PRODUCT_DIRECTORY
-from testing_tools import *
+from testing_tools import * # pylint: disable=unused-wildcard-import
 import services
 
 CUT = services.__name__
@@ -123,7 +123,7 @@ class TestServices(FileBasedTestCase):
         filePath = os.path.join(*'/home/product/config.mak'.split('/'))
         currentPath = os.path.dirname(filePath)
         self._fakeOs.addMockForFunction('getcwd', currentPath)
-        for i in range(len(services.toPosixPath(filePath).split('/'))):
+        for dummyIndex in range(len(services.toPosixPath(filePath).split('/'))):
             self._fakeOs.path.addMockForFunction('isfile', False)
         location = services.getFileLocationThroughoutCurrentPath(os.path.basename(filePath))
         self.assertIsNone(location)
@@ -133,7 +133,7 @@ class TestServices(FileBasedTestCase):
         cwdOffset = os.path.join(*'fw/module/src'.split('/'))
         currentPath = os.path.join(os.path.dirname(filePath), cwdOffset)
         self._fakeOs.addMockForFunction('getcwd', currentPath)
-        for i in range(len(services.toPosixPath(cwdOffset).split('/'))):
+        for dummyIndex in range(len(services.toPosixPath(cwdOffset).split('/'))):
             self._fakeOs.path.addMockForFunction('isfile', False)
         self._fakeOs.path.addMockForFunction('isfile', True)
         location = services.getFileLocationThroughoutCurrentPath(os.path.basename(filePath))
@@ -218,7 +218,7 @@ class TestServices(FileBasedTestCase):
 
     def test_locateResource(self):
         resource = 'si4project.zip'
-        expected = os.path.join('..', attributes.RESOURCES_DIRECTORY, resource)
+        expected = os.path.abspath(os.path.join('..', attributes.RESOURCES_DIRECTORY, resource))
         self.assertEqual(expected, services.locateResource(resource))
 
     def test_locateResourceForNonExisting(self):
@@ -342,7 +342,7 @@ class TestExecute(AdvancedTestCase):
     def test_execute_withCustomKwargs(self):
         fakeCommand = "some fake command to be executed silently"
 
-        status, receivedOutput = services.execute(fakeCommand, beSilent=False, bufsize=0, env={})
+        dummyForStatus, receivedOutput = services.execute(fakeCommand, beSilent=False, bufsize=0, env={})
 
         expected = [call(fakeCommand, bufsize=0, universal_newlines=True,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env={})]
@@ -353,7 +353,7 @@ class TestExecute(AdvancedTestCase):
     def test_execute_withCommandList(self):
         fakeCommand = "some fake command to passed as a list"
 
-        status, receivedOutput = services.execute(fakeCommand.split(), beSilent=False)
+        dummyForStatus, receivedOutput = services.execute(fakeCommand.split(), beSilent=False)
 
         expected = [call(fakeCommand, bufsize=1, universal_newlines=True,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT)]

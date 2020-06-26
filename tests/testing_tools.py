@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import sys
 import os
-from collections import defaultdict
 from shutil import rmtree
 from unittest import TestCase
 from xml.dom.minidom import Text
@@ -10,13 +9,14 @@ from xml.dom.minidom import Text
 from services import isWindows
 
 try:
-    from unittest.mock import patch, call
+    from unittest.mock import patch, call # pylint: disable=no-name-in-module
 except ImportError:
     from mock import patch, call, mock_open
 
 import stat_attributes as attributes
 
 BUILTINS_NAME = builtinsModuleName = '__builtin__' if sys.version_info.major < 3 else 'builtins'
+
 
 def readFileLines(filePath):
     report = open(filePath, 'r')
@@ -106,21 +106,32 @@ class AdvancedTestCase(TestCase):
         else:
             self.assertItemsEqual(expectedCalls, receivedCalls)
 
+
 class FileBasedTestCase(AdvancedTestCase):
+    RUN_ROOT = os.getcwd()
 
     @classmethod
     def setUpClass(cls):
+        cls.enterTestsDirectory()
         cls.rmtree(attributes.OUTPUT_DIRECTORY)
 
     @classmethod
     def tearDownClass(cls):
         for outputDirectory in attributes.ALL_OUTPUT_DIRECTORIES:
             cls.rmtree(outputDirectory)
+        os.chdir(cls.RUN_ROOT)
 
     @staticmethod
     def rmtree(treeRoot):
         if os.path.isdir(treeRoot):
             rmtree(treeRoot)
+
+    @staticmethod
+    def enterTestsDirectory():
+        testsPath = os.path.dirname(os.path.relpath(__file__))
+        if testsPath:
+            os.chdir(testsPath)
+
 
 class SpyArguments(object):
     def __init__(self, *args, **kwargs):
@@ -289,7 +300,7 @@ class FakeSubprocess(SpyModule):
 
     def __init__(self, scriptToSubstituteModuleIn = None):
         SpyModule.__init__(self, 'subprocess', scriptToSubstituteModuleIn)
-        self.processes = [self.FakeProcess() for index in range(self.__MAX_SUPPORTED_PROCESS)]
+        self.processes = [self.FakeProcess() for dummy_index in range(self.__MAX_SUPPORTED_PROCESS)]
 
     def Popen(self, *args, **kwargs):
         self['Popen'].append(SpyArguments(*args, **kwargs))

@@ -9,7 +9,7 @@ VERSION = '2.2.01'
 ########################################################################################################################
 def __getToolPath():
     import os # Prevent porting by those which import this file
-    return os.path.dirname(os.path.relpath(__file__))
+    return os.path.abspath(os.path.dirname(os.path.relpath(__file__)))
 #-----------------------------------------------------------------------------------------------------------------------
 
 TOOL_PATH = __getToolPath()
@@ -26,4 +26,3 @@ AUTO_GENERATED_MAKEFILE = '/'.join([OUTPUT_DIRECTORY, "stat.mak"])
 
 OUTPUT_SUB_DIRECTORIES = ['inc', 'obj', 'bin']
 ALL_OUTPUT_DIRECTORIES = [OUTPUT_DIRECTORY, IDE_DIRECTORY, LOGS_DIRECTORY]
-

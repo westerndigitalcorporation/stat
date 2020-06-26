@@ -6,7 +6,7 @@ import stat_attributes as attributes
 from ide_writer import IdeWriter, IdeCompositeWriter, IdeXmlWriter, IdeWorkspaceWriter
 from services import toNativePath
 from stat_makefile_project import StatMakefileProject
-from testing_tools import AdvancedTestCase
+from testing_tools import AdvancedTestCase, FileBasedTestCase
 
 CUT = IdeWriter.__module__
 TEST_MAKEFILE = 'simplified_example.mak'
@@ -124,7 +124,7 @@ class TestIdeXmlWriter(AdvancedTestCase):
         self.assertCalls(elementMock, expected, ordered=False)
 
     def test_composeElement_withContextOfElements(self):
-        elements = [Mock(spec=Element) for x in range(4)]
+        elements = [Mock(spec=Element) for dummy in range(4)]
         self.mdomDocument.return_value.createElement.side_effect = elements
         self.mdomDocument.return_value.createTextNode.side_effect = lambda x: "value is {0}".format(x)
         elementAttributes = {'the-attribute': 'the attribute value', 'another-one': 'the text of the another one'}
@@ -187,7 +187,7 @@ class IdeTestWriter(IdeWriter):
     def write(self):
         self.output = TEST_IDE_OUTPUT + str(self.tokens)
 
-class TestIdeWorkspaceWriter(AdvancedTestCase):
+class TestIdeWorkspaceWriter(FileBasedTestCase):
 
     def setUp(self):
         self.contents = StatMakefileProject(TEST_MAKEFILE)

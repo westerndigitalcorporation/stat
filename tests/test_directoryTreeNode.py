@@ -1,10 +1,10 @@
 import os
-from unittest import TestCase
 
 from directory_tree_node import DirectoryTreeNode, DirectoryTreeNodeException
+from tests.testing_tools import FileBasedTestCase
 
 
-class TestDirectoryTreeNode(TestCase):
+class TestDirectoryTreeNode(FileBasedTestCase):
     FILE_IN_ROOT_DIRECTORY = 'file_in_root.c'
     FILE_IN_SUB_DIRECTORY = 'mak_examples/simple.mak'
     FIRST_FILE_IN_SUB_TREE = 'tests/example/stat_test_example.c'

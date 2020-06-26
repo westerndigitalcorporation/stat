@@ -10,9 +10,9 @@ import re
 
 _STAT_FILE_NAMES_TO_IGNORE = ["stat_core.mak"]
 
-_REG_EXP_VARIABLE = '\s*(\w+)\s*=\s*(.+)\s*'
-_REG_EXP_SUBSTITUTION = '\$\((?P<variable>[^\(\)\$]+)\)'
-_REG_EXP_INCLUDE = '^\s*!INCLUDE\s+(<)?(?P<path>[^><]+)(?(1)>|\s*)$'
+_REG_EXP_VARIABLE = r'\s*(\w+)\s*=\s*(.+)\s*'
+_REG_EXP_SUBSTITUTION = r'\$\((?P<variable>[^\(\)\$]+)\)'
+_REG_EXP_INCLUDE = r'^\s*!INCLUDE\s+(<)?(?P<path>[^><]+)(?(1)>|\s*)$'
 
 class StatMakefile(object):
     """

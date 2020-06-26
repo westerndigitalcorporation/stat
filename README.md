@@ -1,6 +1,6 @@
 # STAT _(Unit-test Framework)_ <!-- omit in toc -->
 
-![Programming C](https://img.shields.io/badge/programming-TDD-orange.svg?style=flat&logo=c&logoColor=white)
+![Programming C](https://img.shields.io/badge/programming-TDD%20|%20Embedded-orange.svg?style=flat&logo=c&logoColor=white)
 ![MSVS](https://img.shields.io/badge/MSVS-2005--2008%20|%202010--2019-blue?style=flat&logo=Visual-Studio&logoColor=white)
 ![Windows](https://img.shields.io/badge/Windows-7%20|%2010-blue?style=flat&logo=Windows&logoColor=white)
 ![python](https://img.shields.io/badge/python-2.7-blue?style=flat&logo=Python&logoColor=white)  

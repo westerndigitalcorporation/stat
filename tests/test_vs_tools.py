@@ -3,7 +3,7 @@ from mock import PropertyMock
 
 from services import executeForOutput, execute
 from vs_tools import VsToolsException, MsvsTools, NMAKE_ARGUMENTS
-from testing_tools import *
+from testing_tools import * # pylint: disable=unused-wildcard-import
 
 CUT = MsvsTools.__module__
 
@@ -118,7 +118,7 @@ class TestMsvsTools(AdvancedTestCase):
         self.patch(CUT, 'os.path.isfile', return_value=False)
         tools = MsvsTools.find(2015)
         try:
-            filePath = tools.devBatchFile
+            dummyFilePath = tools.devBatchFile
         except VsToolsException as e:
             self.assertEqual(VsToolsException.INCOMPATIBLE_TOOLS, e.message)
         else:
@@ -143,7 +143,7 @@ class TestMsvsTools(AdvancedTestCase):
 
         tools = MsvsTools.find(2015)
         try:
-            filePath = tools.nmakeFilePath
+            dummyFilePath = tools.nmakeFilePath
         except VsToolsException as e:
             self.assertEqual(VsToolsException.INCOMPATIBLE_TOOLS, e.message)
             pass
@@ -174,7 +174,7 @@ class TestMsvsTools(AdvancedTestCase):
 
         tools = MsvsTools.find()
         try:
-            value = tools.versionId
+            dummyValue = tools.versionId
         except VsToolsException as e:
             self.assertEqual(VsToolsException.INCOMPATIBLE_TOOLS, e.message)
             pass

@@ -16,7 +16,7 @@ class IdeWriter(object):
 
     @classmethod
     def _getSubclasses(cls):
-        for subclass in cls.__subclasses__():  # type: IdeWriter
+        for subclass in cls.__subclasses__():  # type: IdeWriter, pylint: disable=no-member
             if subclass.IDE is not None:
                 yield subclass
             for grandSubclass in subclass._getSubclasses(): # type: IdeWriter
