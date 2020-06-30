@@ -1,21 +1,20 @@
-from multiprocessing import Pool
+import sys
+from multiprocessing import Pool, freeze_support
 from time import sleep
-
-from mock import PropertyMock, call, Mock
 
 import stat_attributes as attributes
 from ide_writer import IdeWorkspaceWriter
 from msvs_ide_writer import MsvsWriter
-from stat_main import StatMain, STAT_SUMMARY, STAT_OUTPUT_DELIMITER, STAT_SILENT_OUTPUT, StatException, runTestPackage, \
-    MAKEFILE_CORRUPTION, StatWarning
+from stat_main import StatMain, STAT_SUMMARY, STAT_OUTPUT_DELIMITER, STAT_SILENT_OUTPUT, StatException, \
+    runTestPackage, MAKEFILE_CORRUPTION, StatWarning
 from stat_makefile_generator import StatMakefileGenerator
 from stat_tool_chain import StatToolchain
-from testing_tools import AdvancedTestCase
 from stat_configuration import StatConfiguration
 from stat_argument_parser import StatArgumentParser
 from tests_runner import TestsRunner, TestsRunnerException
 from vs_tools import MsvsTools
 from services import writeJsonFile, remove, mkdir
+from tests.testing_tools import AdvancedTestCase, PropertyMock, call, Mock, isUnderIde
 
 CUT = StatMain.__module__
 
@@ -38,6 +37,7 @@ FAKE_MSVS_TOOLS = Mock(spec=MsvsTools)
 FAKE_EXCEPTION_MESSAGE = 'This is exception emulator'
 FAKE_SUCCESSFUL_RUNS = [(filename, 'PASSED', '') for filename in MANY_MAKE_FILES] * len(MANY_PRODUCTS)
 FAKE_FAILED_RUNS = [(filename, 'FAILED', FAKE_EXCEPTION_MESSAGE) for filename in MANY_MAKE_FILES] * len(MANY_PRODUCTS)
+
 
 class TestStatMainBase(AdvancedTestCase):
     def setupCommon(self):
@@ -76,6 +76,7 @@ class TestStatMainBase(AdvancedTestCase):
         parser.shallRun.return_value = shallCompile and shallExecute
         parser.shallBeVerbose.return_value = shallCompile and shallBeVerbose
 
+
 class TestStatMain(TestStatMainBase):
 
     def setUp(self):
@@ -111,7 +112,7 @@ class TestStatMain(TestStatMainBase):
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(None)])
 
         expected = \
-            [item for product in MANY_PRODUCTS for item in  [call(ALL_PRODUCT_FILES[product]), call().generate()]]
+            [item for product in MANY_PRODUCTS for item in [call(ALL_PRODUCT_FILES[product]), call().generate()]]
         self.assertCalls(self.statMakefileGenerator, expected)
 
         expected = \
@@ -131,7 +132,7 @@ class TestStatMain(TestStatMainBase):
 
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-a'])])
 
-        expected = [item for product in MANY_PRODUCTS for item in  [call(ALL_PRODUCT_FILES[product]), call().generate()]]
+        expected = [item for product in MANY_PRODUCTS for item in [call(ALL_PRODUCT_FILES[product]), call().generate()]]
         self.assertCalls(self.statMakefileGenerator, expected)
 
         expected = \
@@ -196,7 +197,8 @@ class TestStatMain(TestStatMainBase):
         self.assertCalls(self.runTestPackage, expected)
 
         self.assertCalls(self.remove, [call(attributes.LOGS_DIRECTORY)])
-        self.assertCalls(self.mkdir, [call(attributes.LOGS_DIRECTORY), call(attributes.OUTPUT_DIRECTORY,exist_ok=True)])
+        self.assertCalls(self.mkdir,
+                         [call(attributes.LOGS_DIRECTORY), call(attributes.OUTPUT_DIRECTORY, exist_ok=True)])
 
         expected = {makeFile: {"Status": "FAILED", "Info": FAKE_EXCEPTION_MESSAGE} for makeFile in MANY_MAKE_FILES}
         self.assertCalls(self.writeJsonFile, [call(attributes.REPORT_FILENAME, {TARGET_PRODUCT: expected})])
@@ -238,14 +240,16 @@ class TestStatMain(TestStatMainBase):
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-vs'])])
         self.assertCalls(self.statMakefileGenerator, [call(ALL_PRODUCT_FILES[TARGET_PRODUCT]), call().generate()])
         self.assertCalls(self.runTestPackage, [])
-        self.assertCalls(self.ideWorkspaceWriter, [call(MsvsWriter.IDE, SINGLE_MAKE_FILE), call().write()])\
+        self.assertCalls(self.ideWorkspaceWriter, [call(MsvsWriter.IDE, SINGLE_MAKE_FILE), call().write()])
 
 
 TEST_INFO_FORMAT = 'cmd:"{0}"; run:"{1}"; verbose:"{2}"'
 
+
 def runFake(makefile, commandToCompile, shallRun, shallBeVerbose):
-    sleep(1)
+    sleep(0.5)
     return makefile, 'PASSED', TEST_INFO_FORMAT.format(commandToCompile, shallRun, shallBeVerbose)
+
 
 class TestStatMainGear(TestStatMainBase):
 
@@ -253,12 +257,27 @@ class TestStatMainGear(TestStatMainBase):
         self.setupCommon()
         self.runTestPackage = self.patch(CUT, runTestPackage.__name__, new=runFake)
 
+        # Workaround to patch a bug in forking system of multiprocessing module in Python < 3
+        self.old_main = sys.modules["__main__"]
+        self.old_main_file = sys.modules["__main__"].__file__
+        sys.modules["__main__"] = sys.modules[__name__]
+        sys.modules["__main__"].__file__ = sys.modules[__name__].__file__
+
+    def tearDown(self):
+
+        sys.modules["__main__"] = self.old_main
+        sys.modules["__main__"].__file__ = self.old_main_file
+
     def test_run_uponGearBoost(self):
+        if isUnderIde() and (sys.version_info >= (3, 0)):
+            self.skipTest("Multiprocessing can't work in an interactive environment under Python 3+.")
         expectedCores = 8
         receivedCores = []
+
         def spyPool(cores, *args, **kwargs):
             receivedCores.append(cores)
             return Pool(cores, *args, **kwargs)
+
         self._patchArgumentParser(targetProducts=MANY_PRODUCTS, userMakefiles=MANY_MAKE_FILES, processes=expectedCores)
         self._mockParserResults(shallBeVerbose=False)
         self.patch(CUT, Pool.__name__, new=spyPool)
@@ -300,35 +319,41 @@ class TestRunTestPackage(AdvancedTestCase):
         self.assertEqual((SINGLE_MAKE_FILE, 'PASSED', ''), results)
 
     def test_runTestPackage_withTestException(self):
-        ERROR_MESSAGE = "Fake exception to test error-handling"
+        exception = TestsRunnerException("Fake exception to test error-handling")
+
         def fakeRunMethod():
-            raise TestsRunnerException(ERROR_MESSAGE)
+            raise exception
+
         self.testsRunner.return_value.run.side_effect = fakeRunMethod
 
         results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=True)
 
         expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True),
-                     call().compile(), call().run(), call().writeLog(ERROR_MESSAGE)]
+                    call().compile(), call().run(), call().writeLog(exception)]
         self.assertCalls(self.testsRunner, expected)
-        self.assertEqual((SINGLE_MAKE_FILE, 'FAILED', ERROR_MESSAGE), results)
+        self.assertEqual((SINGLE_MAKE_FILE, 'FAILED', str(exception)), results)
 
     def test_runTestPackage_withAbnormalTestException(self):
         exception = Exception("This is abnormal exception emulation")
+
         def fakeRunMethod():
             raise exception
+
         self.testsRunner.return_value.run.side_effect = fakeRunMethod
 
         results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=True)
 
         expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True),
-                    call().compile(), call().run(), call().writeLog(str(exception))]
+                    call().compile(), call().run(), call().writeLog(exception)]
         self.assertCalls(self.testsRunner, expected)
         self.assertEqual((SINGLE_MAKE_FILE, 'CRASHED', str(exception)), results)
 
     def test_runTestPackage_withExceptionUponInitialization(self):
         exception = Exception("This is an emulation of exception upon makefile processing")
+
         def initFakeRunner(*args, **kwargs):
             raise exception
+
         self.testsRunner.side_effect = initFakeRunner
 
         results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=True)
@@ -337,3 +362,7 @@ class TestRunTestPackage(AdvancedTestCase):
         self.assertCalls(self.testsRunner, expected)
         self.assertEqual((SINGLE_MAKE_FILE, 'CRASHED',
                           MAKEFILE_CORRUPTION.format(filename=SINGLE_MAKE_FILE, exception=str(exception))), results)
+
+
+if __name__ == '__main__':
+    freeze_support()

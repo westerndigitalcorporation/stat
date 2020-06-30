@@ -30,7 +30,7 @@ class TestsRunner(object):
 
     def compile(self):
         environ = dict(os.environ, PRIVATE_NAME=self.__makefile.name)
-        status, log = execute( self.__command.format(self.__fileName), beSilent=self.__beSilent, env=environ)
+        status, log = execute(self.__command.format(self.__fileName), beSilent=self.__beSilent, env=environ)
         self.__log.extend(log)
         if status:
             raise TestsRunnerException('Package "{0}" failed to compile.'.format(self.__fileName))
@@ -39,7 +39,8 @@ class TestsRunner(object):
         status, log = execute(self.__getOutputPath('bin', self.__makefile[StatMakefile.EXEC]), beSilent=self.__beSilent)
         self.__log.extend(log)
         if status:
-            message = 'The executable of package "{0}" failed with error-code {1:#X}.\n'.format(self.__fileName, status & 0xFFFFFFFF)
+            message = 'The executable of package "{0}" failed with error-code {1:#X}.\n'.format(self.__fileName,
+                                                                                                status & 0xFFFFFFFF)
             self.__log.append(message)
             raise TestsRunnerException(message)
 
@@ -51,6 +52,7 @@ class TestsRunner(object):
         with open(logFilePath, 'a') as fp:
             fp.writelines(self.__log)
             fp.write(extraInfo)
+
 
 class TestsRunnerException(Exception):
     """

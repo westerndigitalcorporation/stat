@@ -76,7 +76,7 @@ class TestDirectoryTreeNode(FileBasedTestCase):
         try:
             node.addFile(nonExistingFile)
         except DirectoryTreeNodeException as e:
-            self.assertEqual("The file '{fileName}' doesn't exist!".format(fileName = nonExistingFile), str(e))
+            self.assertEqual("The file '{fileName}' doesn't exist!".format(fileName=nonExistingFile), str(e))
         else:
             self.fail('The operation should have raised an exception')
 
@@ -90,5 +90,3 @@ class TestDirectoryTreeNode(FileBasedTestCase):
         receivedFiles = node.getAllFilePaths()
         for filePath in expectedFiles:
             self.assertIn(filePath, receivedFiles)
-
-

@@ -14,6 +14,7 @@ _REG_EXP_VARIABLE = r'\s*(\w+)\s*=\s*(.+)\s*'
 _REG_EXP_SUBSTITUTION = r'\$\((?P<variable>[^\(\)\$]+)\)'
 _REG_EXP_INCLUDE = r'^\s*!INCLUDE\s+(<)?(?P<path>[^><]+)(?(1)>|\s*)$'
 
+
 class StatMakefile(object):
     """
     Parser for Makefiles formatted for STAT
@@ -78,6 +79,7 @@ class StatMakefile(object):
             return self[variable]
         return re.sub(_REG_EXP_SUBSTITUTION, interpretVariable, string)
 
+
 class _MakefileReader(object):
     """
     Mak-file reader that allows reading with included files
@@ -85,7 +87,7 @@ class _MakefileReader(object):
 
     def __init__(self, filePath):
         if not os.path.isfile(filePath):
-            raise StatMakFileException("Makefile '{fileName}' doesn't exist!".format(fileName = filePath))
+            raise StatMakFileException("Makefile '{fileName}' doesn't exist!".format(fileName=filePath))
         self.__filePath = filePath
         self.__nested = None
 
@@ -128,7 +130,7 @@ class _MakefileReader(object):
             line = ''
         else:
             if line:
-               yield  line
+                yield line
 
     def __readTextFileLines(self):
         _file = open(self.__filePath)

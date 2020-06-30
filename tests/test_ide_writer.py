@@ -1,15 +1,15 @@
-from xml.dom.minidom import Element
-
-from mock import Mock, call
+# noinspection PyUnresolvedReferences
+from xml.dom.minidom import Element, Document
 
 import stat_attributes as attributes
 from ide_writer import IdeWriter, IdeCompositeWriter, IdeXmlWriter, IdeWorkspaceWriter
 from services import toNativePath
 from stat_makefile_project import StatMakefileProject
-from testing_tools import AdvancedTestCase, FileBasedTestCase
+from tests.testing_tools import AdvancedTestCase, FileBasedTestCase, Mock, call
 
 CUT = IdeWriter.__module__
 TEST_MAKEFILE = 'simplified_example.mak'
+
 
 class IdeWriterTestExampleA(IdeWriter):
     IDE = 'exampleA'
@@ -89,7 +89,7 @@ class TestIdeCompositeWriter(AdvancedTestCase):
 class TestIdeXmlWriter(AdvancedTestCase):
 
     def setUp(self):
-        self.mdomDocument = self.patch(CUT, 'Document', autospec=True)
+        self.mdomDocument = self.patch(CUT, Document.__name__)
         self.contents = Mock(spec=StatMakefileProject)
 
         self.writer = IdeXmlWriter('', self.contents, )
@@ -107,8 +107,8 @@ class TestIdeXmlWriter(AdvancedTestCase):
         element = self.writer.composeElement("nameOfElement", **elementAttributes)
         self.assertEqual(elementMock, element)
         self.mdomDocument.assert_has_calls([call(), call().createElement("nameOfElement")])
-        expected = [call.setAttribute(attribute, elementAttributes[attribute]) for attribute in elementAttributes]
-        self.assertCalls(elementMock, expected)
+        expected = [call.setAttribute(attribute, value) for attribute, value in elementAttributes.items()]
+        self.assertCalls(elementMock, expected, ordered=False)
 
     def test_composeElement_withContextValue(self):
         elementMock = Mock(spec=Element)
@@ -124,7 +124,7 @@ class TestIdeXmlWriter(AdvancedTestCase):
         self.assertCalls(elementMock, expected, ordered=False)
 
     def test_composeElement_withContextOfElements(self):
-        elements = [Mock(spec=Element) for dummy in range(4)]
+        elements = [Mock(spec=Element) for _dummy in range(4)]
         self.mdomDocument.return_value.createElement.side_effect = elements
         self.mdomDocument.return_value.createTextNode.side_effect = lambda x: "value is {0}".format(x)
         elementAttributes = {'the-attribute': 'the attribute value', 'another-one': 'the text of the another one'}
@@ -165,6 +165,7 @@ ROOT_TOKEN = 'root-token'
 TEST_IDE_NAME = 'Test-IDE'
 TEST_IDE_OUTPUT = 'Output:'
 
+
 class IdeTestWriter(IdeWriter):
 
     def __init__(self, ide, contents):
@@ -187,6 +188,7 @@ class IdeTestWriter(IdeWriter):
     def write(self):
         self.output = TEST_IDE_OUTPUT + str(self.tokens)
 
+
 class TestIdeWorkspaceWriter(FileBasedTestCase):
 
     def setUp(self):
@@ -208,8 +210,8 @@ class TestIdeWorkspaceWriter(FileBasedTestCase):
 
         self.assertCalls(self.mkdir, [call(attributes.IDE_DIRECTORY, exist_ok=True)])
         tokens, files = self.__getTreeItems(self.contents.tree, ROOT_TOKEN)
-        self.assertItemsEqual(tokens, self.testWriter.tokens)
-        self.assertItemsEqual(files, self.testWriter.files)
+        self.assertSameItems(tokens, self.testWriter.tokens)
+        self.assertSameItems(files, self.testWriter.files)
         self.assertEqual(TEST_IDE_OUTPUT + str(tokens), self.testWriter.output)
 
     def __getTreeItems(self, tree, parentToken):

@@ -32,8 +32,8 @@ class MsvsSolutionWriter(object):
         fileContents = self.__readSolutionFileTemplate()
         fileContents = fileContents.format(
             format=self.__tools.solutionFormat, version=self.__tools.versionId, year=self.__tools.year,
-            name=self.__contents.projectName, project_file=self.__projectFilePath, guid=self.__projectGuid)
-        filename = self._SOLUTION_FILENAME.format(name=self.__contents.projectName)
+            name=self.__contents.name, project_file=self.__projectFilePath, guid=self.__projectGuid)
+        filename = self._SOLUTION_FILENAME.format(name=self.__contents.name)
         filePath = "./{0}/{1}".format(attributes.IDE_DIRECTORY, filename)
         _file = open(filePath, "w")
         _file.write(fileContents)
@@ -60,12 +60,11 @@ class MsvsLegacyWriter(IdeXmlWriter):
         :type tools: MsvsTools
         """
         super(MsvsLegacyWriter, self).__init__(ideName, contents)
-        self._filename = self._PROJECT_FILENAME.format(self._contents.projectName)
+        self._filename = self._PROJECT_FILENAME.format(self._contents.name)
         self.__tools = tools
         output = os.path.join("..", attributes.OUTPUT_DIRECTORY)
         self.__includePath = os.path.join(output, "inc")
-        self.__executable = os.path.join(output, "bin", "{0}.exe".format(self._contents.outputName)
-        )
+        self.__executable = os.path.join(output, "bin", "{0}.exe".format(self._contents.outputName))
         root = self.__composeBodyBase()
         for component in self.__composeComponents():
             root.appendChild(component)
@@ -83,7 +82,7 @@ class MsvsLegacyWriter(IdeXmlWriter):
 
     def __composeConfigurations(self):
         commandLine = 'cd..&&"{0}" /S /NOLOGO /ERRORREPORT:NONE /F {1}'.format(
-            self.__tools.nmakeFilePath, self._contents.makeFile)
+            self.__tools.nmakeFilePath, self._contents.makefile)
         tool = self.composeElement(
             "Tool",
             Name="VCNMakeTool",
@@ -115,10 +114,10 @@ class MsvsLegacyWriter(IdeXmlWriter):
             "VisualStudioProject",
             ProjectType="Visual C++",
             Version="{0:.2f}".format(self.__tools.versionId),
-            Name=self._contents.projectName,
+            Name=self._contents.name,
             ProjectGUID="{{{0}}}".format(self._PROJECT_GUID),
             Keyword="MakeFileProj",
-            RootNamespace=self._contents.projectName
+            RootNamespace=self._contents.name
         )
         self._doc.appendChild(body)
         return body
@@ -147,6 +146,7 @@ class MsvsLegacyWriter(IdeXmlWriter):
         solution = MsvsSolutionWriter(self._contents, self.__tools, self._PROJECT_GUID, self._filename)
         solution.write()
 
+
 class Msvs2010ProjectWriter(IdeXmlWriter):
     _PROJECT_GUID = '86FC28D1-F4DE-4209-B544-10B5415D0C20'
     _PROJECT_FILENAME = "vs_{0}.vcxproj"
@@ -158,7 +158,7 @@ class Msvs2010ProjectWriter(IdeXmlWriter):
         :type tools: MsvsTools
         """
         super(Msvs2010ProjectWriter, self).__init__(ideName, contents)
-        self._filename = self._PROJECT_FILENAME.format(self._contents.projectName)
+        self._filename = self._PROJECT_FILENAME.format(self._contents.name)
         self.__tools = tools
         output = os.path.join("..", attributes.OUTPUT_DIRECTORY)
         self.__executable = os.path.join(output, "bin", "{0}.exe".format(self._contents.outputName))
@@ -173,10 +173,10 @@ class Msvs2010ProjectWriter(IdeXmlWriter):
         return [
             self.___composeConfigGroup(),
             self.composeElement("PropertyGroup",
-                                context=dict(ProjectName=self._contents.projectName,
+                                context=dict(ProjectName=self._contents.name,
                                              ProjectGuid="{{{0}}}".format(self._PROJECT_GUID),
                                              Keyword="MakeFileProj",
-                                             RootNamespace=self._contents.projectName),
+                                             RootNamespace=self._contents.name),
                                 Label="Globals"),
             self.composeElement("Import", Project=r"$(VCTargetsPath)\Microsoft.Cpp.Default.props"),
             self.composeElement("PropertyGroup",
@@ -199,7 +199,7 @@ class Msvs2010ProjectWriter(IdeXmlWriter):
 
     def __composeCommandLineGroup(self):
         commandLine = 'cd..&&"{0}" /S /NOLOGO /ERRORREPORT:NONE /F {1}'.format(
-            self.__tools.nmakeFilePath, self._contents.makeFile)
+            self.__tools.nmakeFilePath, self._contents.makefile)
         includePath = "{0};$(NMakeIncludeSearchPath)".format(self.__includePath)
         definitions = "WIN32;_DEBUG;{0};$(NMakePreprocessorDefinitions)".format(';'.join(self._contents.definitions))
         commandLineGroup = self.composeElement("PropertyGroup",
@@ -219,10 +219,11 @@ class Msvs2010ProjectWriter(IdeXmlWriter):
         propertySheets = self.composeElement("ImportGroup",
                                              Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'",
                                              Label="PropertySheets")
-        propertySheets.appendChild(self.composeElement("Import",
-                                                       Project=r"$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props",
-                                                       Condition=r"exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')",
-                                                       Label="LocalAppDataPlatform"))
+        propertySheets.appendChild(self.composeElement(
+            "Import",
+            Project=r"$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props",
+            Condition=r"exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')",
+            Label="LocalAppDataPlatform"))
         return propertySheets
 
     def ___composeConfigGroup(self):
@@ -258,6 +259,7 @@ class Msvs2010ProjectWriter(IdeXmlWriter):
         super(Msvs2010ProjectWriter, self).write()
         solution = MsvsSolutionWriter(self._contents, self.__tools, self._PROJECT_GUID, self._filename)
         solution.write()
+
 
 class MsvsWriter(IdeCompositeWriter):
     IDE = 'MSVS'

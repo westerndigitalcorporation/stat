@@ -2,17 +2,19 @@
 import subprocess
 from io import TextIOWrapper
 from shutil import copyfile
-from mock import Mock, PropertyMock
 
-from stat_attributes import OUTPUT_DIRECTORY, PRODUCT_DIRECTORY
-from testing_tools import * # pylint: disable=unused-wildcard-import
 import services
+from stat_attributes import OUTPUT_DIRECTORY, PRODUCT_DIRECTORY
+from tests.testing_tools import *  # pylint: disable=unused-wildcard-import
+
 
 CUT = services.__name__
+
 
 def _rmtree(treePath):
     if os.path.isdir(treePath):
         rmtree(treePath)
+
 
 class TestServices(FileBasedTestCase):
 
@@ -64,9 +66,9 @@ class TestServices(FileBasedTestCase):
         target = "/home/tests/fw/inc/example.h"
         services.createLink(source, target)
 
-        commandLine = 'cmd /c mklink "{target}" "{source}"'.format(target = services.toWindowsPath(target),
-            source = services.toWindowsPath("../../../product/fw/inc/example.h"))
-        self.assertCalls(patcher, [call.Popen(commandLine, shell=True),call.Popen().wait()])
+        commandLine = 'cmd /c mklink "{target}" "{source}"'.format(
+            target=services.toWindowsPath(target), source=services.toWindowsPath("../../../product/fw/inc/example.h"))
+        self.assertCalls(patcher, [call.Popen(commandLine, shell=True), call.Popen().wait()])
         self.assertEqual(0, len(self._fakeOs['symlink']))
 
     def test_createLinkOnWindowsForDirectory(self):
@@ -79,8 +81,8 @@ class TestServices(FileBasedTestCase):
         services.createLink(source, target)
 
         self.assertEqual(0, len(self._fakeOs['symlink']))
-        commandLine = 'cmd /c mklink /D "{target}" "{source}"'.format(target = services.toWindowsPath(target),
-            source = services.toWindowsPath("../../product/fw/inc"))
+        commandLine = 'cmd /c mklink /D "{target}" "{source}"'.format(
+            target=services.toWindowsPath(target), source=services.toWindowsPath("../../product/fw/inc"))
         self.assertCalls(patcher, [call.Popen(commandLine, shell=True), call.Popen().wait()])
 
     def test_findSubFolderOnPathOfCurrentWorkingDirectory(self):
@@ -97,9 +99,9 @@ class TestServices(FileBasedTestCase):
         startingPath = '/'.join([locationPath] + ['leaf']*2)
         subFolder = 'vc'
         expected = os.path.join(locationPath, subFolder)
-        patcher = self.patch(CUT, 'os.path.isdir', side_effect=[False,False,True])
+        patcher = self.patch(CUT, 'os.path.isdir', side_effect=[False, False, True])
         self.assertEqual(expected, services.findSubFolderOnPath(subFolder, startingPath))
-        self.assertCalls(patcher,[
+        self.assertCalls(patcher, [
             call(os.path.join('/'.join([locationPath] + ['leaf'] * 2), subFolder)),
             call(os.path.join('/'.join([locationPath] + ['leaf']), subFolder)),
             call(os.path.join(expected)),
@@ -160,7 +162,7 @@ class TestServices(FileBasedTestCase):
         self.assertSameItems(makfiles, services.listMakefiles(pathName, '*_*.*'))
 
     def test_readTextFileLines(self):
-        filePath ='/c/some_file.txt'
+        filePath = '/c/some_file.txt'
         expected = ['first line', 'second line', 'third line']
         openPatcher = self.patchOpen()
         openPatcher.return_value.readlines.return_value = [line + '\n' for line in expected]
@@ -229,27 +231,31 @@ class TestServices(FileBasedTestCase):
         else:
             self.fail('The operation should have raised an exception')
 
-    def _patchRmtree(self, retries = 0):
+    def _patchRmtree(self, retries=0):
         self.__rmtreeRetries = retries
+
         def rmtreeFake(pathName):
             if self.__rmtreeRetries > 0:
                 self.__rmtreeRetries -= 1
                 raise OSError("Emulated lockup by Anti-Virus.")
             else:
                 rmtree(pathName)
+
         patcher = self.patch('services', 'rmtree')
         self.patch('services', 'sleep')
         patcher.side_effect = rmtreeFake
         return patcher
 
-    def _patchOsRemove(self, retries = 0):
+    def _patchOsRemove(self, retries=0):
         self.__removeRetries = retries
+
         def osRemove(pathName):
             if self.__removeRetries > 0:
                 self.__removeRetries -= 1
                 raise OSError("Emulated lockup by Anti-Virus.")
             else:
                 os.remove(pathName)
+
         patcher = self.patch('services', 'os.remove')
         self.patch('services', 'sleep')
         patcher.side_effect = osRemove
@@ -270,6 +276,8 @@ class TestServices(FileBasedTestCase):
 
 
 TEST_PATH = './{0}/path/to/check'.format(OUTPUT_DIRECTORY)
+
+
 class TestMkdir(FileBasedTestCase):
 
     def setUp(self):
@@ -294,8 +302,11 @@ class TestMkdir(FileBasedTestCase):
         services.mkdir(TEST_PATH, exist_ok=True)
         self.assertTrue(os.path.isdir(TEST_PATH))
 
+
 TEST_FAKE_OUTPUT = ['first line\n', 'second line\n', 'third line\n', '']
 TEST_FAKE_RETURN_CODE = 0xC0DE
+
+
 class TestExecute(AdvancedTestCase):
 
     def setUp(self):
@@ -370,6 +381,7 @@ class TestExecute(AdvancedTestCase):
 
         self.assertEqual(expected, received)
         self.assertCalls(execute, [call(command, beSilent=True, shell=True)])
+
 
 class TestWriteJsonFile(AdvancedTestCase):
 

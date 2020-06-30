@@ -5,7 +5,8 @@ from shutil import rmtree
 
 import stat_attributes as attributes
 from makefile_logger import MakefileLogger
-from testing_tools import FileBasedTestCase
+from tests.testing_tools import FileBasedTestCase
+
 
 class TestMakefileLogger(FileBasedTestCase):
 
@@ -55,11 +56,17 @@ class TestMakefileLogger(FileBasedTestCase):
         self.assertEqual(lines, [testLine])
 
     def writeToLoggerAndCapturePrintLines(self, logger, line):
+
         class StdoutSpy(object):
             def __init__(self):
                 self.contents = ''
+
             def write(self, string):
                 self.contents += string
+
+            def getvalue(self):
+                return self.contents
+
         stream = StdoutSpy()
         stdoutOriginal = sys.stdout
         sys.stdout = stream

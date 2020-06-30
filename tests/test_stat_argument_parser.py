@@ -1,10 +1,10 @@
-from mock import call
-from psutil import cpu_count
+from __future__ import division
 
+from services import countCpuCores
 from si_ide_writer import SourceInsightWriter
 from msvs_ide_writer import MsvsWriter
 from stat_argument_parser import StatArgumentParser, STAT_MINIMAL_PARALLELISM
-from testing_tools import AdvancedTestCase
+from tests.testing_tools import AdvancedTestCase, call
 
 CUT = 'stat_argument_parser'
 SINGLE_PRODUCT = 'single_product'
@@ -13,17 +13,19 @@ SINGLE_MAKEFILE = 'single_make_file.mak'
 MANY_MAKEFILES = 'first_one.mak second_one.mak next_in_line.mak following.mak the-last-one.mak'.split(' ')
 TEST_MAXIMAL_PARALLELISM = len(MANY_MAKEFILES) * 2
 
+
 class TestStatArgumentParser(AdvancedTestCase):
     def setupCommon(self):
         self.listMakefiles = self.patch(CUT, 'listMakefiles')
-        self.cpuCount = self.patch(CUT, cpu_count.__name__, return_value=TEST_MAXIMAL_PARALLELISM)
+        self.countCpuCores = self.patch(CUT, countCpuCores.__name__, return_value=TEST_MAXIMAL_PARALLELISM)
 
     def verifyCanonicalCompilationOutcomes(self, parser):
         self.assertTrue(parser.shallCompile())
         self.assertTrue(parser.shallBeVerbose())
         self.assertIsNone(parser.ide)
 
-class TestStatArgumentParser_UponSingleProduct(TestStatArgumentParser):
+
+class TestStatArgumentParserUponSingleProduct(TestStatArgumentParser):
 
     def setUp(self):
         self.setupCommon()
@@ -215,7 +217,7 @@ class TestStatArgumentParser_UponSingleProduct(TestStatArgumentParser):
     def test_processesGearExplicitValue(self):
         self.listMakefiles.return_value = SINGLE_PRODUCT * (TEST_MAXIMAL_PARALLELISM + 1)
         parser = self.parser
-        expected = TEST_MAXIMAL_PARALLELISM/2
+        expected = TEST_MAXIMAL_PARALLELISM//2
 
         parser.parse(['-g', str(expected)])
 
@@ -223,7 +225,7 @@ class TestStatArgumentParser_UponSingleProduct(TestStatArgumentParser):
         self.assertFalse(parser.shallBeVerbose())
 
     def test_runOnSmallCpuCount(self):
-        self.cpuCount.return_value = STAT_MINIMAL_PARALLELISM - 1
+        self.countCpuCores.return_value = STAT_MINIMAL_PARALLELISM - 1
         parser = StatArgumentParser([SINGLE_PRODUCT])
         self.listMakefiles.return_value = SINGLE_PRODUCT * (TEST_MAXIMAL_PARALLELISM + 1)
 
@@ -232,7 +234,7 @@ class TestStatArgumentParser_UponSingleProduct(TestStatArgumentParser):
         self.assertEqual(0, parser.processes)
 
     def test_processesGearWithTooSmallCpuCount(self):
-        self.cpuCount.return_value = STAT_MINIMAL_PARALLELISM - 1
+        self.countCpuCores.return_value = STAT_MINIMAL_PARALLELISM - 1
         parser = StatArgumentParser([SINGLE_PRODUCT])
         self.listMakefiles.return_value = SINGLE_PRODUCT * (TEST_MAXIMAL_PARALLELISM + 1)
 
@@ -243,7 +245,7 @@ class TestStatArgumentParser_UponSingleProduct(TestStatArgumentParser):
 
     def test_processesGearWithMinimalCpuCount(self):
         self.listMakefiles.return_value = SINGLE_PRODUCT * (TEST_MAXIMAL_PARALLELISM + 1)
-        self.cpuCount.return_value = STAT_MINIMAL_PARALLELISM
+        self.countCpuCores.return_value = STAT_MINIMAL_PARALLELISM
         parser = StatArgumentParser([SINGLE_PRODUCT])
 
         parser.parse(['-g'])
@@ -278,7 +280,7 @@ class TestStatArgumentParser_UponSingleProduct(TestStatArgumentParser):
             self.fail("Minimal acceptable gear below minimum shall fail")
 
 
-class TestStatArgumentParser_UponManyProducts(TestStatArgumentParser):
+class TestStatArgumentParserUponManyProducts(TestStatArgumentParser):
 
     def setUp(self):
         self.setupCommon()

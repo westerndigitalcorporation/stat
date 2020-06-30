@@ -6,7 +6,7 @@ import sys
 import subprocess
 
 
-def getFileLocationThroughoutCurrentPath(fileName, currentPath = '.'):
+def getFileLocationThroughoutCurrentPath(fileName, currentPath='.'):
     previousDirectory = None
     currentDirectory = currentPath if currentPath != '.' else os.getcwd()
     while previousDirectory != currentDirectory:
@@ -16,6 +16,7 @@ def getFileLocationThroughoutCurrentPath(fileName, currentPath = '.'):
         previousDirectory = currentDirectory
         currentDirectory = os.path.dirname(previousDirectory)
     return None
+
 
 # Entry-point
 if __name__ == "__main__":

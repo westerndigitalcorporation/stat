@@ -1,12 +1,10 @@
 import os
 
-from mock import call
-
 import stat_attributes as attributes
-from services import execute, remove, mkdir
+from services import execute, remove
 from stat_makefile import StatMakefile
-from testing_tools import FileBasedTestCase
 from tests_runner import TestsRunner, TestsRunnerException
+from tests.testing_tools import FileBasedTestCase, call
 
 CUT = TestsRunner.__module__
 
@@ -20,6 +18,7 @@ TEST_ENVIRONMENT_MOCK = dict(user='Arseniy Aharonov', path='/the/right/way', enc
 def createRunner(isVerbose=True):
     return TestsRunner(TEST_MAKEFILE_NAME, TEST_COMMAND_TO_COMPILE, isVerbose)
 
+
 class TestTestsRunner(FileBasedTestCase):
 
     def setUp(self):
@@ -27,7 +26,6 @@ class TestTestsRunner(FileBasedTestCase):
         self.remove = self.patch(CUT, remove.__name__, return_value=False)
         self.execute = self.patch(CUT, execute.__name__, return_value=(0, []))
         self.patch(CUT, 'os.environ', new=TEST_ENVIRONMENT_MOCK)
-
 
     def test_cleanup(self):
         createRunner()
@@ -39,8 +37,8 @@ class TestTestsRunner(FileBasedTestCase):
         runner.compile()
 
         expectedEnv = dict(TEST_ENVIRONMENT_MOCK, PRIVATE_NAME=self.makefile.name)
-        self.assertCalls(self.execute,[call(TEST_COMMAND_TO_COMPILE.format(TEST_MAKEFILE_NAME),
-                                            beSilent=False, env=expectedEnv)])
+        self.assertCalls(self.execute, [call(TEST_COMMAND_TO_COMPILE.format(TEST_MAKEFILE_NAME),
+                                             beSilent=False, env=expectedEnv)])
 
     def test_run(self):
         runner = createRunner()
@@ -117,8 +115,3 @@ class TestTestsRunner(FileBasedTestCase):
                     call().write(exceptionExtraInfo),
                     call().__exit__(None, None, None)]
         self.assertCalls(openMock, expected)
-
-
-
-
-

@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 class StatToolchain(object):
 
     def getCommandToCompile(self):
