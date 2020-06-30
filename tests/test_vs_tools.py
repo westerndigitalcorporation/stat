@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-from mock import PropertyMock
-
-from services import executeForOutput, execute
+from services import executeForOutput
 from vs_tools import VsToolsException, MsvsTools, NMAKE_ARGUMENTS
-from testing_tools import * # pylint: disable=unused-wildcard-import
+from tests.testing_tools import *  # pylint: disable=unused-wildcard-import
 
 CUT = MsvsTools.__module__
 
@@ -11,7 +9,7 @@ USER_MAKE_FILE = "simple.mak"
 EXPECTED_TOOL = '/c/vs/best/tools'
 EXPECTED_PATH = 'tool-chain-path'
 EMULATED_OS_ENVIRON = \
-    {'VS90COMNTOOLS': '/c/vs/oldest/tools', 'VS130COMNTOOLS': EXPECTED_TOOL, 'VS120COMNTOOLS': '/c/vs/medium/tools',}
+    {'VS90COMNTOOLS': '/c/vs/oldest/tools', 'VS130COMNTOOLS': EXPECTED_TOOL, 'VS120COMNTOOLS': '/c/vs/medium/tools', }
 
 VSWHERE_BASE_PATH = os.path.join(attributes.TOOL_PATH, attributes.RESOURCES_DIRECTORY)
 VSWHERE_COMMAND_LINE = VSWHERE_BASE_PATH + "\\vswhere.exe -legacy {0} -property installationPath -latest"
@@ -21,6 +19,7 @@ VS_DEV_BATCH_MOCK = os.path.join(TOOLS_FULL_PATH_MOCK, "VsDevCmd.bat")
 VS_DEV_BATCH_MOCK_OLDER = os.path.join(TOOLS_FULL_PATH_MOCK, "vsvars32.bat")
 DUMMY_ENVIRONMENT = {'VS{0}0COMNTOOLS'.format(version): TOOLS_FULL_PATH_MOCK
                      for version in (8, 9, 10, 11, 12, 14, 15, 16)}
+
 
 class TestMsvsTools(AdvancedTestCase):
 
@@ -82,7 +81,7 @@ class TestMsvsTools(AdvancedTestCase):
         try:
             MsvsTools.find()
         except VsToolsException as e:
-            self.assertEqual(VsToolsException.NO_TOOLS_FOUND, e.message)
+            self.assertEqual(VsToolsException.NO_TOOLS_FOUND, str(e))
         else:
             self.fail("Exception should have been raised!")
 
@@ -91,7 +90,7 @@ class TestMsvsTools(AdvancedTestCase):
         try:
             MsvsTools.find(unsupported)
         except VsToolsException as e:
-            self.assertEqual(VsToolsException.UNSUPPORTED_TOOLS.format(unsupported), e.message)
+            self.assertEqual(VsToolsException.UNSUPPORTED_TOOLS.format(unsupported), str(e))
         else:
             self.fail("Exception should have been raised!")
 
@@ -100,7 +99,7 @@ class TestMsvsTools(AdvancedTestCase):
         self.patch(CUT, 'os.environ', DUMMY_ENVIRONMENT)
         isfilePatcher = self.patch(CUT, 'os.path.isfile', side_effect=[False, True])
 
-        tools =  MsvsTools.find(2008)
+        tools = MsvsTools.find(2008)
         self.assertEqual(expected, tools.devBatchFile)
         self.assertCalls(isfilePatcher, [call(VS_DEV_BATCH_MOCK), call(expected)])
 
@@ -118,9 +117,9 @@ class TestMsvsTools(AdvancedTestCase):
         self.patch(CUT, 'os.path.isfile', return_value=False)
         tools = MsvsTools.find(2015)
         try:
-            dummyFilePath = tools.devBatchFile
+            _dummyFilePath = tools.devBatchFile
         except VsToolsException as e:
-            self.assertEqual(VsToolsException.INCOMPATIBLE_TOOLS, e.message)
+            self.assertEqual(VsToolsException.INCOMPATIBLE_TOOLS, str(e))
         else:
             self.fail("Exception should have been raised!")
 
@@ -130,7 +129,7 @@ class TestMsvsTools(AdvancedTestCase):
         self.patch(CUT, 'os.environ', DUMMY_ENVIRONMENT)
         self.patch(CUT, 'os.path.isfile', return_value=True)
         outputMock = "redundant\n\rredundant\n\r{0}".format(expectedFilePath)
-        executePatcher = self.patch(CUT, executeForOutput.__name__, return_value = outputMock)
+        executePatcher = self.patch(CUT, executeForOutput.__name__, return_value=outputMock)
 
         tools = MsvsTools.find(2015)
         self.assertEqual(expectedFilePath, tools.nmakeFilePath)
@@ -143,25 +142,26 @@ class TestMsvsTools(AdvancedTestCase):
 
         tools = MsvsTools.find(2015)
         try:
-            dummyFilePath = tools.nmakeFilePath
+            _dummyFilePath = tools.nmakeFilePath
         except VsToolsException as e:
-            self.assertEqual(VsToolsException.INCOMPATIBLE_TOOLS, e.message)
+            self.assertEqual(VsToolsException.INCOMPATIBLE_TOOLS, str(e))
             pass
         else:
             self.fail("Exception should have been raised!")
 
     def test_versionId_forSpecifiedTools(self):
         self.patch(CUT, 'os.environ', DUMMY_ENVIRONMENT)
-        for expected,tools in ((9.0, MsvsTools.find(2008)), (14.0, MsvsTools.find(2015)), (16.0, MsvsTools.find(2019))):
+        for expected, tools in \
+                ((9.0, MsvsTools.find(2008)), (14.0, MsvsTools.find(2015)), (16.0, MsvsTools.find(2019))):
             self.assertEqual(expected, tools.versionId)
 
     def test_versionId_forLatestDeterminedTools(self):
         expectedValue = 17.0
         expectedCommandLine = '"{0}" && set VisualStudioVersion'.format(VS_DEV_BATCH_MOCK)
-        self.patch(CUT, 'os.environ',{})
+        self.patch(CUT, 'os.environ', {})
         self.patch(CUT, 'os.path.isfile', return_value=True)
         outputMock = [TOOLS_BASE_PATH_MOCK, "redundant\n\rredundant\n\rVisualStudioVersion={0}".format(expectedValue)]
-        executePatcher = self.patch(CUT, executeForOutput.__name__, side_effect = outputMock)
+        executePatcher = self.patch(CUT, executeForOutput.__name__, side_effect=outputMock)
 
         tools = MsvsTools.find()
         self.assertEqual(expectedValue, tools.versionId)
@@ -174,9 +174,9 @@ class TestMsvsTools(AdvancedTestCase):
 
         tools = MsvsTools.find()
         try:
-            dummyValue = tools.versionId
+            _dummyValue = tools.versionId
         except VsToolsException as e:
-            self.assertEqual(VsToolsException.INCOMPATIBLE_TOOLS, e.message)
+            self.assertEqual(VsToolsException.INCOMPATIBLE_TOOLS, str(e))
             pass
         else:
             self.fail("Exception should have been raised!")
@@ -184,7 +184,7 @@ class TestMsvsTools(AdvancedTestCase):
     def test_year(self):
         self.patch(CUT, 'os.environ', DUMMY_ENVIRONMENT)
         years = (2005, 2008, 2010, 2012, 2013, 2015, 2017, 2019)
-        for year  in years:
+        for year in years:
             tools = MsvsTools.find(year)
             self.assertEqual(year, tools.year)
 
@@ -207,7 +207,3 @@ class TestMsvsTools(AdvancedTestCase):
         receivedCommand = tools.getCommandToCompile()
         expectedCommand = '"{0}" {1} {{0}}'.format(makeExecutor, NMAKE_ARGUMENTS)
         self.assertEqual(expectedCommand, receivedCommand)
-
-
-
-

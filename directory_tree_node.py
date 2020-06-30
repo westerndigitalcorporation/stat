@@ -7,6 +7,7 @@
 
 import os
 
+
 class DirectoryTreeNode(object):
     def __init__(self):
         self.__files = []
@@ -29,7 +30,7 @@ class DirectoryTreeNode(object):
 
     def addFile(self, filePath):
         if not os.path.isfile(filePath):
-            raise DirectoryTreeNodeException("The file '{filePath}' doesn't exist!".format(filePath = filePath))
+            raise DirectoryTreeNodeException("The file '{filePath}' doesn't exist!".format(filePath=filePath))
         if filePath.startswith('./'):
             filePath = filePath[2:]
         leafNode = self.__retrieveLeafNode(os.path.dirname(filePath))
@@ -43,7 +44,7 @@ class DirectoryTreeNode(object):
     def __retrieveLeafNode(self, dirPath):
         treeNode = self
         pathTail = dirPath
-        while not pathTail is '':
+        while pathTail is not '':
             pathRoot, pathTail = splitByRoot(pathTail)
             treeNode = treeNode.__retrieveNextTreeNode(pathRoot)
         return treeNode
@@ -66,8 +67,9 @@ class DirectoryTreeNode(object):
         nodes = [self]
         while not len(nodes) == 0:
             for node in nodes:
-               yield node
+                yield node
             nodes = [node[dirName] for node in nodes for dirName in node.dirs]
+
 
 class DirectoryTreeNodeException(Exception):
     """

@@ -5,10 +5,10 @@
 #
 # SPDX-License-Identifier: MIT
 
-from __future__  import print_function
+from __future__ import print_function
 
 import sys
-from multiprocessing import Pool
+from multiprocessing import Pool, freeze_support
 
 import stat_attributes as attributes
 from stat_argument_parser import StatArgumentParser
@@ -24,6 +24,7 @@ STAT_SUMMARY = "Total:  {total} Runs  {passed} Passed  {failed} Failed"
 STAT_SILENT_OUTPUT = "{0:50}:{1}"
 MAKEFILE_CORRUPTION = 'Processing "{filename}" failed with exception: \n{exception}'
 
+
 def runTestPackage(makefile, commandToCompile, shallRun, shallBeVerbose):
     try:
         runner = TestsRunner(makefile, commandToCompile, shallBeVerbose)
@@ -32,16 +33,17 @@ def runTestPackage(makefile, commandToCompile, shallRun, shallBeVerbose):
             if shallRun:
                 runner.run()
         except TestsRunnerException as exception:
-            runner.writeLog(exception.message)
-            status, description = 'FAILED', exception.message
+            runner.writeLog(exception)
+            status, description = 'FAILED', str(exception)
         except Exception as exception:
-            runner.writeLog(exception.message)
+            runner.writeLog(exception)
             status, description = 'CRASHED', str(exception)
         else:
             status, description = 'PASSED', ''
     except Exception as exception:
         status, description = 'CRASHED', MAKEFILE_CORRUPTION.format(filename=makefile, exception=str(exception))
     return makefile, status, description
+
 
 def prepareOutputDirectories():
     remove(attributes.LOGS_DIRECTORY)
@@ -64,7 +66,6 @@ class StatMain(object):
         self.__parser = StatArgumentParser(self.__config.products, self.__config.defaultProduct)
         self.__commandToCompile = self.__config.getToolchain().getCommandToCompile()
         self.__report = StatReport()
-
 
     def _run(self, manualArguments):
         self.__parser.parse(manualArguments)
@@ -100,12 +101,13 @@ class StatMain(object):
 
     def __runTestsOnTargetInParallel(self, target):
         def handleResult(result):
-           self.__log(*result)
+            self.__log(*result)
         self.__prepareTarget(target)
         pool = Pool(self.__parser.processes)
+        # pool = get_context("spawn").Pool(self.__parser.processes)
         for makefile in self.__parser.makeFiles:
-           args = (makefile, self.__commandToCompile, self.__parser.shallRun(), self.__parser.shallBeVerbose())
-           pool.apply_async(runTestPackage, args, callback=handleResult)
+            args = (makefile, self.__commandToCompile, self.__parser.shallRun(), self.__parser.shallBeVerbose())
+            pool.apply_async(runTestPackage, args, callback=handleResult)
         pool.close()
         pool.join()
 
@@ -124,6 +126,7 @@ class StatMain(object):
         self.__report[makefile] = status, info
         if not self.__parser.shallBeVerbose():
             print(STAT_SILENT_OUTPUT.format(makefile, status))
+
 
 class StatReport(object):
 
@@ -162,17 +165,21 @@ class StatReport(object):
         return [makefile for target in self.__finalReport for makefile in self.__finalReport[target]
                 if not self.__finalReport[target][makefile]['Status'] == 'PASSED']
 
+
 class StatWarning(Exception):
     """
     Custom exception for the STAT-framework managed warnings
     """
+
 
 class StatException(Exception):
     """
     Custom exception for the STAT-framework managed failures
     """
 
+
 if __name__ == '__main__':
+    freeze_support()
     try:
         if '--debug=profile' in sys.argv:
             with Profiler():
@@ -189,5 +196,3 @@ if __name__ == '__main__':
         sys.exit(-1)
     else:
         print("\n=== PASSED ===")
-
-# TODO: Consider StatWarning without failure in case of obsolete arguments, e.g. -p for a single product configuration

@@ -16,14 +16,15 @@ SOURCE_INSIGHT_4 = "si4project.zip"
 FILE_LIST_FILENAME = "{path}/si_filelist.txt"
 SI_FILES_PREFIX = 'stat'
 
+
 class SourceInsightWriter(IdeWriter):
     IDE = 'SourceInsight'
 
     def __init__(self, ide, contents, *args):
         super(SourceInsightWriter, self).__init__(ide, contents, *args)
-        self.__files = [self._contents.makeFile]
+        self.__files = [self._contents.makefile]
         self.__workspacePath = \
-            WORKSPACE_PATH.format(basePath=attributes.IDE_DIRECTORY, name=self._contents.projectName)
+            WORKSPACE_PATH.format(basePath=attributes.IDE_DIRECTORY, name=self._contents.name)
 
     def createRootToken(self):
         return None
@@ -48,7 +49,7 @@ class SourceInsightWriter(IdeWriter):
         zipSource = os.path.join(attributes.TOOL_PATH, attributes.RESOURCES_DIRECTORY, SOURCE_INSIGHT_4)
         with ZipFile(zipSource, "r") as source:
             for member in source.filelist:
-                member.filename = member.filename.replace(SI_FILES_PREFIX, self._contents.projectName)
+                member.filename = member.filename.replace(SI_FILES_PREFIX, self._contents.name)
                 source.extract(member, self.__workspacePath)
 
     def __writeProjectFileList(self):

@@ -5,21 +5,23 @@
 #
 # SPDX-License-Identifier: MIT
 
+# noinspection PyUnresolvedReferences
 from xml.dom.minidom import Document
 
 import stat_attributes as attributes
 from services import toNativePath, mkdir
 from stat_makefile_project import StatMakefileProject
 
+
 class IdeWriter(object):
     IDE = None
 
     @classmethod
     def _getSubclasses(cls):
-        for subclass in cls.__subclasses__():  # type: IdeWriter, pylint: disable=no-member
+        for subclass in cls.__subclasses__():  # type: IdeWriter # pylint: disable=no-member
             if subclass.IDE is not None:
                 yield subclass
-            for grandSubclass in subclass._getSubclasses(): # type: IdeWriter
+            for grandSubclass in subclass._getSubclasses():  # type: IdeWriter
                 yield grandSubclass
 
     def __new__(cls, ideName, contents, *args):
@@ -64,7 +66,8 @@ class IdeCompositeWriter(IdeWriter):
         return [writer.createRootToken() for writer in self._instances]
 
     def createDirectoryToken(self, name, parentDirectoryToken):
-        return [writer.createDirectoryToken(name, token) for writer,token in zip(self._instances, parentDirectoryToken)]
+        return [writer.createDirectoryToken(name, token)
+                for writer, token in zip(self._instances, parentDirectoryToken)]
 
     def addFile(self, filePath, parentDirectoryToken):
         for writer, token in zip(self._instances, parentDirectoryToken):
@@ -130,5 +133,6 @@ class IdeProjectWriterException(Exception):
     Custom exception for STAT IDE-Project Writer
     """
 
+
 if __name__ == '__main__':
-   pass
+    pass

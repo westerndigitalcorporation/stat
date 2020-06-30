@@ -1,4 +1,4 @@
-from __future__  import print_function
+from __future__ import print_function
 
 import os
 import sys
@@ -6,7 +6,7 @@ import sys
 import subprocess
 
 
-def getFileLocationThroughoutCurrentPath(fileName, currentPath = '.'):
+def getFileLocationThroughoutCurrentPath(fileName, currentPath='.'):
     previousDirectory = None
     currentDirectory = currentPath if currentPath != '.' else os.getcwd()
     while previousDirectory != currentDirectory:
@@ -16,6 +16,7 @@ def getFileLocationThroughoutCurrentPath(fileName, currentPath = '.'):
         previousDirectory = currentDirectory
         currentDirectory = os.path.dirname(previousDirectory)
     return None
+
 
 # Entry-point
 if __name__ == "__main__":
@@ -27,7 +28,8 @@ if __name__ == "__main__":
         cmd = [sys.executable, "-m", "cProfile", statTool]
         cmd.extend(sys.argv[1:])
         try:
-            process = subprocess.Popen(cmd, bufsize=1, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            process = subprocess.Popen(cmd, bufsize=1, universal_newlines=True,
+                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             with open('_stat_profiling.txt', 'w') as fp:
                 for line in iter(process.stdout.readline, ''):
                     print(line, end='')

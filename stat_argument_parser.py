@@ -6,14 +6,14 @@
 
 import sys
 from argparse import ArgumentParser, SUPPRESS as HELP_SUPPRESS
-from psutil import cpu_count
 
 import stat_attributes as attributes
 from si_ide_writer import SourceInsightWriter
 from msvs_ide_writer import MsvsWriter
-from services import listMakefiles
+from services import listMakefiles, countCpuCores
 
 STAT_MINIMAL_PARALLELISM = 2
+
 
 class StatArgumentParser(object):
 
@@ -54,7 +54,7 @@ class StatArgumentParser(object):
         self.__processes = min(getattr(self.__instructions, 'processes', 0), len(self.__makeFiles))
         self.__shallBeVerbose = self.__instructions.shallBeVerbose and self.__processes < STAT_MINIMAL_PARALLELISM
         self.__shallRun = self.shallCompile() and not self.__instructions.compile_only
-        if not self.ide is None:
+        if self.ide is not None:
             pureArguments = arguments if arguments else sys.argv[1:]
             pureArguments = ' '.join([item for item in pureArguments if item not in self.__instructions.mak_files])
             if not len(self.makeFiles) is 1:
@@ -95,6 +95,7 @@ class StatArgumentParser(object):
         targetGroup.add_argument('-si', '--source-insight', action='store_const', dest="ide",
                                  const=SourceInsightWriter.IDE, help='creates Source-Insight project for the makefile;'
                                                                      'currently only version 4.0 is supported')
+
     def __addBehavioralArguments(self):
         behavioralGroup = self.__parser.add_mutually_exclusive_group()
         behavioralGroup.add_argument('-s', '--silent', action='store_false', dest='shallBeVerbose',
@@ -102,8 +103,8 @@ class StatArgumentParser(object):
         self.__addGearArgument(behavioralGroup)
 
     def __addGearArgument(self, behavioralGroup):
-        if cpu_count() > 1:
-            maxCpuCount = cpu_count()
+        if countCpuCores() > 1:
+            maxCpuCount = countCpuCores()
 
             def parseGearValue(value):
                 amount = int(value)

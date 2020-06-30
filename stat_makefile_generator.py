@@ -22,6 +22,7 @@ VS_DEV = {vs_dev}
 !INCLUDE {tool_path}/stat_core.mak
 """
 
+
 class StatMakefileGenerator(object):
     def __init__(self, productMakefile):
         self.__targetName = productMakefile.split('.')[0]
@@ -46,6 +47,7 @@ class StatMakefileGenerator(object):
         fileHandle.write(fileContext)
         fileHandle.flush()
         fileHandle.close()
+
 
 class StatMakefileGeneratorException(Exception):
     """

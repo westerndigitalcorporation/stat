@@ -11,8 +11,8 @@ from services import executeForOutput
 from stat_tool_chain import StatToolchain
 
 NMAKE_ARGUMENTS = "/S /NOLOGO /ERRORREPORT:NONE /F"
-SUPPORTED = {8.0 : 2005, 9.0 : 2008, 10.0: 2010, 11.0: 2012, 12.0: 2013, 14.0: 2015, 15.0: 2017, 16.0: 2019}
-SOLUTION_FORMATS = {8.0 : 9.0, 9.0 : 10.0, 10.0: 11.0, 11.0: 11.0, 12.0: 12.0, 14.0: 12.0, 15.0: 12.0, 16.0: 12.0}
+SUPPORTED = {8.0: 2005, 9.0: 2008, 10.0: 2010, 11.0: 2012, 12.0: 2013, 14.0: 2015, 15.0: 2017, 16.0: 2019}
+SOLUTION_FORMATS = {8.0: 9.0, 9.0: 10.0, 10.0: 11.0, 11.0: 11.0, 12.0: 12.0, 14.0: 12.0, 15.0: 12.0, 16.0: 12.0}
 
 TO_FIND_LATER_ON_DEMAND = None
 
@@ -48,7 +48,7 @@ class MsvsTools(StatToolchain):
         else:
             raise VsToolsException(VsToolsException.UNSUPPORTED_TOOLS.format(versionYear))
 
-    def __init__(self, versionId = None):
+    def __init__(self, versionId=None):
         self.__versionId = None
         if versionId:
             self.__findSpecificVersion(versionId)
@@ -57,7 +57,6 @@ class MsvsTools(StatToolchain):
         self.__devBatchFile = TO_FIND_LATER_ON_DEMAND
         self.__nmakeFile = TO_FIND_LATER_ON_DEMAND
         self.__environment = TO_FIND_LATER_ON_DEMAND
-        #print("Toolchain: MSVS (v.{0})".format(self.year))
 
     @property
     def path(self):
@@ -128,7 +127,7 @@ class MsvsTools(StatToolchain):
                                "vswhere.exe -legacy {0} -property installationPath -latest")
         toolsPath = executeForOutput(cmdLine.format(searchPattern))
         if not toolsPath == '':
-            toolsPath = os.path.join(toolsPath,"Common7", "Tools")
+            toolsPath = os.path.join(toolsPath, "Common7", "Tools")
         return toolsPath
 
     @staticmethod
@@ -147,7 +146,7 @@ class MsvsTools(StatToolchain):
         output = self.__queryDevEnvironment("set VisualStudioVersion").splitlines()[-1]
         try:
             versionId = float(output.split('=')[1])
-        except:
+        except (ValueError, IndexError):
             raise VsToolsException(VsToolsException.INCOMPATIBLE_TOOLS)
         return versionId
 
@@ -158,6 +157,7 @@ class MsvsTools(StatToolchain):
             raise VsToolsException(VsToolsException.INCOMPATIBLE_TOOLS)
         return output
 
+
 class VsToolsException(Exception):
     """
     Custom exception for STAT VS-Tools
@@ -165,6 +165,7 @@ class VsToolsException(Exception):
     NO_TOOLS_FOUND = "No MSVS Tools were found on this PC."
     UNSUPPORTED_TOOLS = "MSVS Tools {0} are not explicitly supported."
     INCOMPATIBLE_TOOLS = "MSVS Tools are not operable."
+
 
 if __name__ == '__main__':
     for _tools in (MsvsTools.find(2008), MsvsTools.find()):

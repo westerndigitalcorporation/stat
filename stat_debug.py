@@ -17,6 +17,7 @@ def generateFilename(prefix=''):
     filename = re.sub(r'[^\w.]', '', '_{0}_{1}.csv'.format(prefix, '_'.join([arg for arg in sys.argv[1:]])))
     return '/'.join([attributes.OUTPUT_DIRECTORY, filename])
 
+
 class Profiler(object):
 
     def __init__(self, filenamePrefix='stats'):
@@ -58,7 +59,7 @@ class ProfileCsvStream(object):
         self.__close()
 
     def __close(self):
-        if not self.__file is None:
+        if self.__file is not None:
             self.__flush()
             self.__file.flush()
             self.__file.close()

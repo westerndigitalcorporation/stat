@@ -5,11 +5,12 @@ from stat_makefile_generator import StatMakefileGenerator, StatMakefileGenerator
 from services import toPosixPath, isWindows, remove
 from stat_configuration import StatConfiguration
 from stat_makefile import StatMakefile
-from testing_tools import FileBasedTestCase
+from tests.test_services import FileBasedTestCase
 
 TEST_PRODUCT_NAME = "product"
 TEST_PRODUCT_FILE = TEST_PRODUCT_NAME + ".mak"
 TEST_PRODUCT_EXEC = TEST_PRODUCT_NAME + (".exe" if isWindows() else "")
+
 
 class TestStatMakefileGenerator(FileBasedTestCase):
 
@@ -71,4 +72,3 @@ class TestStatMakefileGenerator(FileBasedTestCase):
 
     def __verifyToolsMakfileIsIncluded(self):
         self.assertIn('UNITY_INCLUDE_CONFIG_H', self.parser[StatMakefile.DEFINES].split())
-

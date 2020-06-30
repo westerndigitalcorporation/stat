@@ -1,16 +1,17 @@
 import os
 import re
+# noinspection PyUnresolvedReferences
 from xml.dom.minidom import parseString as parseXmlString
-from mock import Mock, PropertyMock, call
 
 import stat_attributes as attributes
+from vs_tools import MsvsTools
 from ide_writer import IdeXmlWriter
 from msvs_ide_writer import MsvsSolutionWriter, MsvsLegacyWriter, MsvsWriter, Msvs2010ProjectWriter
 from services import locateResource, readTextFileAtOnce, toNativePath
 from stat_configuration import StatConfiguration
 from stat_makefile_project import StatMakefileProject
-from testing_tools import convertXmlToDictionary, FileBasedTestCase
-from vs_tools import MsvsTools
+from tests.testing_tools import convertXmlToDictionary, FileBasedTestCase, Mock, PropertyMock, call
+
 
 CUT = MsvsSolutionWriter.__module__
 
@@ -28,6 +29,7 @@ TEST_NMAKE_FILE = '/root/tools/bin/nmake.exe'
 TEST_VCPROJ_TEMPLATE_FILE = './extra/template.vcproj'
 TEST_VCXPROJ_TEMPLATE_FILE = './extra/template.vcxproj'
 
+
 class MsvsWriterTestCase(FileBasedTestCase):
 
     def mockCommonObjects(self):
@@ -40,6 +42,7 @@ class MsvsWriterTestCase(FileBasedTestCase):
         type(self.tools).year = self.year
         type(self.tools).solutionFormat = PropertyMock(return_value=TEST_SOLUTION_FORMAT)
         self.makefileProject = StatMakefileProject(TEST_MAKEFILE)
+
 
 class TestMsvsWriter(MsvsWriterTestCase):
 
@@ -105,11 +108,11 @@ class TestMsvsLegacyWriter(MsvsWriterTestCase):
         output = os.path.join('..', attributes.OUTPUT_DIRECTORY)
         expected = convertXmlToDictionary(
             parseXmlString(self.PROJECT_TEMPLATE.format(
-                version=TEST_VERSION, name=self.makefileProject.projectName, guid=self.writer._PROJECT_GUID,
+                version=TEST_VERSION, name=self.makefileProject.name, guid=self.writer._PROJECT_GUID,
                 nmake=TEST_NMAKE_FILE, filename=TEST_MAKEFILE, output=output,
                 executable="{0}.exe".format(self.makefileProject.outputName),
                 definitions=";".join(self.makefileProject.definitions)
-        )))
+            )))
         self.assertEqual(expected, actual)
 
     def test_createRootToken(self):
@@ -156,7 +159,7 @@ class TestMsvsLegacyWriter(MsvsWriterTestCase):
 
         self.assertCalls(self.ideXmlWriter_write, [call()])
         expected = [call(self.makefileProject, self.tools, MsvsLegacyWriter._PROJECT_GUID,
-                         "vs_" + self.makefileProject.projectName + ".vcproj"), call().write()]
+                         "vs_" + self.makefileProject.name + ".vcproj"), call().write()]
         self.assertCalls(self.msvsSolutionWriter, expected)
 
     def __getElements(self, tagName, **xmlAttributes):
@@ -167,6 +170,7 @@ class TestMsvsLegacyWriter(MsvsWriterTestCase):
                     break
             else:
                 yield tag
+
 
 class TestMsvs2010ProjectWriter(MsvsWriterTestCase):
 
@@ -186,7 +190,7 @@ class TestMsvs2010ProjectWriter(MsvsWriterTestCase):
         actual = convertXmlToDictionary(self.writer._doc)
         output = os.path.join('..', attributes.OUTPUT_DIRECTORY)
         expected = convertXmlToDictionary(parseXmlString(self.PROJECT_TEMPLATE.format(
-            version=TEST_VERSION, name=self.makefileProject.projectName, guid=self.writer._PROJECT_GUID,
+            version=TEST_VERSION, name=self.makefileProject.name, guid=self.writer._PROJECT_GUID,
             nmake=TEST_NMAKE_FILE, filename=TEST_MAKEFILE, output=output,
             executable="{0}.exe".format(self.makefileProject.outputName),
             definitions=";".join(self.makefileProject.definitions)
@@ -202,7 +206,7 @@ class TestMsvs2010ProjectWriter(MsvsWriterTestCase):
         tags = self.writer._doc.getElementsByTagName("ClCompile")
         received = [tag.getAttribute("Include") for tag in tags]
         expected = [os.path.join("..", source) for source in sources]
-        self.assertItemsEqual(expected, received)
+        self.assertSameItems(expected, received)
 
     def test_addFile_forHeaderFiles(self):
         sources = ['./main_api.h', './sub_directory/inc/header_a.h', './inc/sub_api.h']
@@ -213,8 +217,7 @@ class TestMsvs2010ProjectWriter(MsvsWriterTestCase):
         tags = self.writer._doc.getElementsByTagName("ClInclude")
         received = [tag.getAttribute("Include") for tag in tags]
         expected = [os.path.join("..", source) for source in sources]
-        self.assertItemsEqual(expected, received)
-
+        self.assertSameItems(expected, received)
 
     def test_write(self):
         writer = self.writer
@@ -223,5 +226,5 @@ class TestMsvs2010ProjectWriter(MsvsWriterTestCase):
 
         self.assertCalls(self.ideXmlWriter_write, [call()])
         expected = [call(self.makefileProject, self.tools, MsvsLegacyWriter._PROJECT_GUID,
-                         "vs_" + self.makefileProject.projectName + ".vcxproj"), call().write()]
+                         "vs_" + self.makefileProject.name + ".vcxproj"), call().write()]
         self.assertCalls(self.msvsSolutionWriter, expected)

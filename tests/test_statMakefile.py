@@ -2,7 +2,7 @@ import os
 import re
 
 from stat_makefile import StatMakefile, StatMakFileException, _REG_EXP_INCLUDE
-from testing_tools import FileBasedTestCase
+from tests.testing_tools import FileBasedTestCase
 
 
 class TestStatMakFile(FileBasedTestCase):
@@ -15,7 +15,7 @@ class TestStatMakFile(FileBasedTestCase):
         try:
             StatMakefile(nonExistingFile)
         except StatMakFileException as e:
-            self.assertEqual("Makefile '{fileName}' doesn't exist!".format(fileName = nonExistingFile), str(e))
+            self.assertEqual("Makefile '{fileName}' doesn't exist!".format(fileName=nonExistingFile), str(e))
         else:
             self.fail('The operation should have raised an exception')
 
@@ -24,7 +24,8 @@ class TestStatMakFile(FileBasedTestCase):
             StatMakefile.SOURCES: ['tests/src/sys_checksum.c', 'tests/src/ut_fletcher_tests.c'],
             StatMakefile.INCLUDES: ['tests/inc'],
             StatMakefile.INTERFACES: [],
-            StatMakefile.DEFINES: ['SIMPLE_DEFINE', 'ANOTHER_DEFINE', 'ADDITIONAL_DEFINE', 'EXTRA_DEFINE', 'SPARE_DEFINE', 'LAST_DEFINE', 'DEFINITION_VALUED=7', 'DEFINITION_SIMPLE'],
+            StatMakefile.DEFINES: ['SIMPLE_DEFINE', 'ANOTHER_DEFINE', 'ADDITIONAL_DEFINE', 'EXTRA_DEFINE',
+                                   'SPARE_DEFINE', 'LAST_DEFINE', 'DEFINITION_VALUED=7', 'DEFINITION_SIMPLE'],
         }
         parser = StatMakefile(self.SIMPLE_MAKEFILE)
         self.assertEqual(parser.name, os.path.basename(self.SIMPLE_MAKEFILE).split('.')[0])
@@ -34,7 +35,9 @@ class TestStatMakFile(FileBasedTestCase):
 
     def test_parsingOfDynamicallyDefinedValues(self):
         expected = {
-            StatMakefile.SOURCES: ['test_main.c', 'code/src/sys_checksum.c', 'code/src/fletcher.c', 'tests/src/ut_fletcher_tests.c', 'tests/src/ut_checksum_tests.c', 'shared/fa/src/ut_fa_stub.c'],
+            StatMakefile.SOURCES: ['test_main.c', 'code/src/sys_checksum.c', 'code/src/fletcher.c',
+                                   'tests/src/ut_fletcher_tests.c', 'tests/src/ut_checksum_tests.c',
+                                   'shared/fa/src/ut_fa_stub.c'],
             StatMakefile.INCLUDES: ['code/inc', 'tests/inc']
         }
 
@@ -46,9 +49,11 @@ class TestStatMakFile(FileBasedTestCase):
     def test_parsingOfCompoundMakefileWithInclude(self):
         expected = {
             StatMakefile.SOURCES: ['test_main.c', 'code/src/sys_checksum.c', 'code/src/tools.c', 'code/src/logs.c',
-                        'code/src/fletcher.c', 'tests/src/ut_fletcher_tests.c', 'tests/src/ut_checksum_tests.c', 'shared/fa/src/ut_fa_stub.c'],
+                                   'code/src/fletcher.c', 'tests/src/ut_fletcher_tests.c',
+                                   'tests/src/ut_checksum_tests.c', 'shared/fa/src/ut_fa_stub.c'],
             StatMakefile.INCLUDES: ['code/inc', 'tests/inc'],
-            StatMakefile.DEFINES: ['SIMPLE_DEFINE', 'ANOTHER_DEFINE', 'ADDITIONAL_DEFINE', 'EXTRA_DEFINE', 'SPARE_DEFINE', 'LAST_DEFINE', 'SYSTEM_DEFINE_EXTRA'],
+            StatMakefile.DEFINES: ['SIMPLE_DEFINE', 'ANOTHER_DEFINE', 'ADDITIONAL_DEFINE', 'EXTRA_DEFINE',
+                                   'SPARE_DEFINE', 'LAST_DEFINE', 'SYSTEM_DEFINE_EXTRA'],
         }
 
         parser = StatMakefile(self.COMPOUND_MAKEFILE)

@@ -19,14 +19,28 @@ Release name format: [2.2.01] - 2020-06-14
 
 ## [Unreleased]
 
-None
+For release  [1.1.0] - 2020-xx-xx:
 
+### Added
+
+- Added support for Python 3 series (verified on versions 3.5 - 3.8, using Conda)
+- Added support to several versions of Python Mock module in unit-tests of the framework
+
+### Changed
+
+- Changed processor counting method so that it doesn't mandatory requires `psutil` package
+- Made additional adjustments to handling of `multiprocessing`-related flows, based on: 
+    - Issues discovered during Python 3 adjustments  
+    and
+    - Issues reported by other developers in the community
+- Code-style changes to meet pep-8 (except for naming conventions)
 
 ## [1.0.0] - 2020-06-26 
 
 ### Added
+
 - First official release of STAT-framework to the open-source
-- Added CHANGELOG.md following format defined by [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+- Added CHANGELOG.md following format defined by "[Keep a Changelog](https://keepachangelog.com/en/1.0.0/)"
 - Added licensing information for the documentation of the framework
 - Finished first draft of STAT-Framework documentation
 - Added complete support to multiple versions of MS Visual Studio

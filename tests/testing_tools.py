@@ -4,18 +4,24 @@ import sys
 import os
 from shutil import rmtree
 from unittest import TestCase
+# noinspection PyUnresolvedReferences
 from xml.dom.minidom import Text
 
 from services import isWindows
 
 try:
-    from unittest.mock import patch, call # pylint: disable=no-name-in-module
+    from unittest.mock import Mock, patch, call, mock_open, PropertyMock  # pylint: disable=no-name-in-module
 except ImportError:
-    from mock import patch, call, mock_open
+    from mock import Mock, patch, call, mock_open, PropertyMock  # pylint: disable=no-name-in-module
 
 import stat_attributes as attributes
 
 BUILTINS_NAME = builtinsModuleName = '__builtin__' if sys.version_info.major < 3 else 'builtins'
+
+
+def isUnderIde():
+    return "PYCHARM_HOSTED" in os.environ or 'VSCODE_PID' in os.environ or \
+        os.getenv("SESSIONNAME") == "Console" or os.getenv("TERM_PROGRAM") == "vscode"
 
 
 def readFileLines(filePath):
@@ -23,6 +29,7 @@ def readFileLines(filePath):
     lines = report.readlines()
     report.close()
     return lines
+
 
 def convertXmlToDictionary(xml):
     def recursive_dict(element):
@@ -38,6 +45,7 @@ def convertXmlToDictionary(xml):
                 contents.setdefault(str(name), []).append(value)
         return str(element.nodeName), contents
     return dict(map(recursive_dict, xml.childNodes))
+
 
 class AdvancedTestCase(TestCase):
     __assertSameItems = None
@@ -104,7 +112,7 @@ class AdvancedTestCase(TestCase):
         if ordered:
             self.assertEqual(expectedCalls, receivedCalls)
         else:
-            self.assertItemsEqual(expectedCalls, receivedCalls)
+            self.assertSameItems(expectedCalls, receivedCalls)
 
 
 class FileBasedTestCase(AdvancedTestCase):
@@ -137,10 +145,13 @@ class SpyArguments(object):
     def __init__(self, *args, **kwargs):
         self.args = args
         self.__kwargs = kwargs
+
     def __getattr__(self, item):
         return self.__kwargs[item]
+
     def __setitem__(self, key, value):
         self.__kwargs[key] = value
+
 
 class SpyClass(object):
     def __new__(cls, classToSpy):
@@ -219,12 +230,13 @@ class SpyClass(object):
         substituted = getattr(sys.modules[inScript], className)
         return SpyClass(substituted)
 
+
 class SpyModule(object):
-    def __init__(self, moduleToSpy = None, scriptToSubstituteModuleIn = None):
+    def __init__(self, moduleToSpy=None, scriptToSubstituteModuleIn=None):
         self.__moduleToSpy = moduleToSpy
-        self.__originalSubstitutedModule = sys.modules[moduleToSpy] if not moduleToSpy is None else None
+        self.__originalSubstitutedModule = sys.modules[moduleToSpy] if moduleToSpy is not None else None
         self.__scriptToSubstituteModuleIn = scriptToSubstituteModuleIn
-        if not scriptToSubstituteModuleIn is None and not moduleToSpy is None:
+        if scriptToSubstituteModuleIn is not None and moduleToSpy is not None:
             setattr(sys.modules[scriptToSubstituteModuleIn], moduleToSpy, self)
         self.__callMocks = {}
         self.__callsHistory = {}
@@ -248,7 +260,7 @@ class SpyModule(object):
                 return self.__issueActualFunctionCall(functionName, *args, **kwargs)
         return spyHandler
 
-    def _substituteFunctionCall(self, functionName, arguments = SpyArguments()):
+    def _substituteFunctionCall(self, functionName, arguments=SpyArguments()):
         self[functionName].append(arguments)
         if functionName in self.__callMocks:
             return self._extractMockReturnValue(functionName)
@@ -264,12 +276,14 @@ class SpyModule(object):
         return mock
 
     def __issueActualFunctionCall(self, functionName, *args, **kwargs):
-        if not self.__originalSubstitutedModule is None and not self.__moduleToSpy is None:
+        if self.__originalSubstitutedModule is not None and self.__moduleToSpy is not None:
             return getattr(self.__originalSubstitutedModule, functionName)(*args, **kwargs)
 
     def restoreOriginalModule(self):
         if self.__scriptToSubstituteModuleIn is not None:
-            setattr(sys.modules[self.__scriptToSubstituteModuleIn], self.__moduleToSpy, self.__originalSubstitutedModule)
+            setattr(sys.modules[self.__scriptToSubstituteModuleIn],
+                    self.__moduleToSpy,
+                    self.__originalSubstitutedModule)
 
 
 class FakeOs(SpyModule):
@@ -277,12 +291,13 @@ class FakeOs(SpyModule):
         def __init__(self):
             SpyModule.__init__(self, 'os.path')
 
-    def __init__(self, scriptToSubstituteModuleIn = None):
+    def __init__(self, scriptToSubstituteModuleIn=None):
         SpyModule.__init__(self, 'os', scriptToSubstituteModuleIn)
         self.path = self.FakePath()
 
     def symlink(self, source, target):
-        self['symlink'].append(SpyArguments(source = source, target = target))
+        self['symlink'].append(SpyArguments(source=source, target=target))
+
 
 class FakeSubprocess(SpyModule):
     __MAX_SUPPORTED_PROCESS = 5
@@ -298,19 +313,21 @@ class FakeSubprocess(SpyModule):
         def wait(self):
             return self._substituteFunctionCall('wait')
 
-    def __init__(self, scriptToSubstituteModuleIn = None):
+    def __init__(self, scriptToSubstituteModuleIn=None):
         SpyModule.__init__(self, 'subprocess', scriptToSubstituteModuleIn)
-        self.processes = [self.FakeProcess() for dummy_index in range(self.__MAX_SUPPORTED_PROCESS)]
+        self.processes = [self.FakeProcess() for _dummyIndex in range(self.__MAX_SUPPORTED_PROCESS)]
 
     def Popen(self, *args, **kwargs):
         self['Popen'].append(SpyArguments(*args, **kwargs))
         callIndex = len(self['Popen']) - 1
         return self.processes[callIndex]
 
+
 class TestingToolsException(Exception):
     """
     Custom exception for STAT mak-file parser
     """
+
 
 if __name__ == '__main__':
     spy = SpyModule('os')

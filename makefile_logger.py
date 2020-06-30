@@ -9,15 +9,16 @@ import os
 
 import stat_attributes as attributes
 
+
 class MakefileLogger(object):
 
-    def __init__(self, makefileName, beSilent = False):
+    def __init__(self, makefileName, beSilent=False):
         self._makefile = makefileName
         self._isSilent = beSilent
         if not os.path.isdir(attributes.LOGS_DIRECTORY):
             os.mkdir(attributes.LOGS_DIRECTORY)
         logfilePath = os.path.join(attributes.LOGS_DIRECTORY, '.'.join([os.path.splitext(makefileName)[0], 'log']))
-        self._logfile = open(logfilePath,'wb')
+        self._logfile = open(logfilePath, 'w')
 
     def write(self, line):
         lineToLog = line.strip()
