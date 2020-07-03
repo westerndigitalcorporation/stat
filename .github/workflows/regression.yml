@@ -5,7 +5,7 @@ name: Regression Tests
 
 on:
   push:
-    branches: [master, develop]
+    branches: [master, develop, feature/**]
     paths-ignore: ['docs/**', '*.md']
   pull_request:
     branches: [master]
@@ -28,17 +28,17 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install Python 2.7 dependencies
+      if: ${{ matrix.python-version == 2.7 }}
+      run: |
+        pip install mock==1.0.1
+
     - name: Install common dependencies
       run: |
         python -m pip install --upgrade pip
         pip install flake8
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi 
- 
-    - name: Install Python 2.7 dependencies
-      if: ${{ matrix.python-version == 2.7 }}
-      run: |
-        pip install mock==1.0.1 
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi 
+        pip freeze > requirements.txt
+        pip install -r requirements.txt
         
     - name: Run Framework tests
       run: |
@@ -46,7 +46,7 @@ jobs:
         
     - name: Run STAT-Mock tests
       run: |
-        makestat -g
+        python makestat.py -g
       working-directory: ./lib/tests
  
     - name: Lint with flake8
@@ -55,10 +55,3 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-  reuse-compliance:
-    runs-on: ubuntu-latest
-    steps: 
-    - uses: actions/checkout@v2
-    - name: REUSE Compliance Check
-      uses: fsfe/reuse-action@v1
