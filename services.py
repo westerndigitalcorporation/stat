@@ -11,6 +11,7 @@ import platform
 import subprocess
 from fnmatch import filter as filterFileNames
 from shutil import rmtree
+from threading import Thread
 from time import sleep
 from json import dump as dumpJson
 
@@ -54,21 +55,34 @@ def mkdir(path, exist_ok=False):
 
 
 def execute(command, beSilent=False, **kwargs):
-    lines = []
     arguments = dict(bufsize=1, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     arguments.update(kwargs)
     commandLine = " ".join(command) if isinstance(command, (list, tuple)) else command
     process = subprocess.Popen(commandLine, **arguments)
-    for line in iter(process.stdout.readline, ''):
-        if not beSilent:
-            print(line, end='')
-        lines.append(line)
-    process.wait()
+    lines = []
+    thread = Thread(target=__captureOutputLines, args=(process, beSilent, lines))
+    thread.setDaemon(True)
+    thread.start()
+    thread.join()
+    process.communicate()
     return process.returncode, lines
 
 
+def __captureOutputLines(process, beSilent, lines):
+    for _line in iter(process.stdout.readline, b''):
+        if _line == '':
+            break
+        lines.append(_line)
+        if not beSilent:
+            print(_line, end='')
+
+
 def executeForOutput(command, **kwargs):
-    return ''.join(execute(command, beSilent=True, **kwargs)[1]).strip()
+    arguments = dict(bufsize=1, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    arguments.update(kwargs)
+    process = subprocess.Popen(command, **arguments)
+    output, _ = process.communicate()
+    return output.strip()
 
 
 def remove(path):

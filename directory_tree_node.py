@@ -44,7 +44,7 @@ class DirectoryTreeNode(object):
     def __retrieveLeafNode(self, dirPath):
         treeNode = self
         pathTail = dirPath
-        while pathTail is not '':
+        while pathTail != '':
             pathRoot, pathTail = splitByRoot(pathTail)
             treeNode = treeNode.__retrieveNextTreeNode(pathRoot)
         return treeNode
