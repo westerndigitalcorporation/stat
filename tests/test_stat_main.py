@@ -14,7 +14,7 @@ from stat_argument_parser import StatArgumentParser
 from tests_runner import TestsRunner, TestsRunnerException
 from vs_tools import MsvsTools
 from services import writeJsonFile, remove, mkdir
-from tests.testing_tools import AdvancedTestCase, PropertyMock, call, Mock, isUnderIde
+from tests.testing_tools import AdvancedTestCase, PropertyMock, call, Mock
 
 CUT = StatMain.__module__
 
@@ -269,7 +269,7 @@ class TestStatMainGear(TestStatMainBase):
         sys.modules["__main__"].__file__ = self.old_main_file
 
     def test_run_uponGearBoost(self):
-        if isUnderIde() and (sys.version_info >= (3, 0)):
+        if sys.version_info >= (3, 0):
             self.skipTest("Multiprocessing can't work in an interactive environment under Python 3+.")
         expectedCores = 8
         receivedCores = []

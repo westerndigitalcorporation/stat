@@ -4,6 +4,7 @@ from io import TextIOWrapper
 from shutil import copyfile
 
 import services
+from ctypes import c_ulong
 from stat_attributes import OUTPUT_DIRECTORY, PRODUCT_DIRECTORY
 from tests.testing_tools import *  # pylint: disable=unused-wildcard-import
 
@@ -303,84 +304,102 @@ class TestMkdir(FileBasedTestCase):
         self.assertTrue(os.path.isdir(TEST_PATH))
 
 
-TEST_FAKE_OUTPUT = ['first line\n', 'second line\n', 'third line\n', '']
+TEST_FAKE_OUTPUT = ['first line\n', 'second line\n', 'third line\n', '\n']
 TEST_FAKE_RETURN_CODE = 0xC0DE
 
 
 class TestExecute(AdvancedTestCase):
 
     def setUp(self):
-        process = Mock(spec=subprocess.Popen)
-        stdoutMock = Mock(spec=TextIOWrapper)
-        stdoutMock.readline.side_effect = TEST_FAKE_OUTPUT
-        returnCode = PropertyMock(return_value=TEST_FAKE_RETURN_CODE)
-        type(process).stdout = PropertyMock(return_value=stdoutMock)
-        type(process).returncode = returnCode
-        self.pOpen = self.patch(CUT, '.'.join([subprocess.__name__, subprocess.Popen.__name__]), return_value=process)
-        self.process = process
         self.printMock = self.patchBuiltinObject('print')
-        self.returnCode = returnCode
 
-    def test_execute_simple(self):
-        fakeCommand = "some fake command"
+    def test_executeWithSuccess(self):
 
-        status, receivedOutput = services.execute(fakeCommand)
+        status, receivedOutput = services.execute("python -m tests.test_services --pass")
 
-        expected = [call(fakeCommand, bufsize=1, universal_newlines=True,
-                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)]
-        self.assertCalls(self.pOpen, expected)
-        self.assertCalls(self.process, [call.wait()])
-        self.assertEqual(TEST_FAKE_RETURN_CODE, status)
-        expected = TEST_FAKE_OUTPUT[:-1]
-        self.assertEqual(expected, receivedOutput)
-        expected = [call(line, end='') for line in expected]
+        self.assertEqual(0, status)
+        self.assertEqual(TEST_FAKE_OUTPUT, receivedOutput)
+        expected = [call(line, end='') for line in TEST_FAKE_OUTPUT]
         self.assertCalls(self.printMock, expected)
 
-    def test_execute_silent(self):
-        fakeCommand = "some fake command to be executed silently"
+    def test_executeSilently(self):
 
-        status, receivedOutput = services.execute(fakeCommand, beSilent=True)
+        status, receivedOutput = services.execute("python -m tests.test_services --pass", beSilent=True)
 
-        expected = [call(fakeCommand, bufsize=1, universal_newlines=True,
-                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)]
-        self.assertCalls(self.pOpen, expected)
-        self.assertCalls(self.process, [call.wait()])
-        self.assertEqual(TEST_FAKE_RETURN_CODE, status)
-        expected = TEST_FAKE_OUTPUT[:-1]
-        self.assertEqual(expected, receivedOutput)
+        self.assertEqual(0, status)
+        self.assertEqual(TEST_FAKE_OUTPUT, receivedOutput)
         self.assertCalls(self.printMock, [])
 
-    def test_execute_withCustomKwargs(self):
-        fakeCommand = "some fake command to be executed silently"
+    def test_executeWithFailure(self):
+        status, receivedOutput = services.execute("python -m tests.test_services --fail")
 
-        dummyForStatus, receivedOutput = services.execute(fakeCommand, beSilent=False, bufsize=0, env={})
+        self.assertEqual(c_ulong(-1).value, c_ulong(status).value)
+        self.assertEqual([], receivedOutput)
+        self.assertCalls(self.printMock, [])
 
-        expected = [call(fakeCommand, bufsize=0, universal_newlines=True,
-                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env={})]
-        self.assertCalls(self.pOpen, expected)
-        expected = TEST_FAKE_OUTPUT[:-1]
-        self.assertEqual(expected, receivedOutput)
-
-    def test_execute_withCommandList(self):
+    def test_executeCorrectness(self):
         fakeCommand = "some fake command to passed as a list"
+        pOpen = self.__patchPOpen()
 
-        dummyForStatus, receivedOutput = services.execute(fakeCommand.split(), beSilent=False)
+        services.execute(fakeCommand)
 
         expected = [call(fakeCommand, bufsize=1, universal_newlines=True,
-                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)]
-        self.assertCalls(self.pOpen, expected)
-        expected = TEST_FAKE_OUTPUT[:-1]
-        self.assertEqual(expected, receivedOutput)
+                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT), call().communicate()]
+        self.assertCalls(pOpen, expected)
 
-    def test_executeForOutput(self):
-        expected = "full_example.mak, simple.mak, simplified_example.mak"
-        command = 'ls -m *.mak'
-        execute = self.patch(CUT, services.execute.__name__, return_value=(0, [expected]))
+    def test_executeCustomKwargs(self):
+        fakeCommand = "some fake command to passed as a list"
+        pOpen = self.__patchPOpen()
 
-        received = services.executeForOutput(command, shell=True)
+        services.execute(fakeCommand, env={})
 
-        self.assertEqual(expected, received)
-        self.assertCalls(execute, [call(command, beSilent=True, shell=True)])
+        expected = [call(fakeCommand, bufsize=1, universal_newlines=True,
+                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env={}), call().communicate()]
+        self.assertCalls(pOpen, expected)
+
+    def __patchPOpen(self):
+        pOpen = self.patch(CUT, '.'.join([subprocess.__name__, subprocess.Popen.__name__]))
+        stdoutMock = Mock(spec=TextIOWrapper)
+        stdoutMock.readline.side_effect = TEST_FAKE_OUTPUT
+        process = pOpen.return_value
+        type(process).stdout = PropertyMock(return_value=stdoutMock)
+        type(process).returncode = PropertyMock(return_value=TEST_FAKE_RETURN_CODE)
+        return pOpen
+
+
+class TestExecuteForOutput(AdvancedTestCase):
+
+    TEST_FAKE_OUTPUT = ''.join(TEST_FAKE_OUTPUT).strip()
+
+    def test_executeForOutputWithSuccess(self):
+        receivedOutput = services.executeForOutput("python -m tests.test_services --pass")
+        self.assertEqual(self.TEST_FAKE_OUTPUT, receivedOutput)
+
+    def test_executeForOutputWithFailure(self):
+        receivedOutput = services.executeForOutput("python -m tests.test_services --fail")
+        self.assertEqual('', receivedOutput)
+
+    def test_executeForOutputCorrectness(self):
+        fakeCommand = "some fake command to passed as a list"
+        pOpen = self.patch(CUT, '.'.join([subprocess.__name__, subprocess.Popen.__name__]))
+        pOpen.return_value.communicate.return_value = ('', None)
+
+        services.executeForOutput(fakeCommand)
+
+        expected = [call(fakeCommand, bufsize=1, universal_newlines=True,
+                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT), call().communicate()]
+        self.assertCalls(pOpen, expected)
+
+    def test_executeForOutputCustomKwargs(self):
+        fakeCommand = "some fake command to passed as a list"
+        pOpen = self.patch(CUT, '.'.join([subprocess.__name__, subprocess.Popen.__name__]))
+        pOpen.return_value.communicate.return_value = ('', None)
+
+        services.executeForOutput(fakeCommand, env={})
+
+        expected = [call(fakeCommand, bufsize=1, universal_newlines=True,
+                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env={}), call().communicate()]
+        self.assertCalls(pOpen, expected)
 
 
 class TestWriteJsonFile(AdvancedTestCase):
@@ -397,3 +416,11 @@ class TestWriteJsonFile(AdvancedTestCase):
 
         self.assertCalls(self.open, [call(fileName, 'w'), call().__enter__(), call().__exit__(None, None, None)])
         self.assertCalls(self.dumpJson, [call(data, self.open.return_value, indent=3)])
+
+
+if __name__ == '__main__':
+    if sys.argv[1] == '--pass':
+        for _line in TEST_FAKE_OUTPUT:
+            print(_line.strip())
+    elif sys.argv[1] == '--fail':
+        sys.exit(-1)

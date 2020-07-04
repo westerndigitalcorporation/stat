@@ -57,9 +57,9 @@ class StatArgumentParser(object):
         if self.ide is not None:
             pureArguments = arguments if arguments else sys.argv[1:]
             pureArguments = ' '.join([item for item in pureArguments if item not in self.__instructions.mak_files])
-            if not len(self.makeFiles) is 1:
+            if len(self.makeFiles) != 1:
                 self.__parser.error("'{0}' can be invoked for a single makefile only".format(pureArguments))
-            elif not len(self.targetProducts) is 1:
+            elif len(self.targetProducts) != 1:
                 self.__parser.error("'{0}' can be invoked for a single product only".format(pureArguments))
 
     def shallCompile(self):
