@@ -1,0 +1,12 @@
+name: REUSE Compliance
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: REUSE Compliance Check
+      run: |
+        docker run --volume $(pwd):/data fsfe/reuse lint
