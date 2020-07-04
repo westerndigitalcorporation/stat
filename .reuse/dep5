@@ -29,3 +29,8 @@ License: MIT
 Files: resources/vswhere.exe
 Copyright: Copyright (C) Microsoft Corporation
 License: MIT
+
+
+Files: .github/* .vscode/*
+Copyright: Copyright (C) Microsoft Corporation
+License: MIT
