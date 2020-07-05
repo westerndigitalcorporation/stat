@@ -14,12 +14,14 @@ All notable changes to this project will be documented in this file.
 ### Fixed       - for any bug fixes.
 ### Security    - in case of vulnerabilities.
 
-Release name format: [2.2.01] - 2020-06-14
+Release name format: [2.2.01] - 2020-02-02
 -->
 
 ## [Unreleased]
 
-For release  [1.1.0] - 2020-xx-xx:
+None
+
+##  [1.1.0] - 2020-07-05:
 
 ### Added
 
