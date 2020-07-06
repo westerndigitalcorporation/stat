@@ -87,7 +87,7 @@ Please refer the following user-guides describing how to work with STAT framewor
 
 Here is additional helpful Unity documentation:
 
-* [*Underlying Theory*](./docs/underlying_theory.md) - theoretical background that lead the design of the framework, a critical knowledge to become Pro with STAT
+* [Conceptual Model](./docs/conceptual_model.md) - conceptual model underlying the design of the framework, a valuable knowledge to become Pro with STAT
 * [*Unity Assertions Cheat Sheet*](./unity/docs/UnityAssertionsCheatSheetSuitableforPrintingandPossiblyFraming.pdf) - a cook-book with macros worth printing and framing
 * [*Unity Configuration Guide*](./unity/docs/UnityConfigurationGuide.md) - the default configuration of Unity defined within STAT can be overwritten
 
