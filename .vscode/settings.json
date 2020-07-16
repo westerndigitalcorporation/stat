@@ -13,6 +13,10 @@
   "python.testing.unittestEnabled": true,
   "python.linting.enabled": true,
   "cSpell.words": [
-    "pylint"
-  ],
+    "executables",
+    "makefiles",
+    "makestat",
+    "pylint",
+    "statignore"
+  ]
 }

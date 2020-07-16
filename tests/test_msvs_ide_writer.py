@@ -105,7 +105,8 @@ class TestMsvsLegacyWriter(MsvsWriterTestCase):
 
     def test_init(self):
         actual = convertXmlToDictionary(self.writer._doc)
-        output = os.path.join('..', attributes.OUTPUT_DIRECTORY)
+        output = os.path.join('..', attributes.OUTPUT_DIRECTORY, self.makefileProject.outputName,
+                              'msvs_' + self.makefileProject.name)
         expected = convertXmlToDictionary(
             parseXmlString(self.PROJECT_TEMPLATE.format(
                 version=TEST_VERSION, name=self.makefileProject.name, guid=self.writer._PROJECT_GUID,
@@ -188,7 +189,8 @@ class TestMsvs2010ProjectWriter(MsvsWriterTestCase):
 
     def test_init(self):
         actual = convertXmlToDictionary(self.writer._doc)
-        output = os.path.join('..', attributes.OUTPUT_DIRECTORY)
+        output = os.path.join('..', attributes.OUTPUT_DIRECTORY, self.makefileProject.outputName,
+                              'msvs_' + self.makefileProject.name)
         expected = convertXmlToDictionary(parseXmlString(self.PROJECT_TEMPLATE.format(
             version=TEST_VERSION, name=self.makefileProject.name, guid=self.writer._PROJECT_GUID,
             nmake=TEST_NMAKE_FILE, filename=TEST_MAKEFILE, output=output,

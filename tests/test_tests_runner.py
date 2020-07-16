@@ -23,14 +23,8 @@ class TestTestsRunner(FileBasedTestCase):
 
     def setUp(self):
         self.makefile = StatMakefile(TEST_MAKEFILE_NAME)
-        self.remove = self.patch(CUT, remove.__name__, return_value=False)
         self.execute = self.patch(CUT, execute.__name__, return_value=(0, []))
         self.patch(CUT, 'os.environ', new=TEST_ENVIRONMENT_MOCK)
-
-    def test_cleanup(self):
-        createRunner()
-        self.assertCalls(self.remove, [call(os.path.join(attributes.OUTPUT_DIRECTORY, TEST_PACKAGE_NAME, directory))
-                                       for directory in attributes.OUTPUT_SUB_DIRECTORIES])
 
     def test_compile(self):
         runner = createRunner()

@@ -175,7 +175,7 @@ def locateResource(filename):
 
 
 def __selectIgnoredFiles(makefiles, pathName):
-    statIgnoreFile = os.path.join(pathName, '.statignore')
+    statIgnoreFile = os.path.join(pathName, attributes.IGNORE_FILENAME)
     if os.path.exists(statIgnoreFile):
         ignoreFile = open(statIgnoreFile, 'r')
         ignoreList = [line.strip() for line in ignoreFile.readlines()]

@@ -6,6 +6,7 @@
 # DEFINES - list of definitions to be invoked via command-line
 
 NAME = simplified
+OUTPUT_NAME = simplified_output
 
 # Source files
 SOURCES = \
