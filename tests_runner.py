@@ -7,7 +7,7 @@
 import os
 
 import stat_attributes as attributes
-from services import execute, remove
+from services import execute
 from stat_makefile import StatMakefile
 
 
@@ -18,15 +18,11 @@ class TestsRunner(object):
         self.__makefile = StatMakefile(makefileName)
         self.__beSilent = not isVerbose
         self.__log = []
-        self.__clearOutputs()
         self.__command = commandToCompile
 
-    def __clearOutputs(self):
-        for directory in attributes.OUTPUT_SUB_DIRECTORIES:
-            remove(self.__getOutputPath(directory))
-
     def __getOutputPath(self, *args):
-        return os.path.join(attributes.OUTPUT_DIRECTORY, self.__makefile.name, *args)
+        makefile = self.__makefile
+        return os.path.join(attributes.OUTPUT_DIRECTORY, makefile[self.__makefile.NAME], makefile.name, *args)
 
     def compile(self):
         environ = dict(os.environ, PRIVATE_NAME=self.__makefile.name)

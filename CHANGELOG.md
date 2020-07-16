@@ -19,7 +19,7 @@ Release name format: [2.2.01] - 2020-02-02
 
 ## [Unreleased]
 
-None
+- Added several types of building options (e.g. incremental build, rebuild)
 
 ##  [1.1.0] - 2020-07-05:
 

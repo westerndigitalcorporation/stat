@@ -29,9 +29,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>.</OutDir>
     <IntDir>.</IntDir>
-    <NMakeBuildCommandLine>cd..&amp;&amp;&quot;{nmake}&quot; /S /NOLOGO /ERRORREPORT:NONE /F {filename}</NMakeBuildCommandLine>
-    <NMakeReBuildCommandLine>cd..&amp;&amp;&quot;{nmake}&quot; /S /NOLOGO /ERRORREPORT:NONE /F {filename}</NMakeReBuildCommandLine>
-    <NMakeCleanCommandLine>cd..&amp;&amp;&quot;{nmake}&quot; /S /NOLOGO /ERRORREPORT:NONE /F {filename} clean</NMakeCleanCommandLine>
+    <NMakeBuildCommandLine>cd..&amp;&amp;&quot;{nmake}&quot; /S /NOLOGO /ERRORREPORT:NONE /F {filename} PRIVATE_NAME=&quot;msvs_{name}&quot; build</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd..&amp;&amp;&quot;{nmake}&quot; /S /NOLOGO /ERRORREPORT:NONE /F {filename} PRIVATE_NAME=&quot;msvs_{name}&quot; rebuild</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd..&amp;&amp;&quot;{nmake}&quot; /S /NOLOGO /ERRORREPORT:NONE /F {filename} PRIVATE_NAME=&quot;msvs_{name}&quot; clean</NMakeCleanCommandLine>
     <NMakeOutput>{output}\bin\{executable}</NMakeOutput>
     <NMakePreprocessorDefinitions>WIN32;_DEBUG;{definitions};$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <NMakeIncludeSearchPath>{output}\inc;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>

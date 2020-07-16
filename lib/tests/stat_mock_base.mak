@@ -14,7 +14,7 @@ SOURCES = \
 INCLUDES = \
 
 # Dummy interfaces used to replace real ones
-DUMMY_INTERFACES = 
+DUMMY_INTERFACES = user_like_dummy.h
 
 # Preprocessor definitions
 DEFINES = $(DEFINES)

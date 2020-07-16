@@ -10,7 +10,7 @@ from stat_attributes import TOOL_PATH, RESOURCES_DIRECTORY
 from services import executeForOutput
 from stat_tool_chain import StatToolchain
 
-NMAKE_ARGUMENTS = "/S /NOLOGO /ERRORREPORT:NONE /F"
+NMAKE_ARGUMENTS = "/S /C /NOLOGO /F"
 SUPPORTED = {8.0: 2005, 9.0: 2008, 10.0: 2010, 11.0: 2012, 12.0: 2013, 14.0: 2015, 15.0: 2017, 16.0: 2019}
 SOLUTION_FORMATS = {8.0: 9.0, 9.0: 10.0, 10.0: 11.0, 11.0: 11.0, 12.0: 12.0, 14.0: 12.0, 15.0: 12.0, 16.0: 12.0}
 

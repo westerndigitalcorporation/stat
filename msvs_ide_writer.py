@@ -62,7 +62,8 @@ class MsvsLegacyWriter(IdeXmlWriter):
         super(MsvsLegacyWriter, self).__init__(ideName, contents)
         self._filename = self._PROJECT_FILENAME.format(self._contents.name)
         self.__tools = tools
-        output = os.path.join("..", attributes.OUTPUT_DIRECTORY)
+        output = os.path.join("..", attributes.OUTPUT_DIRECTORY, self._contents.outputName,
+                              "msvs_{0}".format(self._contents.name))
         self.__includePath = os.path.join(output, "inc")
         self.__executable = os.path.join(output, "bin", "{0}.exe".format(self._contents.outputName))
         root = self.__composeBodyBase()
@@ -81,13 +82,13 @@ class MsvsLegacyWriter(IdeXmlWriter):
         )
 
     def __composeConfigurations(self):
-        commandLine = 'cd..&&"{0}" /S /NOLOGO /ERRORREPORT:NONE /F {1}'.format(
-            self.__tools.nmakeFilePath, self._contents.makefile)
+        commandLine = 'cd..&&"{0}" /S /NOLOGO /ERRORREPORT:NONE /F {1} PRIVATE_NAME="msvs_{2}"'.format(
+            self.__tools.nmakeFilePath, self._contents.makefile, self._contents.name)
         tool = self.composeElement(
             "Tool",
             Name="VCNMakeTool",
-            BuildCommandLine=commandLine,
-            ReBuildCommandLine=commandLine,
+            BuildCommandLine=commandLine + " build",
+            ReBuildCommandLine=commandLine + " rebuild",
             CleanCommandLine=commandLine + " clean",
             Output=self.__executable,
             PreprocessorDefinitions="WIN32;_DEBUG;{0}".format(';'.join(self._contents.definitions)),
@@ -160,7 +161,8 @@ class Msvs2010ProjectWriter(IdeXmlWriter):
         super(Msvs2010ProjectWriter, self).__init__(ideName, contents)
         self._filename = self._PROJECT_FILENAME.format(self._contents.name)
         self.__tools = tools
-        output = os.path.join("..", attributes.OUTPUT_DIRECTORY)
+        output = os.path.join("..", attributes.OUTPUT_DIRECTORY, self._contents.outputName,
+                              "msvs_{0}".format(self._contents.name))
         self.__executable = os.path.join(output, "bin", "{0}.exe".format(self._contents.outputName))
         self.__includePath = os.path.join(output, "inc")
         self.__sources = self.composeElement("ItemGroup")
@@ -198,15 +200,15 @@ class Msvs2010ProjectWriter(IdeXmlWriter):
         ]
 
     def __composeCommandLineGroup(self):
-        commandLine = 'cd..&&"{0}" /S /NOLOGO /ERRORREPORT:NONE /F {1}'.format(
-            self.__tools.nmakeFilePath, self._contents.makefile)
+        commandLine = 'cd..&&"{0}" /S /NOLOGO /ERRORREPORT:NONE /F {1} PRIVATE_NAME="msvs_{2}"'.format(
+            self.__tools.nmakeFilePath, self._contents.makefile, self._contents.name)
         includePath = "{0};$(NMakeIncludeSearchPath)".format(self.__includePath)
         definitions = "WIN32;_DEBUG;{0};$(NMakePreprocessorDefinitions)".format(';'.join(self._contents.definitions))
         commandLineGroup = self.composeElement("PropertyGroup",
                                                dict(OutDir=".",
                                                     IntDir=".",
-                                                    NMakeBuildCommandLine=commandLine,
-                                                    NMakeReBuildCommandLine=commandLine,
+                                                    NMakeBuildCommandLine=commandLine + " build",
+                                                    NMakeReBuildCommandLine=commandLine + " rebuild",
                                                     NMakeCleanCommandLine=commandLine + " clean",
                                                     NMakeOutput=self.__executable,
                                                     NMakePreprocessorDefinitions=definitions,

@@ -221,7 +221,7 @@ class TestServices(FileBasedTestCase):
 
     def test_locateResource(self):
         resource = 'si4project.zip'
-        expected = os.path.abspath(os.path.join('..', attributes.RESOURCES_DIRECTORY, resource))
+        expected = os.path.relpath(os.path.join('..', attributes.RESOURCES_DIRECTORY, resource))
         self.assertEqual(expected, services.locateResource(resource))
 
     def test_locateResourceForNonExisting(self):

@@ -20,9 +20,10 @@ class TestStatArgumentParser(AdvancedTestCase):
         self.countCpuCores = self.patch(CUT, countCpuCores.__name__, return_value=TEST_MAXIMAL_PARALLELISM)
 
     def verifyCanonicalCompilationOutcomes(self, parser):
-        self.assertTrue(parser.shallCompile())
+        self.assertTrue(parser.shallBuild())
         self.assertTrue(parser.shallBeVerbose())
         self.assertIsNone(parser.ide)
+        self.assertEqual(0, parser.getRequestedCleaningLevel())
 
 
 class TestStatArgumentParserUponSingleProduct(TestStatArgumentParser):
@@ -46,6 +47,16 @@ class TestStatArgumentParserUponSingleProduct(TestStatArgumentParser):
         parser = self.parser
 
         parser.parse([])
+
+        self.assertEqual(MANY_MAKEFILES, parser.makeFiles)
+        self.assertCalls(self.listMakefiles, [call('.')])
+        self.__verifyCanonicalExecutionOutcomes()
+
+    def test_parse_uponExplicitRunRequest(self):
+        self.listMakefiles.return_value = MANY_MAKEFILES
+        parser = self.parser
+
+        parser.parse(['-r'])
 
         self.assertEqual(MANY_MAKEFILES, parser.makeFiles)
         self.assertCalls(self.listMakefiles, [call('.')])
@@ -93,20 +104,20 @@ class TestStatArgumentParserUponSingleProduct(TestStatArgumentParser):
         self.assertCalls(self.listMakefiles, [call('.', *fakeWildcard)])
         self.__verifyCanonicalExecutionOutcomes()
 
-    def test_parse_compileOnly(self):
+    def test_parse_buildOnly(self):
         self.listMakefiles.return_value = MANY_MAKEFILES
         parser = self.parser
 
-        parser.parse(['-c'])
+        parser.parse(['-b'])
 
         self.assertFalse(parser.shallRun())
         self.assertEqual(MANY_MAKEFILES, parser.makeFiles)
         self.assertCalls(self.listMakefiles, [call('.')])
         self.__verifyCanonicalCompilationOutcomes()
 
-    def test_parse_overSpecifiedPackagesWithCompileOnly(self):
+    def test_parse_overSpecifiedPackagesWithBuildOnly(self):
         fakeWildcard = MANY_MAKEFILES
-        arguments = ['-c'] + fakeWildcard
+        arguments = ['-b'] + fakeWildcard
         self.listMakefiles.return_value = MANY_MAKEFILES
         parser = self.parser
 
@@ -119,7 +130,7 @@ class TestStatArgumentParserUponSingleProduct(TestStatArgumentParser):
 
     def test_parse_withSilentMode(self):
         fakeWildcard = MANY_MAKEFILES
-        arguments = ['-c', '-s'] + fakeWildcard
+        arguments = ['-b', '-s'] + fakeWildcard
         self.listMakefiles.return_value = MANY_MAKEFILES
         parser = self.parser
 
@@ -127,7 +138,22 @@ class TestStatArgumentParserUponSingleProduct(TestStatArgumentParser):
 
         self.assertFalse(parser.shallBeVerbose())
         self.assertFalse(parser.shallRun())
-        self.assertTrue(parser.shallCompile())
+        self.assertTrue(parser.shallBuild())
+        self.assertEqual(MANY_MAKEFILES, parser.makeFiles)
+        self.assertCalls(self.listMakefiles, [call('.', *fakeWildcard)])
+
+    def test_parse_withCleaningRequest(self):
+        fakeWildcard = MANY_MAKEFILES
+        arguments = ['-b', '-cc'] + fakeWildcard
+        self.listMakefiles.return_value = MANY_MAKEFILES
+        parser = self.parser
+
+        parser.parse(arguments)
+
+        self.assertEqual(2, parser.getRequestedCleaningLevel())
+        self.assertTrue(parser.shallBeVerbose())
+        self.assertFalse(parser.shallRun())
+        self.assertTrue(parser.shallBuild())
         self.assertEqual(MANY_MAKEFILES, parser.makeFiles)
         self.assertCalls(self.listMakefiles, [call('.', *fakeWildcard)])
 
@@ -135,7 +161,7 @@ class TestStatArgumentParserUponSingleProduct(TestStatArgumentParser):
         parser = self.parser
         self.assertEqual([SINGLE_PRODUCT], parser.targetProducts)
         self.assertEqual([SINGLE_MAKEFILE], parser.makeFiles)
-        self.assertFalse(parser.shallCompile())
+        self.assertFalse(parser.shallBuild())
         self.assertFalse(parser.shallRun())
         self.assertIsNotNone(parser.ide)
 
@@ -213,16 +239,18 @@ class TestStatArgumentParserUponSingleProduct(TestStatArgumentParser):
 
         self.assertEqual(TEST_MAXIMAL_PARALLELISM - 1, parser.processes)
         self.assertFalse(parser.shallBeVerbose())
+        self.assertEqual(1, parser.getRequestedCleaningLevel())
 
     def test_processesGearExplicitValue(self):
         self.listMakefiles.return_value = SINGLE_PRODUCT * (TEST_MAXIMAL_PARALLELISM + 1)
         parser = self.parser
         expected = TEST_MAXIMAL_PARALLELISM//2
 
-        parser.parse(['-g', str(expected)])
+        parser.parse(['-cc', '-g', str(expected)])
 
         self.assertEqual(expected, parser.processes)
         self.assertFalse(parser.shallBeVerbose())
+        self.assertEqual(1, parser.getRequestedCleaningLevel())
 
     def test_runOnSmallCpuCount(self):
         self.countCpuCores.return_value = STAT_MINIMAL_PARALLELISM - 1

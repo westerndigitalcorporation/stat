@@ -68,13 +68,14 @@ class TestStatMainBase(AdvancedTestCase):
         type(parser).redundant = self.redundantArguments
         return parser
 
-    def _mockParserResults(self, ide=None, shallExecute=True, shallBeVerbose=True):
+    def _mockParserResults(self, ide=None, shallExecute=True, shallBeVerbose=True, cleaningLevel=0):
         parser = self.statArgumentParser.return_value
         parser.ide = ide
         shallCompile = ide is None
-        parser.shallCompile.return_value = shallCompile
+        parser.shallBuild.return_value = shallCompile
         parser.shallRun.return_value = shallCompile and shallExecute
         parser.shallBeVerbose.return_value = shallCompile and shallBeVerbose
+        parser.getRequestedCleaningLevel.return_value = cleaningLevel
 
 
 class TestStatMain(TestStatMainBase):
@@ -143,10 +144,32 @@ class TestStatMain(TestStatMainBase):
         self._patchArgumentParser(targetProducts=[TARGET_PRODUCT], userMakefiles=MANY_MAKE_FILES)
         self._mockParserResults(shallExecute=False)
 
-        StatMain.run(['-c'])
+        StatMain.run(['-b'])
 
-        self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-c'])])
+        self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-b'])])
         expected = [call(makeFile, COMPILATION_COMMAND, False, True) for makeFile in MANY_MAKE_FILES]
+        self.assertCalls(self.runTestPackage, expected)
+
+    def test_run_withSingleLevelOfCleaning(self):
+        self._patchArgumentParser(targetProducts=[TARGET_PRODUCT], userMakefiles=MANY_MAKE_FILES)
+        self._mockParserResults(shallExecute=False, cleaningLevel=1)
+
+        StatMain.run(['-b', '-c'])
+
+        expectedCommandLine = COMPILATION_COMMAND + ' default_rebuild'
+        self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-b', '-c'])])
+        expected = [call(makeFile, expectedCommandLine, False, True) for makeFile in MANY_MAKE_FILES]
+        self.assertCalls(self.runTestPackage, expected)
+
+    def test_run_withDoubleLevelOfCleaning(self):
+        self._patchArgumentParser(targetProducts=[TARGET_PRODUCT], userMakefiles=MANY_MAKE_FILES)
+        self._mockParserResults(shallExecute=False, cleaningLevel=2)
+
+        StatMain.run(['-b', '-cc'])
+
+        expectedCommandLine = COMPILATION_COMMAND + ' clean' + ' default_rebuild'
+        self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-b', '-cc'])])
+        expected = [call(makeFile, expectedCommandLine, False, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
 
     def test_run_withSilentArguments(self):
@@ -170,13 +193,13 @@ class TestStatMain(TestStatMainBase):
         self.redundantArguments.return_value = ['-run', '--redundant']
 
         try:
-            StatMain.run(['-c'])
+            StatMain.run(['-b'])
         except StatWarning:
             pass
         else:
             self.fail("The framework shall fire a STAT Warning.")
 
-        self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-c'])])
+        self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-b'])])
         expected = [call(makeFile, COMPILATION_COMMAND, False, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
 

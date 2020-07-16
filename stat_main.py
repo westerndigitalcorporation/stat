@@ -69,12 +69,20 @@ class StatMain(object):
 
     def _run(self, manualArguments):
         self.__parser.parse(manualArguments)
+        self.adjustCommandLineWithCleaningLevel()
         if self.__parser.ide is not None:
             self.__createIdeWorkspace()
         else:
             self.__runTests()
         if self.__parser.redundant:
             raise StatWarning('WARNING: The arguments {0} are redundant!'.format(self.__parser.redundant))
+
+    def adjustCommandLineWithCleaningLevel(self):
+        cleaningLevel = self.__parser.getRequestedCleaningLevel()
+        if cleaningLevel > 0:
+            if cleaningLevel > 1:
+                self.__commandToCompile += ' {0}'.format(attributes.CLEAN_TARGET)
+            self.__commandToCompile += ' {0}'.format(attributes.REBUILD_TARGET)
 
     def __runTests(self):
         prepareOutputDirectories()
@@ -94,8 +102,8 @@ class StatMain(object):
 
     def __runTestsOnTargetInSerial(self, target):
         self.__prepareTarget(target)
-        for testPackageFile in self.__parser.makeFiles:
-            result = runTestPackage(testPackageFile, self.__commandToCompile, self.__parser.shallRun(),
+        for makefile in self.__parser.makeFiles:
+            result = runTestPackage(makefile, self.__commandToCompile, self.__parser.shallRun(),
                                     self.__parser.shallBeVerbose())
             self.__log(*result)
 
