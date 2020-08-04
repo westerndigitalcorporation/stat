@@ -38,7 +38,7 @@ class StatMakefileGenerator(object):
                                               name=self.__targetName,
                                               extension='.exe' if isWindows() else '',
                                               vs_dev=toPosixPath(tools.devBatchFile) if isWindows() else '',
-                                              tool_path=toPosixPath(attributes.TOOL_PATH),
+                                              tool_path=toPosixPath(os.path.relpath(attributes.TOOL_PATH)),
                                               product_file_path=self.__productFilePath)
         fileName = attributes.AUTO_GENERATED_MAKEFILE
         directory = os.path.dirname(fileName)

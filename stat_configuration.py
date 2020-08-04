@@ -20,11 +20,10 @@ def calculateConfigurationVersion():
 
 class StatConfiguration(Singleton):
     def __init__(self):
-        self.__toolPath = os.path.dirname(os.path.relpath(__file__))
         self.__configuration = {
             'TOOL_VERSION': attributes.VERSION,
             'OUTPUT_DIR': attributes.OUTPUT_DIRECTORY,
-            'TOOL_DIR': toPosixPath(attributes.TOOL_PATH),
+            'TOOL_DIR': toPosixPath(os.path.relpath(attributes.TOOL_PATH)),
             'DUMMIES_DIR': attributes.DUMMIES_DIRECTORY,
         }
         self.__products = [item[:-4] for item in listMakefiles(attributes.PRODUCT_DIRECTORY)]
@@ -49,10 +48,6 @@ class StatConfiguration(Singleton):
     def __iter__(self):
         for key in self.__configuration:
             yield key
-
-    @property
-    def statPath(self):
-        return self.__toolPath
 
     @property
     def products(self):
