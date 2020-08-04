@@ -10,7 +10,7 @@ VERSION = '2.3.00'
 # ----------------------------------------------------------------------------------------------------------------------
 def __getToolPath():
     import os  # Prevent porting by those which import this file
-    return os.path.relpath(os.path.dirname(os.path.relpath(__file__)))
+    return os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 # ----------------------------------------------------------------------------------------------------------------------
 
 

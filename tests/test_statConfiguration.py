@@ -30,15 +30,11 @@ class TestStatConfigurationDefault(TestStatConfiguration):
     def test__new__isSingleton(self):
         self.assertEqual(self.config, StatConfiguration())
 
-    def test_statPath(self):
-        directory = self.config.statPath
-        self.assertEqual(os.path.relpath('..'), directory)
-
     def test___init__basics(self):
         config = StatConfiguration()
         self.assertEqual(attributes.VERSION, config['TOOL_VERSION'])
         self.assertEqual(toPosixPath(attributes.OUTPUT_DIRECTORY), toPosixPath(config['OUTPUT_DIR']))
-        self.assertEqual(toPosixPath(attributes.TOOL_PATH), toPosixPath(config['TOOL_DIR']))
+        self.assertEqual(toPosixPath(os.path.relpath(attributes.TOOL_PATH)), toPosixPath(config['TOOL_DIR']))
         self.assertEqual(toPosixPath(attributes.DUMMIES_DIRECTORY), toPosixPath(config['DUMMIES_DIR']))
 
     def test_products(self):
