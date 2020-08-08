@@ -19,7 +19,21 @@ Release name format: [2.2.01] - 2020-02-02
 
 ## [Unreleased]
 
+##  [1.2.0] - 2020-08-12:
+
+### Added
+
 - Added several types of building options (e.g. incremental build, rebuild)
+
+### Changed
+
+- Modified the way that tool's root-path is referred to allow more flexibility
+    - Supports execution of STAT-own unit-test from different IDEs (e.g. VS Code, PyCharm)
+    - Reduces full-path references to minimum -> replaced (where possible) with relative path
+
+### Fixed 
+
+- Fixed the limitation within MSVS IDE that prevented compilation errors from being clickable from the debugger
 
 ##  [1.1.0] - 2020-07-05:
 

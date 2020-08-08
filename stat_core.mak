@@ -44,16 +44,16 @@ clean :
 ### Internal helper targets
 
 set_default_build:
-	set BUILD_TARGET=update copy_headers build
+	set STAT_MAKE_ARGUMENTS=update copy_headers incremental_build
 
 set_default_rebuild :
-	set BUILD_TARGET=clean_headers copy_headers rebuild
+	set STAT_MAKE_ARGUMENTS=/A clean_headers copy_headers full_build
 
 set_build :
-	set BUILD_TARGET=update link_headers build
+	set STAT_MAKE_ARGUMENTS=update link_headers incremental_build
 
 set_rebuild :
-	set BUILD_TARGET=clean_headers link_headers rebuild
+	set STAT_MAKE_ARGUMENTS=/A clean_headers link_headers incremental_build
 
 all : create_output
 	call <<$(OUTPUT_DIR)/stat_msvs.bat <<$(OUTPUT_DIR)/arguments.mak
@@ -76,7 +76,7 @@ all : create_output
 	::
 	:: # Invoke execution of the main NMAKE-based makefile-script
 	::
-	$(MAKE) /F"$(TOOL_DIR)/msvs_main.mak" @%1 %BUILD_TARGET%& endlocal& GOTO :eof
+	$(MAKE) /F"$(TOOL_DIR)/msvs_main.mak" @%1 %STAT_MAKE_ARGUMENTS%& endlocal& GOTO :eof
 	::
 	:: ### Helper subroutines for list expansion and formatting
 	::
