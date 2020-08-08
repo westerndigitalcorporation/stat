@@ -29,11 +29,11 @@ copy_headers :
 	FOR %%F IN ($(DEPENDENT_HEADERS:/=\)) DO @IF NOT EXIST "%INCLUDES_PATH%\%%~nxF" copy /Y "%%~pnxF" "%INCLUDES_PATH%\%%~nxF" >nul
 
 # Invoke incremental compilation and linkage
-build : $(DEP_INCLUSIONS)
-	$(MAKE) /F"$(TOOL_DIR)/msvs_builder.mak" @$(OUTPUT_DIR)/arguments.mak
+incremental_build : $(DEP_INCLUSIONS)
+	$(MAKE) /$(MAKEFLAGS) /F"$(TOOL_DIR)/msvs_builder.mak" @$(OUTPUT_DIR)/arguments.mak
 
-# Re-compile all sources and re-link the target
-rebuild :
+# Invoke fast full compilation and linkage
+full_build :
 	echo Compiling sources...
 	$(CC) $(CFLAGS) $(DEFINES) -Fd$(OBJECTS_DIR)\ -I$(INCLUDES_DIR)\ /Fo$(OBJECTS_DIR)\ @<<$(OUTPUT_DIR)/cc_response.txt
 $(SOURCES: =^
@@ -60,8 +60,8 @@ $(DEP_INCLUSIONS) : $(DEP_FILES)
 
 # Track changes in source files
 $(DEP_FILES) : $(SOURCES)
-	FOR %%G in ( $? ) DO @IF "%%~nG" == "$(@B)" PowerShell -NoProfile -ExecutionPolicy Bypass -File <<$(OUTPUT_DIR)/build_dep.ps1 -source "%%G" -depFile "$@" -objFile "$(@:.dep=.obj)"
+	FOR %%G in ( $? ) DO @IF "%%~nG" == "$(@B)" PowerShell -NoProfile -ExecutionPolicy Bypass -File <<$(OUTPUT_DIR)/build_dep.ps1 -source "%%~fG" -depFile "$@" -objFile "$(@:.dep=.obj)"
 	Param([string]$$source, [string]$$depFile, [string]$$objFile)
 	$$dependencies=($(CC) /nologo /Fonul /EHar /showIncludes /I$(INCLUDES_DIR) $$source 2>&1 | %{ [Regex]::Matches($$_, "$(INCLUDES_DIR).*\.h") } | %{ $$_.Value }) -join ' '
-	@(("$$objFile : $$source  $$dependencies"), ("	`$$(CC) `$$(CFLAGS) `$$(DEFINES) $$source -Fd`$$(OBJECTS_DIR)\ -I`$$(INCLUDES_DIR)\ /Fo$$objFile") ) | Set-Content -Path ($$depFile)
+	@(("$$objFile : ""$$source""  $$dependencies"), ("	`$$(CC) `$$(CFLAGS) `$$(DEFINES) ""$$source"" -Fd`$$(OBJECTS_DIR)\ -I`$$(INCLUDES_DIR)\ /Fo$$objFile") ) | Set-Content -Path ($$depFile)
 <<NOKEEP
