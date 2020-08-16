@@ -18,13 +18,11 @@ clean_headers :
 
 # Create symbolic-links of proper versions of header-files
 link_headers :
-	echo Collecting dependent headers...
 	set INCLUDES_PATH=.\$(INCLUDES_DIR:/=\)
 	FOR %%F IN ($(DEPENDENT_HEADERS:/=\)) DO @IF NOT EXIST "%INCLUDES_PATH%\%%~nxF" mklink "%INCLUDES_PATH%\%%~nxF" "%%~pnxF" >nul
 
 # Copy proper versions of header-files
 copy_headers :
-	echo Collecting dependent headers...
 	set INCLUDES_PATH=.\$(INCLUDES_DIR:/=\)
 	FOR %%F IN ($(DEPENDENT_HEADERS:/=\)) DO @IF NOT EXIST "%INCLUDES_PATH%\%%~nxF" copy /Y "%%~pnxF" "%INCLUDES_PATH%\%%~nxF" >nul
 
@@ -34,34 +32,42 @@ incremental_build : $(DEP_INCLUSIONS)
 
 # Invoke fast full compilation and linkage
 full_build :
-	echo Compiling sources...
+	echo Compiling all sources...
+	IF EXIST $(BINARY_DIR:/=\) @DEL /Q /F $(BINARY_DIR:/=\)\*.* >nul
 	$(CC) $(CFLAGS) $(DEFINES) -Fd$(OBJECTS_DIR)\ -I$(INCLUDES_DIR)\ /Fo$(OBJECTS_DIR)\ @<<$(OUTPUT_DIR)/cc_response.txt
 $(SOURCES: =^
 )
 <<NOKEEP
 	echo Linking target...
-	LINK /NOLOGO /DEBUG /WX @<<$(OUTPUT_DIR)/link_response.txt /out:$(EXECUTABLE)
-$(OBJ_FILES: =^
-)
-<<NOKEEP
+	LINK /NOLOGO /DEBUG $(OBJECTS_DIR)\*.obj /out:$(EXECUTABLE)
 
 # Collect proper versions of header-files and update the collection if needed
-$(EXECUTABLE) :: $(DEPENDENT_HEADERS)
+$(EXECUTABLE) : $(DEPENDENT_HEADERS)
 	setlocal EnableExtensions
 	echo Handling dependencies ...
 	set INCLUDES_PATH=.\$(INCLUDES_DIR:/=\)
-	FOR %%G IN ( $(?B) ) DO @IF EXIST %INCLUDES_PATH%\%%~G.h del /Q /F "%INCLUDES_PATH%%\%~G.h" >nul
+	set DEPENDENT_HEADER_NAMES=$(?B)
+	FOR %%G IN ( %DEPENDENT_HEADER_NAMES% ) DO @IF EXIST %INCLUDES_PATH%\%%~G.h del /Q /F "%INCLUDES_PATH%%\%~G.h" >nul
+
+# This target exists only to overcome bad coding of the programmers who create makefiles with bad syntax
+$(DEPENDENT_HEADERS) :
+	echo WARNING: Bad make-file syntax: inclusion path "$@" is incorrect!!!
 
 # Track changes in dependency files with compilation rules
-$(DEP_INCLUSIONS) : $(DEP_FILES)
-	echo Tracking changes ...
-	echo # Include files with dependency rules for object-files >$(DEP_INCLUSIONS)
-	FOR %%G in ( $(DEP_FILES) ) DO @echo !INCLUDE %%G >>$(DEP_INCLUSIONS)
-
-# Track changes in source files
-$(DEP_FILES) : $(SOURCES)
-	FOR %%G in ( $? ) DO @IF "%%~nG" == "$(@B)" PowerShell -NoProfile -ExecutionPolicy Bypass -File <<$(OUTPUT_DIR)/build_dep.ps1 -source "%%~fG" -depFile "$@" -objFile "$(@:.dep=.obj)"
-	Param([string]$$source, [string]$$depFile, [string]$$objFile)
-	$$dependencies=($(CC) /nologo /Fonul /EHar /showIncludes /I$(INCLUDES_DIR) $$source 2>&1 | %{ [Regex]::Matches($$_, "$(INCLUDES_DIR).*\.h") } | %{ $$_.Value }) -join ' '
-	@(("$$objFile : ""$$source""  $$dependencies"), ("	`$$(CC) `$$(CFLAGS) `$$(DEFINES) ""$$source"" -Fd`$$(OBJECTS_DIR)\ -I`$$(INCLUDES_DIR)\ /Fo$$objFile") ) | Set-Content -Path ($$depFile)
+$(DEP_INCLUSIONS) : $(SOURCES)
+	echo Track changes ...
+	::
+	call <<$(OUTPUT_DIR)/build_dep.bat
+	@echo off
+	setlocal EnableExtensions
+	::
+	:: # Erase old dependency file
+	echo # Dependency targets >$(DEP_INCLUSIONS)
+	::
+	set SOURCES_NAMES=$(SOURCES)
+	set STAT_BUILD_COMMAND=
+	FOR %%G in ( %SOURCES_NAMES% ) DO @ (
+		echo $(OBJECTS_DIR)/%%~nG.obj : "%%~fG" $(INCLUDES_DIR)/*.h
+		echo   SET SOURCES_TO_REBUILD=%%SOURCES_TO_REBUILD%% "%%~fG"
+	) >>$(DEP_INCLUSIONS)
 <<NOKEEP

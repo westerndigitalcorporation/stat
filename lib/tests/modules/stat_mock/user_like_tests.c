@@ -23,6 +23,10 @@
 #undef D_CURRENT_FILE
 #define D_CURRENT_FILE _USER_LIKE_TESTS_C
 
+#ifndef STAT_MOCK
+#error Definitions specified in a make-file shall impact all compiler calls!
+#endif
+
 /******************************************************************************/
 /*     MACROS                                                                 */
 /******************************************************************************/
