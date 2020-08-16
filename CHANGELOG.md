@@ -14,10 +14,23 @@ All notable changes to this project will be documented in this file.
 ### Fixed       - for any bug fixes.
 ### Security    - in case of vulnerabilities.
 
-Release name format: [2.2.01] - 2020-02-02
+Release name format: [2.2.1] - 2020-02-02
 -->
 
 ## [Unreleased]
+
+None
+
+##  [1.2.1] - 2020-08-17:
+
+### Fixed 
+
+- Fixed issues with incremental build that caused failures due to extreme over-checking of warnings fired by the linker
+
+### Changed
+
+- Improved the performance of the incremental build mode to ensure efficient running for automation
+- Added a rule to MSVS core-makefiles that bypasses an issue with makefiles having bad syntax that caused incremental build to fail
 
 ##  [1.2.0] - 2020-08-12:
 

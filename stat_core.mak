@@ -20,7 +20,7 @@ OBJECTS_DIR = $(OUTPUT_DIR)/obj
 BINARY_DIR = $(OUTPUT_DIR)/bin
 
 # Main file that includes all dependency files
-DEP_INCLUSIONS=$(OBJECTS_DIR)/all_deps.inc
+DEP_INCLUSIONS=$(OBJECTS_DIR)/all_dependencies.dep
 
 # Default build target set by command-line
 default_build : set_default_build all
@@ -41,26 +41,47 @@ clean :
 	set OUTPUT_DIRS=$(INCLUDES_DIR:/=\) $(OBJECTS_DIR:/=\) $(BINARY_DIR:/=\) $(OUTPUT_DIR:/=\)
 	FOR %%D in ( %%OUTPUT_DIRS%% ) DO @IF EXIST %%D @DEL /Q /F %%D\*.* >nul
 
+
 ### Internal helper targets
 
 set_default_build:
-	set STAT_MAKE_ARGUMENTS=update copy_headers incremental_build
+	echo:
+	echo "Building ""$(PRIVATE_NAME)"" for ""$(OUTPUT_NAME)"" ..."
+	set STAT_METHOD_INCLUDE=copy_headers
+	set STAT_METHOD_BUILD=incremental_build
 
 set_default_rebuild :
-	set STAT_MAKE_ARGUMENTS=/A clean_headers copy_headers full_build
+	echo:
+	echo "Rebuilding ""$(PRIVATE_NAME)"" for ""$(OUTPUT_NAME)""..."
+	set STAT_METHOD_INCLUDE=copy_headers
+	set STAT_METHOD_BUILD=full_build
 
 set_build :
-	set STAT_MAKE_ARGUMENTS=update link_headers incremental_build
+	set STAT_METHOD_INCLUDE=link_headers
+	set STAT_METHOD_BUILD=incremental_build
 
 set_rebuild :
-	set STAT_MAKE_ARGUMENTS=/A clean_headers link_headers incremental_build
+	set STAT_METHOD_INCLUDE=link_headers
+	set STAT_METHOD_BUILD=full_build
 
-all : create_output
+
+### Call MSVS main makefile
+all :
+	IF NOT EXIST $(OUTPUT_DIR:/=\) MD $(OUTPUT_DIR:/=\) >nul
 	call <<$(OUTPUT_DIR)/stat_msvs.bat <<$(OUTPUT_DIR)/arguments.mak
 	@echo off
+	IF NOT EXIST $(OBJECTS_DIR:/=\) (IF "%STAT_METHOD_BUILD%"=="incremental_build" (set STAT_METHOD_BUILD=full_build))
+	IF "%STAT_METHOD_BUILD%"=="incremental_build" (
+		set STAT_MAKE_ARGUMENTS=update %STAT_METHOD_INCLUDE% incremental_build
+	) ELSE (
+		set STAT_MAKE_ARGUMENTS=/A clean_headers %STAT_METHOD_INCLUDE% full_build
+	)
+	:: # Create output directories
+	set OUTPUT_PATHS=$(INCLUDES_DIR:/=\) $(OBJECTS_DIR:/=\) $(BINARY_DIR:/=\)
+	FOR %%D in ( %OUTPUT_PATHS% ) DO @IF NOT EXIST %%D MD %%D >nul
+	::
 	:: # Initialize MSVS build-command shell
-	if "%VSINSTALLDIR%"=="" call "$(VS_DEV:/=\)" >nul
-	echo Building for "$(OUTPUT_NAME)"...
+	IF "%VSINSTALLDIR%"=="" call "$(VS_DEV:/=\)" >nul
 	echo (tools: %VSINSTALLDIR%)
 	::
 	:: # Prepare convenience list-variables for all build-targets
@@ -72,7 +93,7 @@ all : create_output
 	set OBJ_FILES=& FOR %%G IN ( $(SOURCES) ) DO set OBJ_FILES=!OBJ_FILES! $(OBJECTS_DIR)/%%~nG.obj
 	::
 	:: # Add convenience list-variables to the file with NMAKE command-line arguments
-	FOR %%G IN ( DEFINES DEPENDENT_HEADERS OBJ_FILES ) DO call :add_to_arguments_file %%G %1
+	FOR %%G IN (DEFINES DEPENDENT_HEADERS OBJ_FILES) DO call :add_to_arguments_file %%G %1
 	::
 	:: # Invoke execution of the main NMAKE-based makefile-script
 	::
@@ -106,9 +127,3 @@ all : create_output
 	OUTPUT_EXEC="$(OUTPUT_EXEC)" \
 	DEP_INCLUSIONS="$(DEP_INCLUSIONS)" \
 <<NOKEEP
-
-create_output:
-	:: # Create output directories
-	setlocal EnableExtensions
-	set OUTPUT_PATHS=$(INCLUDES_DIR:/=\) $(OBJECTS_DIR:/=\) $(BINARY_DIR:/=\)
-	FOR %%D in ( %%OUTPUT_PATHS%% ) DO @IF NOT EXIST %%D MD %%D >nul
