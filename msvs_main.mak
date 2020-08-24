@@ -65,9 +65,8 @@ $(DEP_INCLUSIONS) : $(SOURCES)
 	echo # Dependency targets >$(DEP_INCLUSIONS)
 	::
 	set SOURCES_NAMES=$(SOURCES)
-	set STAT_BUILD_COMMAND=
 	FOR %%G in ( %SOURCES_NAMES% ) DO @ (
 		echo $(OBJECTS_DIR)/%%~nG.obj : "%%~fG" $(INCLUDES_DIR)/*.h
-		echo   SET SOURCES_TO_REBUILD=%%SOURCES_TO_REBUILD%% "%%~fG"
+		echo   echo "%%~fG" ^>^>$(OBJECTS_DIR:/=\)\changed_sources.txt
 	) >>$(DEP_INCLUSIONS)
 <<NOKEEP

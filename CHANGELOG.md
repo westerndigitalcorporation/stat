@@ -21,6 +21,12 @@ Release name format: [2.2.1] - 2020-02-02
 
 None
 
+##  [1.2.2] - 2020-08-24:
+
+### Fixed 
+
+- Fixed an issue related to inconsistency of NMAKE to deal with assignments of environment variables, which caused occasional failures of incremental build
+
 ##  [1.2.1] - 2020-08-17:
 
 ### Fixed 
