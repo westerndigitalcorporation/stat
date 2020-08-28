@@ -19,7 +19,18 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [Unreleased]
 
-None
+### Added
+
+- Added the initial list of contributors
+
+### Changed
+
+- Performed some refactoring in NMAKE script-structure to unify the method of compiling and linking both in full and incremental builds
+
+### Fixed
+
+- Fixed incorrect logging in case of internal failure of a test-package
+
 
 ##  [1.2.3] - 2020-08-29:
 
