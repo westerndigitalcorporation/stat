@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: MIT
 
 # Override compiler macros
-CFLAGS=/c /WX /W3 /Zi /nologo
+CFLAGS=/FD /WX /W3 /Zi /c /nologo
 
 # Sanity check
 !IF "$(PRIVATE_NAME)" == ""
@@ -19,20 +19,22 @@ INCLUDES_DIR = $(OUTPUT_DIR)/inc
 OBJECTS_DIR = $(OUTPUT_DIR)/obj
 BINARY_DIR = $(OUTPUT_DIR)/bin
 
+EXECUTABLE="$(BINARY_DIR)/$(OUTPUT_EXEC)"
+
 # Main file that includes all dependency files
 DEP_INCLUSIONS=$(OBJECTS_DIR)/all_dependencies.dep
 
-# Default build target set by command-line
-default_build : set_default_build all
+# CLI build target (set by command-line)
+cli_build : include_by_copy accomplish_build
 
-# Default rebuild target set by command-line
-default_rebuild : set_default_rebuild all
+# CLI rebuild target (set by command-line)
+cli_rebuild : include_by_copy configure_full_rebuild accomplish_build
 
 # Build target set within IDE
-build : set_build all
+build : include_by_link accomplish_build
 
 # Rebuild target set within IDE
-rebuild : set_rebuild all
+rebuild : include_by_link configure_full_rebuild accomplish_build
 
 # Clean-up target
 clean :
@@ -44,39 +46,39 @@ clean :
 
 ### Internal helper targets
 
-set_default_build:
+include_by_copy:
 	echo:
 	echo "Building ""$(PRIVATE_NAME)"" for ""$(OUTPUT_NAME)"" ..."
-	set STAT_METHOD_INCLUDE=copy_headers
-	set STAT_METHOD_BUILD=incremental_build
+	set STAT_INCLUDE_METHOD=copy_headers
 
-set_default_rebuild :
-	echo:
-	echo "Rebuilding ""$(PRIVATE_NAME)"" for ""$(OUTPUT_NAME)""..."
-	set STAT_METHOD_INCLUDE=copy_headers
-	set STAT_METHOD_BUILD=full_build
+include_by_link:
+	set STAT_INCLUDE_METHOD=link_headers
 
-set_build :
-	set STAT_METHOD_INCLUDE=link_headers
-	set STAT_METHOD_BUILD=incremental_build
-
-set_rebuild :
-	set STAT_METHOD_INCLUDE=link_headers
-	set STAT_METHOD_BUILD=full_build
+configure_full_rebuild:
+	set STAT_MAKE_TARGETS=/A clean %STAT_INCLUDE_METHOD% full_rebuild
 
 
 ### Call MSVS main makefile
-all :
+accomplish_build :
 	IF NOT EXIST $(OUTPUT_DIR:/=\) MD $(OUTPUT_DIR:/=\) >nul
-	call <<$(OUTPUT_DIR)/stat_msvs.bat <<$(OUTPUT_DIR)/arguments.mak
+	call <<$(OUTPUT_DIR)/stat_msvs.bat <<$(OUTPUT_DIR)/make_arguments.mak
 	@echo off
-	IF NOT EXIST $(OBJECTS_DIR:/=\) (IF "%STAT_METHOD_BUILD%"=="incremental_build" (set STAT_METHOD_BUILD=full_build))
-	IF "%STAT_METHOD_BUILD%"=="incremental_build" (
-		set STAT_MAKE_ARGUMENTS=update %STAT_METHOD_INCLUDE% incremental_build
-	) ELSE (
-		set STAT_MAKE_ARGUMENTS=/A clean_headers %STAT_METHOD_INCLUDE% full_build
+	::
+	:: # Remember name of argument files
+	set STAT_MAKE_ARGUMENTS_FILE=%1
+	set STAT_CC_ARGUMENTS_FILE=$(OBJECTS_DIR)/cc_arguments.txt
+	IF EXIST %STAT_CC_ARGUMENTS_FILE% del /Q /F %STAT_CC_ARGUMENTS_FILE:/=\% >nul
+	::
+	:: # Configure build, if rebuild was not configured yet
+	IF "%STAT_MAKE_TARGETS%"=="" (
+		IF EXIST $(OBJECTS_DIR:/=\) (
+			set STAT_MAKE_TARGETS=update %STAT_INCLUDE_METHOD% incremental_build
+		) ELSE (
+			set STAT_MAKE_TARGETS=/A clean %STAT_INCLUDE_METHOD% full_rebuild
+		)
 	)
-	:: # Create output directories
+	::
+	:: # Create output directories if do not exist
 	set OUTPUT_PATHS=$(INCLUDES_DIR:/=\) $(OBJECTS_DIR:/=\) $(BINARY_DIR:/=\)
 	FOR %%D in ( %OUTPUT_PATHS% ) DO @IF NOT EXIST %%D MD %%D >nul
 	::
@@ -89,18 +91,12 @@ all :
 	call :format_list_of_values DEFINES "$(DEFINES)" "-D" ""
 	call :format_list_of_values DEPENDENT_DUMMIES "$(DUMMY_INTERFACES)" "$(DUMMIES_DIR)/" ""
 	call :format_list_of_values DEPENDENT_INCLUDES "$(INCLUDES)" "" "/*.h"
-	set DEPENDENT_HEADERS=%DEPENDENT_DUMMIES% %DEPENDENT_INCLUDES%
 	set OBJ_FILES=& FOR %%G IN ( $(SOURCES) ) DO set OBJ_FILES=!OBJ_FILES! $(OBJECTS_DIR)/%%~nG.obj
 	::
-	:: # Add convenience list-variables to the file with NMAKE command-line arguments
-	FOR %%G IN (DEFINES DEPENDENT_HEADERS OBJ_FILES) DO call :add_to_arguments_file %%G %1
-	::
 	:: # Invoke execution of the main NMAKE-based makefile-script
+	$(MAKE) /F"$(TOOL_DIR)/msvs_main.mak" @%1 %STAT_MAKE_TARGETS%& endlocal& GOTO :eof
 	::
-	$(MAKE) /F"$(TOOL_DIR)/msvs_main.mak" @%1 %STAT_MAKE_ARGUMENTS%& endlocal& GOTO :eof
-	::
-	:: ### Helper subroutines for list expansion and formatting
-	::
+	:: ### Helper subroutine for list expansion and formatting
 	:format_list_of_values # arguments: target_name source_list prefix suffix
 	setlocal EnableDelayedExpansion
 	set TEMP_TARGET_LIST=
@@ -108,13 +104,6 @@ all :
 	FOR %%G IN ("%TEMP_SOURCE_ITEMS: =" "%") DO (IF NOT "%%~G" == "" set TEMP_TARGET_LIST=!TEMP_TARGET_LIST! %~3%%~G%~4)
 	endlocal& set %~1=%TEMP_TARGET_LIST%& EXIT /B
 	::
-	:add_to_arguments_file # arguments: variable_name arguments_file_name
-	setlocal EnableDelayedExpansion& call :trim_whitespaces %%%1%%
-	endlocal& echo %1="%TRIMMED_VARIABLE_VALUE%" \>>%2
-	EXIT /B
-	::
-	:trim_whitespaces
-	set TRIMMED_VARIABLE_VALUE=%*& EXIT /B
 <<NOKEEP
 	/nologo /$(MAKEFLAGS) \
 	CFLAGS="$(CFLAGS)" \
