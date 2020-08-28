@@ -19,6 +19,10 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [Unreleased]
 
+None
+
+##  [1.2.3] - 2020-08-29:
+
 ### Added
 
 - Added the initial list of contributors
@@ -30,7 +34,6 @@ Release name format: [2.2.1] - 2020-02-02
 ### Fixed
 
 - Fixed incorrect logging in case of internal failure of a test-package
-
 
 ##  [1.2.2-alpha] - 2020-08-24:
 
