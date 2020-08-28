@@ -26,6 +26,7 @@ It is based on a really great open-source project named [Unity](http://www.throw
   - [4.3. IDEs](#43-ides)
 - [5. Maintainer](#5-maintainer)
 - [6. Contributing](#6-contributing)
+  - [6.1. Contributors](#61-contributors)
 - [7. License](#7-license)
   - [7.1. Imported Components](#71-imported-components)
 - [8. Definitions](#8-definitions)
@@ -122,15 +123,29 @@ Framework provides services to generate project files for certain IDEs, by the m
 
 ## 5. Maintainer
 
-[![GitHub](https://img.shields.io/badge/GitHub-@Arseniy%20Aharonov-blue.svg?style=social&logo=GitHub)](https://github.com/are-scenic)
+&nbsp;&nbsp;&nbsp;*Arseniy Aharonov* - maintainer and main contributor  
+&nbsp;&nbsp;&nbsp;[![GitHub](https://img.shields.io/badge/%20-@are&minus;scenic-blue.svg?style=social&logo=GitHub)](https://github.com/are-scenic) [![GitHub](https://img.shields.io/badge/Contact-@arseniy@aharonov.icu-blue.svg?style=social)](mailto:arseniy@aharonov.icu)
 
 ## 6. Contributing
 
-Feel free to impact! [Open an issue](#TBD)<!--https://github.com/are-scenic/issues/new//-->.  
+Feel free to impact! [Open an issue](https://github.com/westerndigitalcorporation/stat/issues).  
 
 <!--
 STAT framework follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
 -->
+
+### 6.1. Contributors
+
+An open source project thrives on contribution of different people, and it may come in many forms. Some develope the very code, others provide constructive feedback, and some share wisdom through guidance and consultation. And all of these are very valuable contributions made by very valuable contributors:  
+
+* Eitan Talianker  
+[![GitHub](https://img.shields.io/badge/@etalianker-blue.svg?style=social&logo=GitHub)](https://github.com/etalianker)
+* Dr.Eitan Farchi  
+[![GitHub](https://img.shields.io/badge/@farchi@il.ibm.com-blue.svg?style=social&logo=IBM)](mailto:farchi@il.ibm.com)
+* Udi Arie  
+[![GitHub](https://img.shields.io/badge/@udiarie-blue.svg?style=social&logo=GitHub)](https://github.com/udiarie)
+* Oran DeBotton    
+[![GitHub](https://img.shields.io/badge/SolarEdge-@oran.debotton@SolarEdge.com-blue.svg?style=social)](mailto:oran.debotton@SolarEdge.com)
 
 ## 7. License
 
@@ -138,13 +153,13 @@ The base-code of the STAT framework is licensed under [MIT license](LICENSES/MIT
 
 ### 7.1. Imported Components
 
-STAT wasn't build from scratch. Several valuable components underly the framework:
+STAT wasn't build from scratch. Several valuable components underlay the framework:
 
 * Unity harness source-files - a [key component](#unity-harness) for the framework
   * License: [MIT](./unity/LICENSE.txt)
   * Source: [on GitHub](https://github.com/ThrowTheSwitch/Unity)
 * Visual Studio Locator (a.k.a. `vswhere`) - a utility to locate Visual Studio in newer versions of MSVS. 
-  * Licesnse: [MIT](https://github.com/microsoft/vswhere/blob/ded0fdd04473772af1dd001d82b6e3c871731788/LICENSE.txt)
+  * License: [MIT](https://github.com/microsoft/vswhere/blob/ded0fdd04473772af1dd001d82b6e3c871731788/LICENSE.txt)
   * Source: [on GitHub](https://github.com/Microsoft/vswhere/releases)
 
 

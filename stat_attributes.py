@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-VERSION = '1.2.2'
+VERSION = '1.2.3-alpha'
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ REPORT_FILENAME = 'report.json'
 IGNORE_FILENAME = '.statignore'
 CONFIG_FILENAME = '.statconfig'
 AUTO_GENERATED_MAKEFILE = '/'.join([OUTPUT_DIRECTORY, "stat.mak"])
-REBUILD_TARGET = 'default_rebuild'
+REBUILD_TARGET = 'cli_rebuild'
 CLEAN_TARGET = 'clean'
 
 OUTPUT_SUB_DIRECTORIES = ['inc', 'obj', 'bin']
