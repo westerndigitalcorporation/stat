@@ -156,7 +156,7 @@ class TestStatMain(TestStatMainBase):
 
         StatMain.run(['-b', '-c'])
 
-        expectedCommandLine = COMPILATION_COMMAND + ' default_rebuild'
+        expectedCommandLine = COMPILATION_COMMAND + ' ' + attributes.REBUILD_TARGET
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-b', '-c'])])
         expected = [call(makeFile, expectedCommandLine, False, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
@@ -167,7 +167,7 @@ class TestStatMain(TestStatMainBase):
 
         StatMain.run(['-b', '-cc'])
 
-        expectedCommandLine = COMPILATION_COMMAND + ' clean' + ' default_rebuild'
+        expectedCommandLine = COMPILATION_COMMAND + ' clean' + ' ' + attributes.REBUILD_TARGET
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-b', '-cc'])])
         expected = [call(makeFile, expectedCommandLine, False, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
@@ -342,10 +342,10 @@ class TestRunTestPackage(AdvancedTestCase):
         self.assertEqual((SINGLE_MAKE_FILE, 'PASSED', ''), results)
 
     def test_runTestPackage_withTestException(self):
-        exception = TestsRunnerException("Fake exception to test error-handling")
+        exception = "Fake exception to test error-handling"
 
         def fakeRunMethod():
-            raise exception
+            raise TestsRunnerException(exception)
 
         self.testsRunner.return_value.run.side_effect = fakeRunMethod
 
@@ -354,13 +354,13 @@ class TestRunTestPackage(AdvancedTestCase):
         expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True),
                     call().compile(), call().run(), call().writeLog(exception)]
         self.assertCalls(self.testsRunner, expected)
-        self.assertEqual((SINGLE_MAKE_FILE, 'FAILED', str(exception)), results)
+        self.assertEqual((SINGLE_MAKE_FILE, 'FAILED', exception), results)
 
     def test_runTestPackage_withAbnormalTestException(self):
-        exception = Exception("This is abnormal exception emulation")
+        exception = "This is abnormal exception emulation"
 
         def fakeRunMethod():
-            raise exception
+            raise Exception(exception)
 
         self.testsRunner.return_value.run.side_effect = fakeRunMethod
 
@@ -369,7 +369,7 @@ class TestRunTestPackage(AdvancedTestCase):
         expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True),
                     call().compile(), call().run(), call().writeLog(exception)]
         self.assertCalls(self.testsRunner, expected)
-        self.assertEqual((SINGLE_MAKE_FILE, 'CRASHED', str(exception)), results)
+        self.assertEqual((SINGLE_MAKE_FILE, 'CRASHED', exception), results)
 
     def test_runTestPackage_withExceptionUponInitialization(self):
         exception = Exception("This is an emulation of exception upon makefile processing")

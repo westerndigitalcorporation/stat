@@ -5,6 +5,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+DEPENDENT_HEADERS=$(DEPENDENT_DUMMIES) $(DEPENDENT_INCLUDES)
 DEP_FILES=$(OBJ_FILES:.obj=.dep)
 EXECUTABLE="$(BINARY_DIR)/$(OUTPUT_EXEC)"
 
@@ -12,9 +13,9 @@ EXECUTABLE="$(BINARY_DIR)/$(OUTPUT_EXEC)"
 update : $(EXECUTABLE)
 
 # Clear old dependent headers
-clean_headers :
+clean :
 	set INCLUDES_PATH=.\$(INCLUDES_DIR:/=\)
-	IF EXIST %INCLUDES_PATH% @DEL /Q /F %INCLUDES_PATH%\*.* >nul
+	IF EXIST %INCLUDES_PATH% @del /Q /F %INCLUDES_PATH%\*.* >nul
 
 # Create symbolic-links of proper versions of header-files
 link_headers :
@@ -26,20 +27,11 @@ copy_headers :
 	set INCLUDES_PATH=.\$(INCLUDES_DIR:/=\)
 	FOR %%F IN ($(DEPENDENT_HEADERS:/=\)) DO @IF NOT EXIST "%INCLUDES_PATH%\%%~nxF" copy /Y "%%~pnxF" "%INCLUDES_PATH%\%%~nxF" >nul
 
-# Invoke incremental compilation and linkage
-incremental_build : $(DEP_INCLUSIONS)
-	$(MAKE) /$(MAKEFLAGS) /F"$(TOOL_DIR)/msvs_builder.mak" @$(OUTPUT_DIR)/arguments.mak
-
 # Invoke fast full compilation and linkage
-full_build :
-	echo Compiling all sources...
-	IF EXIST $(BINARY_DIR:/=\) @DEL /Q /F $(BINARY_DIR:/=\)\*.* >nul
-	$(CC) $(CFLAGS) $(DEFINES) -Fd$(OBJECTS_DIR)\ -I$(INCLUDES_DIR)\ /Fo$(OBJECTS_DIR)\ @<<$(OUTPUT_DIR)/cc_response.txt
-$(SOURCES: =^
-)
-<<NOKEEP
-	echo Linking target...
-	LINK /NOLOGO /DEBUG $(OBJECTS_DIR)\*.obj /out:$(EXECUTABLE)
+full_rebuild : prepare_full_rebuild build
+
+# Invoke incremental compilation and linkage
+incremental_build : prepare_incremental_build build
 
 # Collect proper versions of header-files and update the collection if needed
 $(EXECUTABLE) : $(DEPENDENT_HEADERS)
@@ -53,10 +45,16 @@ $(EXECUTABLE) : $(DEPENDENT_HEADERS)
 $(DEPENDENT_HEADERS) :
 	echo WARNING: Bad make-file syntax: inclusion path "$@" is incorrect!!!
 
+prepare_full_rebuild:
+	set SOURCES_NAMES=$(SOURCES)
+	FOR %%G in ( %SOURCES_NAMES% ) DO @echo "%%~fG" >>$(STAT_CC_ARGUMENTS_FILE)
+
+prepare_incremental_build: $(DEP_INCLUSIONS)
+	echo Track changes...
+	$(MAKE) /$(MAKEFLAGS) /F"$(TOOL_DIR)/msvs_builder.mak" @$(STAT_MAKE_ARGUMENTS_FILE)
+
 # Track changes in dependency files with compilation rules
 $(DEP_INCLUSIONS) : $(SOURCES)
-	echo Track changes ...
-	::
 	call <<$(OUTPUT_DIR)/build_dep.bat
 	@echo off
 	setlocal EnableExtensions
@@ -67,6 +65,18 @@ $(DEP_INCLUSIONS) : $(SOURCES)
 	set SOURCES_NAMES=$(SOURCES)
 	FOR %%G in ( %SOURCES_NAMES% ) DO @ (
 		echo $(OBJECTS_DIR)/%%~nG.obj : "%%~fG" $(INCLUDES_DIR)/*.h
-		echo   echo "%%~fG" ^>^>$(OBJECTS_DIR:/=\)\changed_sources.txt
+		echo   echo "%%~fG" ^>^>$(STAT_CC_ARGUMENTS_FILE)
 	) >>$(DEP_INCLUSIONS)
+<<NOKEEP
+
+build:
+	call <<$(OUTPUT_DIR)/stat_build.bat
+	@echo off
+	IF EXIST $(STAT_CC_ARGUMENTS_FILE) (
+		echo Compiling...
+		$(CC) $(CFLAGS) $(DEFINES) -Fd$(OBJECTS_DIR)\ -I$(INCLUDES_DIR)\ /Fo$(OBJECTS_DIR)\ @$(STAT_CC_ARGUMENTS_FILE)
+		echo Linking...
+		IF EXIST $(BINARY_DIR:/=\) @DEL /Q /F $(BINARY_DIR:/=\)\*.* >nul
+		LINK /NOLOGO /DEBUG $(OBJECTS_DIR)\*.obj /out:$(EXECUTABLE)
+	)
 <<NOKEEP

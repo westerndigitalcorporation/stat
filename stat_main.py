@@ -33,11 +33,13 @@ def runTestPackage(makefile, commandToCompile, shallRun, shallBeVerbose):
             if shallRun:
                 runner.run()
         except TestsRunnerException as exception:
-            runner.writeLog(exception)
-            status, description = 'FAILED', str(exception)
+            errorMessage = str(exception)
+            runner.writeLog(errorMessage)
+            status, description = 'FAILED', errorMessage
         except Exception as exception:
-            runner.writeLog(exception)
-            status, description = 'CRASHED', str(exception)
+            errorMessage = str(exception)
+            runner.writeLog(errorMessage)
+            status, description = 'CRASHED', str(errorMessage)
         else:
             status, description = 'PASSED', ''
     except Exception as exception:
