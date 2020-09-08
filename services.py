@@ -14,6 +14,7 @@ from shutil import rmtree
 from threading import Thread
 from time import sleep
 from json import dump as dumpJson
+from shlex import split as splitCmdLine
 
 import stat_attributes as attributes
 
@@ -57,7 +58,7 @@ def mkdir(path, exist_ok=False):
 def execute(command, beSilent=False, **kwargs):
     arguments = dict(bufsize=1, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     arguments.update(kwargs)
-    commandLine = " ".join(command) if isinstance(command, (list, tuple)) else command
+    commandLine = command if isinstance(command, (list, tuple)) else splitCmdLine(command)
     process = subprocess.Popen(commandLine, **arguments)
     lines = []
     thread = Thread(target=__captureOutputLines, args=(process, beSilent, lines))
@@ -78,9 +79,10 @@ def __captureOutputLines(process, beSilent, lines):
 
 
 def executeForOutput(command, **kwargs):
+    commandLine = command if isinstance(command, (list, tuple)) else splitCmdLine(command)
     arguments = dict(bufsize=1, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     arguments.update(kwargs)
-    process = subprocess.Popen(command, **arguments)
+    process = subprocess.Popen(commandLine, **arguments)
     output, _ = process.communicate()
     return output.strip()
 
@@ -192,24 +194,92 @@ def __selectFilesByPatterns(makefiles, patterns):
     return set(filtered)
 
 
-class _Singleton(type):
+def meta_class(mcs, *cls, **mewAttributes):
+    mangledName = "_".join(("_", mcs.__name__,) + tuple(item.__name__ for item in cls))
+    return mcs(mangledName, cls, mewAttributes)
+
+
+def abstract_method(method):
+    return abstract_callable(method)
+
+
+def abstract_callable(callableObject):
+    def call_wrapper(*args, **kwargs):
+        typeName = 'method' if args and hasattr(args[0], callableObject.__name__) else callableObject.__class__.__name__
+        raise NotImplementedError("The {0} '{1}' must be implemented!".format(typeName, callableObject.__name__))
+    return call_wrapper
+
+
+class SingletonMeta(type):
     """ A metaclass that creates a Singleton base class when called. """
-    _instances = {}
+    __instances = {}
 
     def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(_Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+        if cls not in cls.__instances:
+            cls.__instances[cls] = super(SingletonMeta, cls).__call__(*args, **kwargs)
+        return cls.__instances[cls]
 
-
-class Singleton(_Singleton('SingletonMeta', (object,), {})):
-
-    @classmethod
     def clear(cls):
         try:
-            del cls._instances[cls]  # pylint: disable=no-member
+            del cls.__instances[cls]  # pylint: disable=no-member
         except KeyError:
             pass
+
+
+class FactoryByLegacy(type):
+
+    def __init__(cls, name, bases, spec):
+        super(FactoryByLegacy, cls).__init__(name, bases, spec)
+        if not hasattr(cls, '_announcedFactoryItems'):
+            cls._announcedFactoryItems = {}
+        cls.__registerIfAnnounced()
+
+    def __registerIfAnnounced(cls):
+        uidAttribute = getattr(cls, 'uidAttribute', 'UID')
+        uidValue = getattr(cls, uidAttribute, None)
+        if uidValue:
+            cls._announcedFactoryItems[uidValue] = cls
+
+    def __iter__(cls):
+        for _uid in cls._announcedFactoryItems:
+            yield _uid
+
+    def __contains__(cls, uid):
+        return uid in cls._announcedFactoryItems
+
+    def __len__(cls):
+        return len(cls._announcedFactoryItems)
+
+    def get(cls, uid, default=None):
+        return cls._announcedFactoryItems.get(uid, default)
+
+
+class Configuration(object):
+
+    def __init__(self, **kwargs):
+        super(Configuration, self).__init__()
+        self.__configuration = kwargs
+
+    def __getitem__(self, key):
+        return self.__configuration.get(key, None)
+
+    def __iter__(self):
+        for key in self.__configuration:
+            yield key
+
+    def update(self, iterable=None, **kwargs):
+        if iterable:
+            self.__configuration.update({key: iterable[key] for key in iterable})
+        self.__configuration.update(kwargs)
+
+    def getInt(self, key, default=0):
+        try:
+            return int(self.__configuration.get(key, ''))
+        except ValueError:
+            return default
+
+    def get(self, key, default):
+        return self.__configuration.get(key, default)
 
 
 class ServicesException(Exception):

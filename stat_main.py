@@ -11,6 +11,7 @@ import sys
 from multiprocessing import Pool, freeze_support
 
 import stat_attributes as attributes
+from build_tools_crawler import BuildToolsCrawler
 from stat_argument_parser import StatArgumentParser
 from stat_configuration import StatConfiguration
 from stat_debug import Profiler
@@ -66,7 +67,8 @@ class StatMain(object):
     def __init__(self):
         self.__config = StatConfiguration()
         self.__parser = StatArgumentParser(self.__config.products, self.__config.defaultProduct)
-        self.__commandToCompile = self.__config.getToolchain().getCommandToCompile()
+        self.__tools = BuildToolsCrawler().retrieve()
+        self.__commandToCompile = self.__tools.getCommandToCompile()
         self.__report = StatReport()
 
     def _run(self, manualArguments):

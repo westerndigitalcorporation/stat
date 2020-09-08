@@ -83,7 +83,7 @@ accomplish_build :
 	FOR %%D in ( %OUTPUT_PATHS% ) DO @IF NOT EXIST %%D MD %%D >nul
 	::
 	:: # Initialize MSVS build-command shell
-	IF "%VSINSTALLDIR%"=="" call "$(VS_DEV:/=\)" >nul
+	IF "%VSINSTALLDIR%"=="" call "$(MSVS_DEV:/=\)" >nul
 	echo (tools: %VSINSTALLDIR%)
 	::
 	:: # Prepare convenience list-variables for all build-targets

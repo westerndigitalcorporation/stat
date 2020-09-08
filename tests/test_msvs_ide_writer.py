@@ -4,11 +4,11 @@ import re
 from xml.dom.minidom import parseString as parseXmlString
 
 import stat_attributes as attributes
-from vs_tools import MsvsTools
+from build_tools_crawler import BuildToolsCrawler
+from msvs_tools import MsvsTools
 from ide_writer import IdeXmlWriter
 from msvs_ide_writer import MsvsSolutionWriter, MsvsLegacyWriter, MsvsWriter, Msvs2010ProjectWriter
-from services import locateResource, readTextFileAtOnce, toNativePath
-from stat_configuration import StatConfiguration
+from services import locateResource, readTextFileAtOnce, toNativePath, isWindows
 from stat_makefile_project import StatMakefileProject
 from tests.testing_tools import convertXmlToDictionary, FileBasedTestCase, Mock, PropertyMock, call
 
@@ -48,8 +48,8 @@ class TestMsvsWriter(MsvsWriterTestCase):
 
     def setUp(self):
         self.mockCommonObjects()
-        getMsvsTools = '.'.join([StatConfiguration.__name__, StatConfiguration.getMsvsTools.__name__])
-        self.getMsvsTools = self.patch(CUT, getMsvsTools, return_value=self.tools)
+        toolsCrawler = self.patch(CUT, BuildToolsCrawler.__name__)
+        toolsCrawler.return_value.retrieve.return_value = self.tools
         self.msvsLegacyWriter = self.patch(CUT, MsvsLegacyWriter.__name__)
         self.msvs2010ProjectWriter = self.patch(CUT, Msvs2010ProjectWriter.__name__)
 
@@ -95,6 +95,8 @@ class TestMsvsLegacyWriter(MsvsWriterTestCase):
     def setUpClass(cls):
         MsvsWriterTestCase.setUpClass()
         cls.PROJECT_TEMPLATE = re.sub(r">[\s\n\r]+<", '><', readTextFileAtOnce(TEST_VCPROJ_TEMPLATE_FILE))
+        if not isWindows():
+            cls.PROJECT_TEMPLATE = cls.PROJECT_TEMPLATE.replace("\\", "/")
 
     def setUp(self):
         self.mockCommonObjects()
@@ -188,6 +190,7 @@ class TestMsvs2010ProjectWriter(MsvsWriterTestCase):
         self.writer = Msvs2010ProjectWriter('msvs', self.makefileProject, self.tools)
 
     def test_init(self):
+        self.maxDiff = None
         actual = convertXmlToDictionary(self.writer._doc)
         output = os.path.join('..', attributes.OUTPUT_DIRECTORY, self.makefileProject.outputName,
                               'msvs_' + self.makefileProject.name)
