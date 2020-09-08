@@ -8,7 +8,7 @@
 import os
 
 import stat_attributes as attributes
-from stat_configuration import StatConfiguration
+from build_tools_crawler import BuildToolsCrawler
 from ide_writer import IdeXmlWriter, IdeCompositeWriter
 from services import locateResource, toNativePath
 
@@ -273,7 +273,6 @@ class MsvsWriter(IdeCompositeWriter):
         :type contents: StatMakefileProject
         """
         super(MsvsWriter, self).__init__(ideName, contents, args)
-        config = StatConfiguration()
-        tools = config.getMsvsTools()
+        tools = BuildToolsCrawler().retrieve()
         writer = Msvs2010ProjectWriter if tools.year >= 2010 else MsvsLegacyWriter
-        self._instances.append(writer(ideName, contents, config.getMsvsTools()))
+        self._instances.append(writer(ideName, contents, tools))

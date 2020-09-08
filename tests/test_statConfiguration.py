@@ -4,18 +4,15 @@ import stat_attributes as attributes
 from services import readTextFileAtOnce, toPosixPath
 from stat_configuration import StatConfiguration
 from stat_makefile import StatMakefile
-from vs_tools import MsvsTools
+from build_tools import BuildTools
 from tests.testing_tools import FileBasedTestCase, Mock, PropertyMock, call
 
 CUT = StatConfiguration.__module__
-EXPECTED_MSVS_TOOLS_FIND = '/path/to/default/windows/dev/path'
 
 
 class TestStatConfiguration(FileBasedTestCase):
     def setupCommon(self):
-        self.msvsTools = Mock(spec=MsvsTools)
-        type(self.msvsTools).devBatchFile = PropertyMock(return_value=EXPECTED_MSVS_TOOLS_FIND)
-        self.msvsToolsFind = self.patch(CUT, 'MsvsTools.find', return_value=self.msvsTools)
+        self.tools = Mock(spec=BuildTools)
 
     def tearDown(self):
         StatConfiguration.clear()
@@ -46,14 +43,6 @@ class TestStatConfigurationDefault(TestStatConfiguration):
         config = StatConfiguration()
         self.assertEqual(None, config.defaultProduct)
         self.assertTrue(config.isStale())
-
-    def test_getMsvsTools(self):
-        config = StatConfiguration()
-        self.assertEqual(self.msvsTools, config.getMsvsTools())
-
-    def test_getToolchain(self):
-        config = StatConfiguration()
-        self.assertEqual(self.msvsTools, config.getToolchain())
 
 
 VALID_PRODUCT = 'product_derived'

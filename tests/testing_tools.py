@@ -42,6 +42,8 @@ def convertXmlToDictionary(xml):
         children = map(recursive_dict, element.childNodes)
         if children:
             for name, value in children:
+                if not isWindows():
+                    value = str(value).replace("\\", "/")
                 contents.setdefault(str(name), []).append(value)
         return str(element.nodeName), contents
     return dict(map(recursive_dict, xml.childNodes))
@@ -103,7 +105,7 @@ class AdvancedTestCase(TestCase):
     def getMockCalls(patchedObject):
         def __isDebuggerCall(callEntry):
             callDescription = tuple(callEntry)[0]
-            result = callDescription.find('__str__')
+            result = callDescription.find('__str__') + callDescription.find('__eq__')
             return result >= 0
         return [aCall for aCall in patchedObject.mock_calls if not __isDebuggerCall(aCall)]
 

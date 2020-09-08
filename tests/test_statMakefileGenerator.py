@@ -2,7 +2,7 @@ import os
 
 import stat_attributes as attributes
 from stat_makefile_generator import StatMakefileGenerator, StatMakefileGeneratorException
-from services import toPosixPath, isWindows, remove
+from services import isWindows, remove
 from stat_configuration import StatConfiguration
 from stat_makefile import StatMakefile
 from tests.test_services import FileBasedTestCase
@@ -32,7 +32,6 @@ class TestStatMakefileGenerator(FileBasedTestCase):
 
     def test_generate(self):
         config = StatConfiguration()
-        tools = config.getMsvsTools()
         makFile = attributes.AUTO_GENERATED_MAKEFILE
         generator = StatMakefileGenerator(productMakefile=TEST_PRODUCT_FILE)
         generator.generate()
@@ -40,17 +39,10 @@ class TestStatMakefileGenerator(FileBasedTestCase):
 
         self.parser = StatMakefile(makFile)
 
-        self.assertEqual(config['TOOL_VERSION'], self.parser['TOOL_VERSION'])
-        self.assertEqual(config['TOOL_DIR'], self.parser['TOOL_DIR'])
-        self.assertEqual(config['DUMMIES_DIR'], self.parser['DUMMIES_DIR'])
-        self.assertEqual(config['OUTPUT_DIR'], self.parser['OUTPUT_DIR'])
+        for parameter in config:
+            self.assertEqual(config[parameter], self.parser[parameter])
         self.assertEqual(TEST_PRODUCT_NAME, self.parser[StatMakefile.NAME])
         self.assertEqual(TEST_PRODUCT_EXEC, self.parser[StatMakefile.EXEC])
-        if not isWindows():
-            self.assertEqual('', self.parser['VS_DEV'])
-
-        else:
-            self.assertEqual(toPosixPath(tools.devBatchFile), self.parser['VS_DEV'])
 
         self.__verifyProductMakfileIsIncluded()
         self.__verifyToolsMakfileIsIncluded()

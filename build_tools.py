@@ -4,8 +4,13 @@
 #
 # SPDX-License-Identifier: MIT
 
+from services import abstract_method
 
-class StatToolchain(object):
 
-    def getCommandToCompile(self):
-        raise NotImplementedError('Method "{0}" is not implemented'.format(self.getCommandToCompile.__name__))
+class BuildTools(object):
+
+    def __init__(self, *args):
+        pass
+
+    @abstract_method
+    def getCommandToCompile(self): pass

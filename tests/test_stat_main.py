@@ -3,16 +3,16 @@ from multiprocessing import Pool, freeze_support
 from time import sleep
 
 import stat_attributes as attributes
+from build_tools_crawler import BuildToolsCrawler
 from ide_writer import IdeWorkspaceWriter
 from msvs_ide_writer import MsvsWriter
 from stat_main import StatMain, STAT_SUMMARY, STAT_OUTPUT_DELIMITER, STAT_SILENT_OUTPUT, StatException, \
     runTestPackage, MAKEFILE_CORRUPTION, StatWarning
 from stat_makefile_generator import StatMakefileGenerator
-from stat_tool_chain import StatToolchain
+from build_tools import BuildTools
 from stat_configuration import StatConfiguration
 from stat_argument_parser import StatArgumentParser
 from tests_runner import TestsRunner, TestsRunnerException
-from vs_tools import MsvsTools
 from services import writeJsonFile, remove, mkdir
 from tests.testing_tools import AdvancedTestCase, PropertyMock, call, Mock
 
@@ -33,7 +33,6 @@ COMPILATION_COMMAND = 'command to compile a makefile'
 
 LOG_LINES = ['First line', 'second line', '3rd line']
 
-FAKE_MSVS_TOOLS = Mock(spec=MsvsTools)
 FAKE_EXCEPTION_MESSAGE = 'This is exception emulator'
 FAKE_SUCCESSFUL_RUNS = [(filename, 'PASSED', '') for filename in MANY_MAKE_FILES] * len(MANY_PRODUCTS)
 FAKE_FAILED_RUNS = [(filename, 'FAILED', FAKE_EXCEPTION_MESSAGE) for filename in MANY_MAKE_FILES] * len(MANY_PRODUCTS)
@@ -48,15 +47,16 @@ class TestStatMainBase(AdvancedTestCase):
         self.writeJsonFile = self.patch(CUT, writeJsonFile.__name__)
         self.ideWorkspaceWriter = self.patch(CUT, IdeWorkspaceWriter.__name__, autospec=True)
 
-        self.toolchain = Mock(spec=StatToolchain)
-        self.toolchain.getCommandToCompile.return_value = COMPILATION_COMMAND
+        self.tools = Mock(spec=BuildTools)
+        self.tools.getCommandToCompile.return_value = COMPILATION_COMMAND
+        toolsCrawler = self.patch(CUT, BuildToolsCrawler.__name__)
+        toolsCrawler.return_value.retrieve.return_value = self.tools
 
         self.statConfiguration = self.patch(CUT, StatConfiguration.__name__, autospec=True)
         configuration = self.statConfiguration.return_value
         type(configuration).defaultProduct = PropertyMock(return_value=DEFAULT_PRODUCT)
         type(configuration).products = PropertyMock(return_value=MANY_PRODUCTS)
         configuration.isStale.return_value = True
-        configuration.getToolchain.return_value = self.toolchain
 
     def _patchArgumentParser(self, targetProducts, userMakefiles, processes=0):
         self.statArgumentParser = self.patch(CUT, StatArgumentParser.__name__, autospec=True)

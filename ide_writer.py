@@ -9,46 +9,34 @@
 from xml.dom.minidom import Document
 
 import stat_attributes as attributes
-from services import toNativePath, mkdir
+from services import toNativePath, mkdir, abstract_method, meta_class, FactoryByLegacy
 from stat_makefile_project import StatMakefileProject
 
 
-class IdeWriter(object):
-    IDE = None
+class IdeWriter(meta_class(FactoryByLegacy, object, uidAttribute='IDE')):
 
-    @classmethod
-    def _getSubclasses(cls):
-        for subclass in cls.__subclasses__():  # type: IdeWriter # pylint: disable=no-member
-            if subclass.IDE is not None:
-                yield subclass
-            for grandSubclass in subclass._getSubclasses():  # type: IdeWriter
-                yield grandSubclass
+    def __new__(cls, ide, *args, **kwargs):
+        _cls = cls.get(ide, cls)
+        return object.__new__(_cls)
 
-    def __new__(cls, ideName, contents, *args):
-        for subclass in cls._getSubclasses():
-            if subclass.IDE == ideName:
-                return object.__new__(subclass)
-        else:
-            return object.__new__(cls)
-
-    def __init__(self, ide, contents, *args):
+    def __init__(self, ide, contents, *args, **kwargs):
         """
         :param ideName:
         :type contents: StatMakefileProject
         """
         self._contents = contents
 
-    def createRootToken(self):
-        raise NotImplementedError("'{0}' must be implemented!".format(self.createRootToken))
+    @abstract_method
+    def createRootToken(self): pass
 
-    def createDirectoryToken(self, name, parentDirectoryToken):
-        raise NotImplementedError("'{0}' must be implemented!".format(self.createDirectoryToken))
+    @abstract_method
+    def createDirectoryToken(self, name, parentDirectoryToken): pass
 
-    def addFile(self, filePath, parentDirectoryToken):
-        raise NotImplementedError("'{0}' must be implemented!".format(self.addFile))
+    @abstract_method
+    def addFile(self, filePath, parentDirectoryToken): pass
 
-    def write(self):
-        raise NotImplementedError("'{0}' must be implemented!".format(self.write))
+    @abstract_method
+    def write(self): pass
 
 
 class IdeCompositeWriter(IdeWriter):

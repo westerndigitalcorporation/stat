@@ -4,7 +4,7 @@ from io import TextIOWrapper
 from shutil import copyfile
 
 import services
-from ctypes import c_ulong
+from shlex import split as splitCmdLine
 from stat_attributes import OUTPUT_DIRECTORY, PRODUCT_DIRECTORY
 from tests.testing_tools import *  # pylint: disable=unused-wildcard-import
 
@@ -306,6 +306,8 @@ class TestMkdir(FileBasedTestCase):
 
 TEST_FAKE_OUTPUT = ['first line\n', 'second line\n', 'third line\n', '\n']
 TEST_FAKE_RETURN_CODE = 0xC0DE
+TEST_COMMAND_LINE = "{0} -m tests.test_services".format(
+    "python" if sys.version_info < (3, 0) or isWindows() else "python3")
 
 
 class TestExecute(AdvancedTestCase):
@@ -315,7 +317,7 @@ class TestExecute(AdvancedTestCase):
 
     def test_executeWithSuccess(self):
 
-        status, receivedOutput = services.execute("python -m tests.test_services --pass")
+        status, receivedOutput = services.execute(TEST_COMMAND_LINE + " --pass")
 
         self.assertEqual(0, status)
         self.assertEqual(TEST_FAKE_OUTPUT, receivedOutput)
@@ -324,16 +326,16 @@ class TestExecute(AdvancedTestCase):
 
     def test_executeSilently(self):
 
-        status, receivedOutput = services.execute("python -m tests.test_services --pass", beSilent=True)
+        status, receivedOutput = services.execute(TEST_COMMAND_LINE + " --pass", beSilent=True)
 
         self.assertEqual(0, status)
         self.assertEqual(TEST_FAKE_OUTPUT, receivedOutput)
         self.assertCalls(self.printMock, [])
 
     def test_executeWithFailure(self):
-        status, receivedOutput = services.execute("python -m tests.test_services --fail")
+        status, receivedOutput = services.execute(TEST_COMMAND_LINE + " --fail")
 
-        self.assertEqual(c_ulong(-1).value, c_ulong(status).value)
+        self.assertNotEqual(0, status)
         self.assertEqual([], receivedOutput)
         self.assertCalls(self.printMock, [])
 
@@ -343,7 +345,7 @@ class TestExecute(AdvancedTestCase):
 
         services.execute(fakeCommand)
 
-        expected = [call(fakeCommand, bufsize=1, universal_newlines=True,
+        expected = [call(splitCmdLine(fakeCommand), bufsize=1, universal_newlines=True,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT), call().communicate()]
         self.assertCalls(pOpen, expected)
 
@@ -353,7 +355,7 @@ class TestExecute(AdvancedTestCase):
 
         services.execute(fakeCommand, env={})
 
-        expected = [call(fakeCommand, bufsize=1, universal_newlines=True,
+        expected = [call(splitCmdLine(fakeCommand), bufsize=1, universal_newlines=True,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env={}), call().communicate()]
         self.assertCalls(pOpen, expected)
 
@@ -372,11 +374,11 @@ class TestExecuteForOutput(AdvancedTestCase):
     TEST_FAKE_OUTPUT = ''.join(TEST_FAKE_OUTPUT).strip()
 
     def test_executeForOutputWithSuccess(self):
-        receivedOutput = services.executeForOutput("python -m tests.test_services --pass")
+        receivedOutput = services.executeForOutput(TEST_COMMAND_LINE + " --pass")
         self.assertEqual(self.TEST_FAKE_OUTPUT, receivedOutput)
 
     def test_executeForOutputWithFailure(self):
-        receivedOutput = services.executeForOutput("python -m tests.test_services --fail")
+        receivedOutput = services.executeForOutput(TEST_COMMAND_LINE + " --fail")
         self.assertEqual('', receivedOutput)
 
     def test_executeForOutputCorrectness(self):
@@ -386,7 +388,7 @@ class TestExecuteForOutput(AdvancedTestCase):
 
         services.executeForOutput(fakeCommand)
 
-        expected = [call(fakeCommand, bufsize=1, universal_newlines=True,
+        expected = [call(splitCmdLine(fakeCommand), bufsize=1, universal_newlines=True,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT), call().communicate()]
         self.assertCalls(pOpen, expected)
 
@@ -397,7 +399,7 @@ class TestExecuteForOutput(AdvancedTestCase):
 
         services.executeForOutput(fakeCommand, env={})
 
-        expected = [call(fakeCommand, bufsize=1, universal_newlines=True,
+        expected = [call(splitCmdLine(fakeCommand), bufsize=1, universal_newlines=True,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env={}), call().communicate()]
         self.assertCalls(pOpen, expected)
 
