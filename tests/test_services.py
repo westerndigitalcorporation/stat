@@ -4,7 +4,6 @@ from io import TextIOWrapper
 from shutil import copyfile
 
 import services
-from shlex import split as splitCmdLine
 from stat_attributes import OUTPUT_DIRECTORY, PRODUCT_DIRECTORY
 from tests.testing_tools import *  # pylint: disable=unused-wildcard-import
 
@@ -67,8 +66,8 @@ class TestServices(FileBasedTestCase):
         target = "/home/tests/fw/inc/example.h"
         services.createLink(source, target)
 
-        commandLine = 'cmd /c mklink "{target}" "{source}"'.format(
-            target=services.toWindowsPath(target), source=services.toWindowsPath("../../../product/fw/inc/example.h"))
+        commandLine = services.formatCommandLine('cmd /c mklink "{target}" "{source}"'.format(
+            target=services.toWindowsPath(target), source=services.toWindowsPath("../../../product/fw/inc/example.h")))
         self.assertCalls(patcher, [call.Popen(commandLine, shell=True), call.Popen().wait()])
         self.assertEqual(0, len(self._fakeOs['symlink']))
 
@@ -82,8 +81,8 @@ class TestServices(FileBasedTestCase):
         services.createLink(source, target)
 
         self.assertEqual(0, len(self._fakeOs['symlink']))
-        commandLine = 'cmd /c mklink /D "{target}" "{source}"'.format(
-            target=services.toWindowsPath(target), source=services.toWindowsPath("../../product/fw/inc"))
+        commandLine = services.formatCommandLine('cmd /c mklink /D "{target}" "{source}"'.format(
+            target=services.toWindowsPath(target), source=services.toWindowsPath("../../product/fw/inc")))
         self.assertCalls(patcher, [call.Popen(commandLine, shell=True), call.Popen().wait()])
 
     def test_findSubFolderOnPathOfCurrentWorkingDirectory(self):
@@ -345,7 +344,7 @@ class TestExecute(AdvancedTestCase):
 
         services.execute(fakeCommand)
 
-        expected = [call(splitCmdLine(fakeCommand), bufsize=1, universal_newlines=True,
+        expected = [call(services.formatCommandLine(fakeCommand), bufsize=1, universal_newlines=True,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT), call().communicate()]
         self.assertCalls(pOpen, expected)
 
@@ -355,7 +354,7 @@ class TestExecute(AdvancedTestCase):
 
         services.execute(fakeCommand, env={})
 
-        expected = [call(splitCmdLine(fakeCommand), bufsize=1, universal_newlines=True,
+        expected = [call(services.formatCommandLine(fakeCommand), bufsize=1, universal_newlines=True,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env={}), call().communicate()]
         self.assertCalls(pOpen, expected)
 
@@ -388,7 +387,7 @@ class TestExecuteForOutput(AdvancedTestCase):
 
         services.executeForOutput(fakeCommand)
 
-        expected = [call(splitCmdLine(fakeCommand), bufsize=1, universal_newlines=True,
+        expected = [call(services.formatCommandLine(fakeCommand), bufsize=1, universal_newlines=True,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT), call().communicate()]
         self.assertCalls(pOpen, expected)
 
@@ -399,7 +398,7 @@ class TestExecuteForOutput(AdvancedTestCase):
 
         services.executeForOutput(fakeCommand, env={})
 
-        expected = [call(splitCmdLine(fakeCommand), bufsize=1, universal_newlines=True,
+        expected = [call(services.formatCommandLine(fakeCommand), bufsize=1, universal_newlines=True,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env={}), call().communicate()]
         self.assertCalls(pOpen, expected)
 

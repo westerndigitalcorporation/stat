@@ -55,10 +55,17 @@ def mkdir(path, exist_ok=False):
     os.makedirs(path)
 
 
+def formatCommandLine(command):
+    if isWindows():
+        return " ".join(command) if isinstance(command, (list, tuple)) else command
+    else:
+        return command if isinstance(command, (list, tuple)) else splitCmdLine(command)
+
+
 def execute(command, beSilent=False, **kwargs):
+    commandLine = formatCommandLine(command)
     arguments = dict(bufsize=1, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     arguments.update(kwargs)
-    commandLine = command if isinstance(command, (list, tuple)) else splitCmdLine(command)
     process = subprocess.Popen(commandLine, **arguments)
     lines = []
     thread = Thread(target=__captureOutputLines, args=(process, beSilent, lines))
@@ -79,7 +86,7 @@ def __captureOutputLines(process, beSilent, lines):
 
 
 def executeForOutput(command, **kwargs):
-    commandLine = command if isinstance(command, (list, tuple)) else splitCmdLine(command)
+    commandLine = formatCommandLine(command)
     arguments = dict(bufsize=1, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     arguments.update(kwargs)
     process = subprocess.Popen(commandLine, **arguments)
@@ -115,7 +122,7 @@ def createLink(sourcePath, targetPath):
             commandLine = 'cmd /c mklink /D "{target}" "{source}"'
         else:
             commandLine = 'cmd /c mklink "{target}" "{source}"'
-        subprocess.Popen(commandLine.format(target=target, source=source), shell=True).wait()
+        subprocess.Popen(formatCommandLine(commandLine.format(target=target, source=source)), shell=True).wait()
     else:
         os.symlink(source, target)  # pylint: disable=no-member
 

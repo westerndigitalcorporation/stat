@@ -149,7 +149,7 @@ An open source project thrives on contribution of different people, and it may c
 
 ## 7. License
 
-The base-code of the STAT framework is licensed under [MIT license](LICENSES/MIT.txt).
+The base-code of the STAT framework is licensed under [MIT license](LICENSES/MIT.txt). In addition to that this repo contains a binary of GNU-Make, which is distributed under [GPLv3+ license](LICENSES/GPL-3.0-or-later.txt).
 
 ### 7.1. Imported Components
 
