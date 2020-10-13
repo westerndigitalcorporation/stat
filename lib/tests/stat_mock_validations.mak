@@ -15,4 +15,4 @@
 DEFINES = STAT_MOCK_PERMISSIVE_VALIDATION
 
 # Include the STAT build rules
-!INCLUDE ./stat_mock_base.mak
+include ./stat_mock_base.mak

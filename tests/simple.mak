@@ -28,4 +28,4 @@ DUMMY_INTERFACES = first_dummy.h second_dummy.h duplicated.h
 DEFINES = PROJECT_EXAMPLE
 
 # Include the STAT build rules
-!INCLUDE ./../stat_core.mak
+include ./../build/stat_executive.mak

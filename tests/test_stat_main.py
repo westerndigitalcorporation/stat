@@ -3,13 +3,11 @@ from multiprocessing import Pool, freeze_support
 from time import sleep
 
 import stat_attributes as attributes
-from build_tools_crawler import BuildToolsCrawler
 from ide_writer import IdeWorkspaceWriter
 from msvs_ide_writer import MsvsWriter
 from stat_main import StatMain, STAT_SUMMARY, STAT_OUTPUT_DELIMITER, STAT_SILENT_OUTPUT, StatException, \
     runTestPackage, MAKEFILE_CORRUPTION, StatWarning
 from stat_makefile_generator import StatMakefileGenerator
-from build_tools import BuildTools
 from stat_configuration import StatConfiguration
 from stat_argument_parser import StatArgumentParser
 from tests_runner import TestsRunner, TestsRunnerException
@@ -29,7 +27,7 @@ SINGLE_MAKE_FILE = "simple.mak"
 MANY_MAKE_FILES = ['simplified_example.mak', SINGLE_MAKE_FILE, 'full_example.mak']
 MANY_LOG_FILES = [filename[:-4] + '.log' for filename in MANY_MAKE_FILES]
 
-COMPILATION_COMMAND = 'command to compile a makefile'
+MAKE_ARGUMENTS = ['COPY_HEADERS="TRUE"']
 
 LOG_LINES = ['First line', 'second line', '3rd line']
 
@@ -46,11 +44,6 @@ class TestStatMainBase(AdvancedTestCase):
         self.open = self.patchOpen()
         self.writeJsonFile = self.patch(CUT, writeJsonFile.__name__)
         self.ideWorkspaceWriter = self.patch(CUT, IdeWorkspaceWriter.__name__, autospec=True)
-
-        self.tools = Mock(spec=BuildTools)
-        self.tools.getCommandToCompile.return_value = COMPILATION_COMMAND
-        toolsCrawler = self.patch(CUT, BuildToolsCrawler.__name__)
-        toolsCrawler.return_value.retrieve.return_value = self.tools
 
         self.statConfiguration = self.patch(CUT, StatConfiguration.__name__, autospec=True)
         configuration = self.statConfiguration.return_value
@@ -98,7 +91,7 @@ class TestStatMain(TestStatMainBase):
         expected = [call(ALL_PRODUCT_FILES[DEFAULT_PRODUCT]), call().generate()]
         self.assertCalls(self.statMakefileGenerator, expected)
 
-        expected = [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES]
+        expected = [call(makeFile, MAKE_ARGUMENTS, True, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
 
         expected = {makeFile: {"Status": "PASSED", "Info": ""} for makeFile in MANY_MAKE_FILES}
@@ -117,7 +110,7 @@ class TestStatMain(TestStatMainBase):
         self.assertCalls(self.statMakefileGenerator, expected)
 
         expected = \
-            [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES] * len(MANY_PRODUCT_FILES)
+            [call(makeFile, MAKE_ARGUMENTS, True, True) for makeFile in MANY_MAKE_FILES] * len(MANY_PRODUCT_FILES)
         self.assertCalls(self.runTestPackage, expected)
 
         expected = {makeFile: {"Status": "PASSED", "Info": ""} for makeFile in MANY_MAKE_FILES}
@@ -137,7 +130,7 @@ class TestStatMain(TestStatMainBase):
         self.assertCalls(self.statMakefileGenerator, expected)
 
         expected = \
-            [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES] * len(MANY_PRODUCT_FILES)
+            [call(makeFile, MAKE_ARGUMENTS, True, True) for makeFile in MANY_MAKE_FILES] * len(MANY_PRODUCT_FILES)
         self.assertCalls(self.runTestPackage, expected)
 
     def test_run_withCompileOnlyArguments(self):
@@ -147,7 +140,7 @@ class TestStatMain(TestStatMainBase):
         StatMain.run(['-b'])
 
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-b'])])
-        expected = [call(makeFile, COMPILATION_COMMAND, False, True) for makeFile in MANY_MAKE_FILES]
+        expected = [call(makeFile, MAKE_ARGUMENTS, False, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
 
     def test_run_withSingleLevelOfCleaning(self):
@@ -156,7 +149,7 @@ class TestStatMain(TestStatMainBase):
 
         StatMain.run(['-b', '-c'])
 
-        expectedCommandLine = COMPILATION_COMMAND + ' ' + attributes.REBUILD_TARGET
+        expectedCommandLine = MAKE_ARGUMENTS + [attributes.REBUILD_TARGET]
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-b', '-c'])])
         expected = [call(makeFile, expectedCommandLine, False, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
@@ -167,7 +160,7 @@ class TestStatMain(TestStatMainBase):
 
         StatMain.run(['-b', '-cc'])
 
-        expectedCommandLine = COMPILATION_COMMAND + ' clean' + ' ' + attributes.REBUILD_TARGET
+        expectedCommandLine = MAKE_ARGUMENTS + ['clean', attributes.REBUILD_TARGET]
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-b', '-cc'])])
         expected = [call(makeFile, expectedCommandLine, False, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
@@ -180,7 +173,7 @@ class TestStatMain(TestStatMainBase):
         StatMain.run(['-s'])
 
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-s'])])
-        expected = [call(makeFile, COMPILATION_COMMAND, True, False) for makeFile in MANY_MAKE_FILES]
+        expected = [call(makeFile, MAKE_ARGUMENTS, True, False) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
         count = len(MANY_MAKE_FILES)
         expected = [call(STAT_SILENT_OUTPUT.format(makeFile, 'PASSED')) for makeFile in MANY_MAKE_FILES] + \
@@ -200,7 +193,7 @@ class TestStatMain(TestStatMainBase):
             self.fail("The framework shall fire a STAT Warning.")
 
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(['-b'])])
-        expected = [call(makeFile, COMPILATION_COMMAND, False, True) for makeFile in MANY_MAKE_FILES]
+        expected = [call(makeFile, MAKE_ARGUMENTS, False, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
 
     def test_run_withException(self):
@@ -216,7 +209,7 @@ class TestStatMain(TestStatMainBase):
         else:
             self.fail("The framework shall fire a STAT Exception.")
 
-        expected = [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES]
+        expected = [call(makeFile, MAKE_ARGUMENTS, True, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
 
         self.assertCalls(self.remove, [call(attributes.LOGS_DIRECTORY)])
@@ -238,7 +231,7 @@ class TestStatMain(TestStatMainBase):
         StatMain.run()
 
         self.assertCalls(self.statMakefileGenerator, [])
-        expected = [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES]
+        expected = [call(makeFile, MAKE_ARGUMENTS, True, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
 
     def test_run_withNonStaleConfigurationAnotherProduct(self):
@@ -251,7 +244,7 @@ class TestStatMain(TestStatMainBase):
 
         self.statArgumentParser.assert_has_calls([call(MANY_PRODUCTS, DEFAULT_PRODUCT), call().parse(arguments)])
         self.assertCalls(self.statMakefileGenerator, [call(ALL_PRODUCT_FILES[TARGET_PRODUCT]), call().generate()])
-        expected = [call(makeFile, COMPILATION_COMMAND, True, True) for makeFile in MANY_MAKE_FILES]
+        expected = [call(makeFile, MAKE_ARGUMENTS, True, True) for makeFile in MANY_MAKE_FILES]
         self.assertCalls(self.runTestPackage, expected)
 
     def test_run_uponVisualStudioRequest(self):
@@ -266,12 +259,12 @@ class TestStatMain(TestStatMainBase):
         self.assertCalls(self.ideWorkspaceWriter, [call(MsvsWriter.IDE, SINGLE_MAKE_FILE), call().write()])
 
 
-TEST_INFO_FORMAT = 'cmd:"{0}"; run:"{1}"; verbose:"{2}"'
+TEST_INFO_FORMAT = 'args:"{0}"; run:"{1}"; verbose:"{2}"'
 
 
-def runFake(makefile, commandToCompile, shallRun, shallBeVerbose):
+def runFake(makefile, makeArguments, shallRun, shallBeVerbose):
     sleep(0.5)
-    return makefile, 'PASSED', TEST_INFO_FORMAT.format(commandToCompile, shallRun, shallBeVerbose)
+    return makefile, 'PASSED', TEST_INFO_FORMAT.format(makeArguments, shallRun, shallBeVerbose)
 
 
 class TestStatMainGear(TestStatMainBase):
@@ -309,7 +302,7 @@ class TestStatMainGear(TestStatMainBase):
 
         self.assertEqual([expectedCores]*len(MANY_PRODUCTS), receivedCores)
 
-        expected = {makeFile: {"Status": "PASSED", "Info": TEST_INFO_FORMAT.format(COMPILATION_COMMAND, True, False)}
+        expected = {makeFile: {"Status": "PASSED", "Info": TEST_INFO_FORMAT.format(MAKE_ARGUMENTS, True, False)}
                     for makeFile in MANY_MAKE_FILES}
         expected = {product: expected for product in MANY_PRODUCTS}
         self.assertCalls(self.writeJsonFile, [call(attributes.REPORT_FILENAME, expected)])
@@ -321,23 +314,23 @@ class TestRunTestPackage(AdvancedTestCase):
         self.testsRunner = self.patch(CUT, TestsRunner.__name__, autospec=True)
 
     def test_runTestPackage_fullTestRun(self):
-        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=True)
+        results = runTestPackage(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, shallRun=True, shallBeVerbose=True)
 
-        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True), call().compile(), call().run()]
+        expected = [call(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, True), call().compile(), call().run()]
         self.assertCalls(self.testsRunner, expected)
         self.assertEqual((SINGLE_MAKE_FILE, 'PASSED', ''), results)
 
     def test_runTestPackage_compileOnly(self):
-        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=False, shallBeVerbose=True)
+        results = runTestPackage(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, shallRun=False, shallBeVerbose=True)
 
-        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True), call().compile()]
+        expected = [call(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, True), call().compile()]
         self.assertCalls(self.testsRunner, expected)
         self.assertEqual((SINGLE_MAKE_FILE, 'PASSED', ''), results)
 
     def test_runTestPackage_withSilentArguments(self):
-        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=False)
+        results = runTestPackage(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, shallRun=True, shallBeVerbose=False)
 
-        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, False), call().compile(), call().run()]
+        expected = [call(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, False), call().compile(), call().run()]
         self.assertCalls(self.testsRunner, expected)
         self.assertEqual((SINGLE_MAKE_FILE, 'PASSED', ''), results)
 
@@ -349,9 +342,9 @@ class TestRunTestPackage(AdvancedTestCase):
 
         self.testsRunner.return_value.run.side_effect = fakeRunMethod
 
-        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=True)
+        results = runTestPackage(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, shallRun=True, shallBeVerbose=True)
 
-        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True),
+        expected = [call(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, True),
                     call().compile(), call().run(), call().writeLog(exception)]
         self.assertCalls(self.testsRunner, expected)
         self.assertEqual((SINGLE_MAKE_FILE, 'FAILED', exception), results)
@@ -364,9 +357,9 @@ class TestRunTestPackage(AdvancedTestCase):
 
         self.testsRunner.return_value.run.side_effect = fakeRunMethod
 
-        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=True)
+        results = runTestPackage(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, shallRun=True, shallBeVerbose=True)
 
-        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True),
+        expected = [call(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, True),
                     call().compile(), call().run(), call().writeLog(exception)]
         self.assertCalls(self.testsRunner, expected)
         self.assertEqual((SINGLE_MAKE_FILE, 'CRASHED', exception), results)
@@ -379,9 +372,9 @@ class TestRunTestPackage(AdvancedTestCase):
 
         self.testsRunner.side_effect = initFakeRunner
 
-        results = runTestPackage(SINGLE_MAKE_FILE, COMPILATION_COMMAND, shallRun=True, shallBeVerbose=True)
+        results = runTestPackage(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, shallRun=True, shallBeVerbose=True)
 
-        expected = [call(SINGLE_MAKE_FILE, COMPILATION_COMMAND, True)]
+        expected = [call(SINGLE_MAKE_FILE, MAKE_ARGUMENTS, True)]
         self.assertCalls(self.testsRunner, expected)
         self.assertEqual((SINGLE_MAKE_FILE, 'CRASHED',
                           MAKEFILE_CORRUPTION.format(filename=SINGLE_MAKE_FILE, exception=str(exception))), results)

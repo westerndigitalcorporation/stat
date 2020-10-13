@@ -20,14 +20,13 @@ SOURCES = \
     $(NO_SOURCES) \
     code/src/fletcher.c
 
-SOURCES = test_main.c $(SOURCES) $(TEST_SOURCES) \
+SOURCES := test_main.c $(SOURCES) $(TEST_SOURCES) \
     shared/fa/src/ut_fa_stub.c
 
 # Include directories
 INCLUDES = code/inc
 
-INCLUDES = \
-    $(INCLUDES) \
+INCLUDES += \
     tests/inc
 
 # Dummy interfaces used to replace real ones

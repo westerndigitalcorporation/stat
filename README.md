@@ -149,7 +149,7 @@ An open source project thrives on contribution of different people, and it may c
 
 ## 7. License
 
-The base-code of the STAT framework is licensed under [MIT license](LICENSES/MIT.txt). In addition to that this repo contains a binary of GNU-Make, which is distributed under [GPLv3+ license](LICENSES/GPL-3.0-or-later.txt).
+The base-code of the STAT framework is licensed under [MIT license](LICENSES/MIT.txt). In addition, this repo contains a binary of GNU-Make tool, which is distributed under [GPLv3+ license](LICENSES/GPL-3.0-or-later.txt).
 
 ### 7.1. Imported Components
 
@@ -161,6 +161,9 @@ STAT wasn't build from scratch. Several valuable components underlay the framewo
 * Visual Studio Locator (a.k.a. `vswhere`) - a utility to locate Visual Studio in newer versions of MSVS. 
   * License: [MIT](https://github.com/microsoft/vswhere/blob/ded0fdd04473772af1dd001d82b6e3c871731788/LICENSE.txt)
   * Source: [on GitHub](https://github.com/Microsoft/vswhere/releases)
+* GNU Make tool - controls generation of executables from sources based on makefiles
+  * License: [GPLv3+ license](LICENSES/GPL-3.0-or-later.txt)
+  * Source: [on GNU.org](https://www.gnu.org/software/make/)
 
 
 ## 8. Definitions

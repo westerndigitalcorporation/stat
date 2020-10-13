@@ -231,6 +231,56 @@ class TestServices(FileBasedTestCase):
         else:
             self.fail('The operation should have raised an exception')
 
+    def test_formatMakeCommand_simpleOnWindows32Bit(self):
+        self.patch(CUT, services.getPlatform.__name__, return_value="Windows32")
+        filename = "some_make_file.mak"
+        makeTool = services.locateResource(attributes.MAKE_TOOL["Windows32"])
+        expected = [makeTool, "-f {file}".format(file=filename)]
+
+        command = services.formatMakeCommand(filename)
+
+        self.assertEqual(expected, command)
+
+    def test_formatMakeCommand_simpleOnWindows64Bit(self):
+        self.patch(CUT, services.getPlatform.__name__, return_value="Windows64")
+        filename = "some_make_file.mak"
+        makeTool = services.locateResource(attributes.MAKE_TOOL["Windows64"])
+        expected = [makeTool, "-f {file}".format(file=filename)]
+
+        command = services.formatMakeCommand(filename)
+
+        self.assertEqual(expected, command)
+
+    def test_formatMakeCommand_withArguments(self):
+        self.patch(CUT, services.getPlatform.__name__, return_value="Windows64")
+        filename = "some_make_file.mak"
+        makeTool = services.locateResource(attributes.MAKE_TOOL["Windows64"])
+        args = ["clean", "build"]
+        expected = [makeTool, "-f {file}".format(file=filename)] + args
+
+        command = services.formatMakeCommand(filename, args)
+
+        self.assertEqual(expected, command)
+
+    def test_formatMakeCommand_withArgumentsAndVars(self):
+        self.patch(CUT, services.getPlatform.__name__, return_value="Windows64")
+        filename = "some_make_file.mak"
+        args = ["clean", "build"]
+        expected = ["clean", "build", 'SOME_NAME="some-value"', 'ANOTHER="anotherValue"']
+
+        command = services.formatMakeCommand(filename, args, SOME_NAME="some-value", ANOTHER="anotherValue")
+
+        self.assertSameItems(expected, command[-4:])
+
+    def test_formatMakeCommand_uponUnknownPlatform(self):
+        self.patch(CUT, services.getPlatform.__name__, return_value="unknown-fake")
+        filename = "some_make_file.mak"
+        expected = ["make", "-f {file}".format(file=filename)]
+
+        command = services.formatMakeCommand(filename)
+
+        self.assertEqual(expected, command)
+
     def _patchRmtree(self, retries=0):
         self.__rmtreeRetries = retries
 

@@ -13,4 +13,4 @@ class BuildTools(object):
         pass
 
     @abstract_method
-    def getCommandToCompile(self): pass
+    def getAttributes(self): pass

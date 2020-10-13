@@ -21,7 +21,7 @@ class SourceInsightWriter(IdeWriter):
     IDE = 'SourceInsight'
 
     def __init__(self, ide, contents, *args):
-        super(SourceInsightWriter, self).__init__(ide, contents, *args)
+        super(SourceInsightWriter, self).__init__(contents, *args)
         self.__files = [self._contents.makefile]
         self.__workspacePath = \
             WORKSPACE_PATH.format(basePath=attributes.IDE_DIRECTORY, name=self._contents.name)

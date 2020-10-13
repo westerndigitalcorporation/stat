@@ -37,7 +37,7 @@ class TestMsvsTools(AdvancedTestCase):
 
         tools = MsvsTools(config)
         self.assertEqual(expected, tools.path)
-        self.assertEqual(expected + "/vsvars32.bat", config['MSVS_DEV'])
+        self.assertSameItems({'MSVS_DEV': expected + "/vsvars32.bat"}, tools.getAttributes())
 
     def test_find_byEnvironmentNewer(self):
         expected = TOOLS_BASE_PATH_MOCK
@@ -47,7 +47,7 @@ class TestMsvsTools(AdvancedTestCase):
 
         tools = MsvsTools(config)
         self.assertEqual(expected, tools.path)
-        self.assertEqual(expected + "/VsDevCmd.bat", config['MSVS_DEV'])
+        self.assertSameItems({'MSVS_DEV': expected + "/VsDevCmd.bat"}, tools.getAttributes())
 
     def test_find_byVsWhere(self):
         expected = '/c/vs_tools/VsWhere'
@@ -59,7 +59,8 @@ class TestMsvsTools(AdvancedTestCase):
         tools = MsvsTools(config)
         expectedCalls = [call(VSWHERE_PATH_COMMAND_LINE.format("-version [15.0,16.0)"))]
         self.assertEqual(os.path.join(expected, "Common7", "Tools"), tools.path)
-        self.assertEqual("/".join([expected, "Common7", "Tools", "VsDevCmd.bat"]), config['MSVS_DEV'])
+        self.assertSameItems({'MSVS_DEV': "/".join([expected, "Common7", "Tools", "VsDevCmd.bat"])},
+                             tools.getAttributes())
         self.assertCalls(executeForOutputPatcher, expectedCalls)
 
         config = Configuration(MSVS_VERSION=2019)

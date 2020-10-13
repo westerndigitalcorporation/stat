@@ -21,10 +21,9 @@ class MsvsTools(BuildTools):
         """
         :type configuration: Configuration
         """
-        super(MsvsTools, self).__init__(configuration)
+        super(MsvsTools, self).__init__()
         self.__toolsPath, self.__versionId = locateTools(configuration.getInt('MSVS_VERSION', None))
         self.__devBatchFile = self.__determineDevBatchFile()
-        configuration.update(MSVS_DEV=toPosixPath(self.__devBatchFile))
         self.__nmakeFile = None
 
     @property
@@ -55,6 +54,9 @@ class MsvsTools(BuildTools):
 
     def getCommandToCompile(self):
         return '"{nmake}" {arguments} {{0}}'.format(nmake=self.nmakeFilePath, arguments=NMAKE_ARGUMENTS)
+
+    def getAttributes(self):
+        return dict(MSVS_DEV=toPosixPath(self.__devBatchFile))
 
     def __determineDevBatchFile(self):
         filename = os.path.join(self.__toolsPath, "VsDevCmd.bat")

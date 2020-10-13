@@ -7,26 +7,26 @@
 import os
 
 import stat_attributes as attributes
-from services import execute
+from services import execute, formatMakeCommand
 from stat_makefile import StatMakefile
 
 
 class TestsRunner(object):
 
-    def __init__(self, makefileName, commandToCompile, isVerbose=True):
+    def __init__(self, makefileName, makeArguments, isVerbose=True):
         self.__fileName = makefileName
         self.__makefile = StatMakefile(makefileName)
         self.__beSilent = not isVerbose
         self.__log = []
-        self.__command = commandToCompile
+        self.__arguments = makeArguments
 
     def __getOutputPath(self, *args):
         makefile = self.__makefile
         return os.path.join(attributes.OUTPUT_DIRECTORY, makefile[self.__makefile.NAME], makefile.name, *args)
 
     def compile(self):
-        environ = dict(os.environ, PRIVATE_NAME=self.__makefile.name)
-        status, log = execute(self.__command.format(self.__fileName), beSilent=self.__beSilent, env=environ)
+        environ = dict(os.environ, STAT_NAMESPACE=self.__makefile.name)
+        status, log = execute(formatMakeCommand(self.__fileName, self.__arguments, ), beSilent=self.__beSilent, env=environ)
         self.__log.extend(log)
         if status:
             raise TestsRunnerException('Package "{0}" failed to compile.'.format(self.__fileName))

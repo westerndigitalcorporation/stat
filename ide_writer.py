@@ -9,19 +9,14 @@
 from xml.dom.minidom import Document
 
 import stat_attributes as attributes
-from services import toNativePath, mkdir, abstract_method, meta_class, FactoryByLegacy
+from services import toNativePath, mkdir, abstract_method, meta_class, FactoryByLegacy, formatMakeCommand
 from stat_makefile_project import StatMakefileProject
 
 
 class IdeWriter(meta_class(FactoryByLegacy, object, uidAttribute='IDE')):
 
-    def __new__(cls, ide, *args, **kwargs):
-        _cls = cls.get(ide, cls)
-        return object.__new__(_cls)
-
-    def __init__(self, ide, contents, *args, **kwargs):
+    def __init__(self, contents, *args, **kwargs):
         """
-        :param ideName:
         :type contents: StatMakefileProject
         """
         self._contents = contents
@@ -42,13 +37,13 @@ class IdeWriter(meta_class(FactoryByLegacy, object, uidAttribute='IDE')):
 class IdeCompositeWriter(IdeWriter):
     writers = []
 
-    def __init__(self, ideName, contents, *args):
+    def __init__(self, contents, *args):
         """
-        :param ideName:
         :type contents: StatMakefileProject
         """
-        super(IdeCompositeWriter, self).__init__(ideName, contents, args)
-        self._instances = [writer(ideName, contents, args) for writer in self.writers]
+        super(IdeCompositeWriter, self).__init__(contents, args)
+        self._instances = [writer(contents, args) for writer in self.writers]
+        pass
 
     def createRootToken(self):
         return [writer.createRootToken() for writer in self._instances]
@@ -68,12 +63,11 @@ class IdeCompositeWriter(IdeWriter):
 
 class IdeXmlWriter(IdeWriter):
 
-    def __init__(self, ideName, contents, *args):
+    def __init__(self, contents, *args):
         """
-        :param ideName:
         :type contents: StatMakefileProject
         """
-        super(IdeXmlWriter, self).__init__(ideName, contents, args)
+        super(IdeXmlWriter, self).__init__(contents, args)
         self._doc = Document()
         self._filename = None
 
@@ -96,12 +90,16 @@ class IdeXmlWriter(IdeWriter):
         _file.flush()
         _file.close()
 
+    def formatCommandLine(self, target):
+        namespace = "ide_{0}".format(self._contents.name)
+        return "cd..&&" + " ".join(formatMakeCommand(self._contents.makefile, [target], STAT_NAMESPACE=namespace))
+
 
 class IdeWorkspaceWriter(object):
 
     def __init__(self, ideName, makeFile):
         self.__contents = StatMakefileProject(makeFile)
-        self.__writer = IdeWriter(ideName, self.__contents)
+        self.__writer = IdeWriter.create(ideName, self.__contents)
 
     def write(self):
         mkdir(attributes.IDE_DIRECTORY, exist_ok=True)

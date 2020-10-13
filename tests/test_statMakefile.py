@@ -61,14 +61,17 @@ class TestStatMakFile(FileBasedTestCase):
         for variable in expected:
             self.assertEqual(expected[variable], parser[variable].split())
 
-    def test_regexForInclude(self):
-        pattern = _REG_EXP_INCLUDE
-        strings = ["", "   ", "!INCLUDE ", "!INCLUDETRASH", "!INCLUDE <bad url", "!INCLUDE bad url>",
-                   "!INCLUDE good/url/to/catch", "!INCLUDE <another/very/good/url/to/catch>"]
-        matches = [re.search(pattern, text) for text in strings]
+    def test_regexForValidIncludes(self):
+        lines = "include good/one", "include good/url/to/catch  ", " INCLUDE another/very/good/url/to/catch\n"
+        expected = [line.replace("include", "").replace("INCLUDE", "").strip() for line in lines]
+        matches = [re.search(_REG_EXP_INCLUDE, line, re.IGNORECASE) for line in lines]
         results = [item.group('path') for item in matches if item is not None]
-        self.assertEqual([None]*(len(matches)-2), matches[:-2])
-        self.assertEqual(["good/url/to/catch", "another/very/good/url/to/catch"], results)
+        self.assertEqual(expected, results)
+
+    def test_regexForInvalidIncludes(self):
+        lines = "", " ", "include", "er include good/url/to/catch  ", " another/very/good/url/to/catch\n"
+        matches = [re.search(_REG_EXP_INCLUDE, line, re.IGNORECASE) for line in lines]
+        self.assertEqual([None] * len(lines), matches)
 
     def test_regexForSubstitution(self):
         pattern = r'\$\((?P<variable>[^\(\)\$]+)\)'

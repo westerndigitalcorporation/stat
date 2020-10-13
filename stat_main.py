@@ -11,7 +11,6 @@ import sys
 from multiprocessing import Pool, freeze_support
 
 import stat_attributes as attributes
-from build_tools_crawler import BuildToolsCrawler
 from stat_argument_parser import StatArgumentParser
 from stat_configuration import StatConfiguration
 from stat_debug import Profiler
@@ -26,9 +25,9 @@ STAT_SILENT_OUTPUT = "{0:50}:{1}"
 MAKEFILE_CORRUPTION = 'Processing "{filename}" failed with exception: \n{exception}'
 
 
-def runTestPackage(makefile, commandToCompile, shallRun, shallBeVerbose):
+def runTestPackage(makefile, makeArguments, shallRun, shallBeVerbose):
     try:
-        runner = TestsRunner(makefile, commandToCompile, shallBeVerbose)
+        runner = TestsRunner(makefile, makeArguments, shallBeVerbose)
         try:
             runner.compile()
             if shallRun:
@@ -67,8 +66,7 @@ class StatMain(object):
     def __init__(self):
         self.__config = StatConfiguration()
         self.__parser = StatArgumentParser(self.__config.products, self.__config.defaultProduct)
-        self.__tools = BuildToolsCrawler().retrieve()
-        self.__commandToCompile = self.__tools.getCommandToCompile()
+        self.__makeArguments = ['COPY_HEADERS="TRUE"']
         self.__report = StatReport()
 
     def _run(self, manualArguments):
@@ -85,8 +83,8 @@ class StatMain(object):
         cleaningLevel = self.__parser.getRequestedCleaningLevel()
         if cleaningLevel > 0:
             if cleaningLevel > 1:
-                self.__commandToCompile += ' {0}'.format(attributes.CLEAN_TARGET)
-            self.__commandToCompile += ' {0}'.format(attributes.REBUILD_TARGET)
+                self.__makeArguments.append(attributes.CLEAN_TARGET)
+            self.__makeArguments.append(attributes.REBUILD_TARGET)
 
     def __runTests(self):
         prepareOutputDirectories()
@@ -107,7 +105,7 @@ class StatMain(object):
     def __runTestsOnTargetInSerial(self, target):
         self.__prepareTarget(target)
         for makefile in self.__parser.makeFiles:
-            result = runTestPackage(makefile, self.__commandToCompile, self.__parser.shallRun(),
+            result = runTestPackage(makefile, self.__makeArguments, self.__parser.shallRun(),
                                     self.__parser.shallBeVerbose())
             self.__log(*result)
 
@@ -116,9 +114,8 @@ class StatMain(object):
             self.__log(*result)
         self.__prepareTarget(target)
         pool = Pool(self.__parser.processes)
-        # pool = get_context("spawn").Pool(self.__parser.processes)
         for makefile in self.__parser.makeFiles:
-            args = (makefile, self.__commandToCompile, self.__parser.shallRun(), self.__parser.shallBeVerbose())
+            args = (makefile, self.__makeArguments, self.__parser.shallRun(), self.__parser.shallBeVerbose())
             pool.apply_async(runTestPackage, args, callback=handleResult)
         pool.close()
         pool.join()
