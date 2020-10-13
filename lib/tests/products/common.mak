@@ -9,7 +9,7 @@
 PRODUCT_SOURCES=./products/lib.c
 
 # Include directories
-PRODUCT_INCLUDES=\
+PRODUCT_INCLUDES=
 
 # Dummy interfaces
 PRODUCT_DUMMY_INTERFACES=

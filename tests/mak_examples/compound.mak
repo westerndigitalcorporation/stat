@@ -10,6 +10,5 @@ EXTERNAL_SOURCES = code/src/tools.c \
     code/src/logs.c
 
 # Include the STAT build rules
-!INCLUDE ./mak_examples/dynamic.mak
-!INCLUDE ./products/product_derived.mak
-!INCLUDE ./extra/system.mak
+include ./mak_examples/dynamic.mak
+INCLUDE ./products/product_derived.mak ./extra/system.mak

@@ -20,4 +20,4 @@ DUMMY_INTERFACES = dummy_header.h
 DEFINES = D_TEST_EXAMPLE
 
 # Include the STAT build rules
-!INCLUDE ./output/stat.mak
+include ./output/stat.mak

@@ -23,9 +23,9 @@
 		>
 		<Tool
 		  Name="VCNMakeTool"
-		  BuildCommandLine="cd..&amp;&amp;&quot;{nmake}&quot; /S /NOLOGO /ERRORREPORT:NONE /F {filename} PRIVATE_NAME=&quot;msvs_{name}&quot; build"
-		  ReBuildCommandLine="cd..&amp;&amp;&quot;{nmake}&quot; /S /NOLOGO /ERRORREPORT:NONE /F {filename} PRIVATE_NAME=&quot;msvs_{name}&quot; rebuild"
-		  CleanCommandLine="cd..&amp;&amp;&quot;{nmake}&quot; /S /NOLOGO /ERRORREPORT:NONE /F {filename} PRIVATE_NAME=&quot;msvs_{name}&quot; clean"
+		  BuildCommandLine="{build}"
+		  ReBuildCommandLine="{rebuild}"
+		  CleanCommandLine="{clean}"
 		  Output="{output}\bin\{executable}"
 		  PreprocessorDefinitions="WIN32;_DEBUG;{definitions}"
 		  IncludeSearchPath="{output}\inc"

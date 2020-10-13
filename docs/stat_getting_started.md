@@ -72,7 +72,7 @@ DUMMY_INTERFACES = <dummy-header> <another dummy-header> ...
 DEFINES = <definition> <definition>=<value> ...
 
 # Include the STAT build rules
-!INCLUDE ./output/stat.mak
+include ./output/stat.mak
 ```
 
 Whereas the last line in the file is for STAT-framework needs and shall be inserted as it is, other variables in the file have certain meaning: 

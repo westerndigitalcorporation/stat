@@ -11,19 +11,19 @@
 # DEFINES - list of definitions to be invoked via command-line
     
 # Source files
-SOURCES=$(SOURCES) $(PRODUCT_SOURCES) \
-    $(TOOL_DIR)/unity/unity.c \
-    $(TOOL_DIR)/lib/src/stat.c \
-    $(TOOL_DIR)/lib/src/stat_rng.c \
-    $(TOOL_DIR)/lib/src/stat_mock.c \
+SOURCES:=$(SOURCES) $(PRODUCT_SOURCES) \
+    $(STAT_ROOT)/unity/unity.c \
+    $(STAT_ROOT)/lib/src/stat.c \
+    $(STAT_ROOT)/lib/src/stat_rng.c \
+    $(STAT_ROOT)/lib/src/stat_mock.c \
 
 # Include directories
-INCLUDES=$(INCLUDES) $(PRODUCT_INCLUDES) \
-    $(TOOL_DIR)/unity \
-    $(TOOL_DIR)/lib/inc \
+INCLUDES:=$(INCLUDES) $(PRODUCT_INCLUDES) \
+    $(STAT_ROOT)/unity \
+    $(STAT_ROOT)/lib/inc \
 
 # Dummy interfaces
-DUMMY_INTERFACES=$(DUMMY_INTERFACES) $(PRODUCT_DUMMY_INTERFACES)
+DUMMY_INTERFACES:=$(DUMMY_INTERFACES) $(PRODUCT_DUMMY_INTERFACES)
 
 # Preprocessor definitions
-DEFINES=$(DEFINES) $(PRODUCT_DEFINES) UNITY_INCLUDE_CONFIG_H STAT
+DEFINES:=$(DEFINES) $(PRODUCT_DEFINES) UNITY_INCLUDE_CONFIG_H STAT

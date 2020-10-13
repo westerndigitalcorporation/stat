@@ -29,9 +29,9 @@ class TestIdeWriter(AdvancedTestCase):
         self.contents = Mock(spec=StatMakefileProject)
 
     def test_factory(self):
-        instanceA = IdeWriter(IdeWriterTestExampleA.IDE, self.contents)
-        instanceB = IdeWriter(IdeWriterTestExampleB.IDE, self.contents)
-        instanceC = IdeWriter(IdeWriterTestExampleC.IDE, self.contents)
+        instanceA = IdeWriter.create(IdeWriterTestExampleA.IDE, self.contents)
+        instanceB = IdeWriter.create(IdeWriterTestExampleB.IDE, self.contents)
+        instanceC = IdeWriter.create(IdeWriterTestExampleC.IDE, self.contents)
 
         self.assertIsInstance(instanceA, IdeWriterTestExampleA)
         self.assertIsInstance(instanceB, IdeWriterTestExampleB)
@@ -48,11 +48,11 @@ class TestIdeCompositeWriter(AdvancedTestCase):
         class IdeCompositeWriterTestClass(IdeCompositeWriter):
             writers = [self.writerA, self.writerB]
 
-        self.writer = IdeCompositeWriterTestClass('', self.contents)
+        self.writer = IdeCompositeWriterTestClass(self.contents)
 
     def test_init(self):
-        self.assertCalls(self.writerA, [call('', self.contents, ())])
-        self.assertCalls(self.writerB, [call('', self.contents, ())])
+        self.assertCalls(self.writerA, [call(self.contents, ())])
+        self.assertCalls(self.writerB, [call(self.contents, ())])
 
     def test_create_root_token(self):
         self.writerA.return_value.createRootToken.return_value = 'TOKEN-A'
@@ -61,7 +61,7 @@ class TestIdeCompositeWriter(AdvancedTestCase):
         tokens = self.writer.createRootToken()
         self.assertEqual(['TOKEN-A', 'TOKEN-B'], tokens)
         for writer in self.writer.writers:
-            self.assertCalls(writer, [call('', self.contents, ()), call().createRootToken()])
+            self.assertCalls(writer, [call(self.contents, ()), call().createRootToken()])
 
     def test_create_directory_token(self):
         parentTokens = ['PARENT-TOKEN-A', 'PARENT-TOKEN-B']
@@ -71,19 +71,19 @@ class TestIdeCompositeWriter(AdvancedTestCase):
         tokens = self.writer.createDirectoryToken('directory', parentTokens)
         self.assertEqual(['DIR-TOKEN-A', 'DIR-TOKEN-B'], tokens)
         for writer, parent in zip(self.writer.writers, parentTokens):
-            self.assertCalls(writer, [call('', self.contents, ()), call().createDirectoryToken('directory', parent)])
+            self.assertCalls(writer, [call(self.contents, ()), call().createDirectoryToken('directory', parent)])
 
     def test_add_file(self):
         parentTokens = ['PARENT-TOKEN-A', 'PARENT-TOKEN-B']
 
         self.writer.addFile('file-path', parentTokens)
         for writer, parent in zip(self.writer.writers, parentTokens):
-            self.assertCalls(writer, [call('', self.contents, ()), call().addFile('file-path', parent)])
+            self.assertCalls(writer, [call(self.contents, ()), call().addFile('file-path', parent)])
 
     def test_write(self):
         self.writer.write()
         for writer in self.writer.writers:
-            self.assertCalls(writer, [call('', self.contents, ()), call().write()])
+            self.assertCalls(writer, [call(self.contents, ()), call().write()])
 
 
 class TestIdeXmlWriter(AdvancedTestCase):
@@ -92,7 +92,7 @@ class TestIdeXmlWriter(AdvancedTestCase):
         self.mdomDocument = self.patch(CUT, Document.__name__)
         self.contents = Mock(spec=StatMakefileProject)
 
-        self.writer = IdeXmlWriter('', self.contents, )
+        self.writer = IdeXmlWriter(self.contents)
 
     def test_init(self):
         self.assertEqual(self.contents, self.writer._contents)
@@ -169,7 +169,7 @@ TEST_IDE_OUTPUT = 'Output:'
 class IdeTestWriter(IdeWriter):
 
     def __init__(self, ide, contents):
-        super(IdeTestWriter, self).__init__(ide, contents)
+        super(IdeTestWriter, self).__init__(contents)
         self.tokens = []
         self.files = []
         self.output = ''
@@ -196,14 +196,14 @@ class TestIdeWorkspaceWriter(FileBasedTestCase):
         self.testWriter = IdeTestWriter('TEST', self.contents)
         self.statMakefileProject = self.patch(CUT, StatMakefileProject.__name__, autospec=True,
                                               return_value=self.contents)
-        self.ideWriter = self.patch(CUT, IdeWriter.__name__, autospec=True, return_value=self.testWriter)
+        self.ideWriterCreate = self.patch(CUT, 'IdeWriter.create', return_value=self.testWriter)
         self.mkdir = self.patch(CUT, 'mkdir')
 
         self.writer = IdeWorkspaceWriter(TEST_IDE_NAME, TEST_MAKEFILE)
 
     def test_init(self):
         self.assertCalls(self.statMakefileProject, [call(TEST_MAKEFILE)])
-        self.assertCalls(self.ideWriter, [call(TEST_IDE_NAME, self.contents)])
+        self.assertCalls(self.ideWriterCreate, [call(TEST_IDE_NAME, self.contents)])
 
     def test_write(self):
         self.writer.write()

@@ -9,6 +9,7 @@ from __future__ import print_function
 import os
 import platform
 import subprocess
+import sys
 from fnmatch import filter as filterFileNames
 from shutil import rmtree
 from threading import Thread
@@ -35,6 +36,14 @@ def countCpuCores():
 
 def isWindows():
     return True if platform.system() == "Windows" else False
+
+
+def getPlatform():
+    return platform.system() + ("64" if isPlatform64Bit() else "32")
+
+
+def isPlatform64Bit():
+    return sys.maxsize > 2**32
 
 
 def toWindowsPath(path):
@@ -183,6 +192,15 @@ def locateResource(filename):
     return resource
 
 
+def formatMakeCommand(makefile, args=(), **variables):
+    _platform = attributes.MAKE_TOOL.get(getPlatform(), None)
+    makeTool = locateResource(_platform) if _platform else "make"
+    command = [makeTool, " ".join(["-f", makefile])]
+    command.extend(args)
+    command.extend(['{0}="{1}"'.format(*pair) for pair in variables.items()])
+    return command
+
+
 def __selectIgnoredFiles(makefiles, pathName):
     statIgnoreFile = os.path.join(pathName, attributes.IGNORE_FILENAME)
     if os.path.exists(statIgnoreFile):
@@ -260,6 +278,10 @@ class FactoryByLegacy(type):
     def get(cls, uid, default=None):
         return cls._announcedFactoryItems.get(uid, default)
 
+    def create(cls, uid, *args, **kwargs):
+        _cls = cls._announcedFactoryItems.get(uid, cls)
+        return _cls(*args, **kwargs)
+
 
 class Configuration(object):
 
@@ -267,12 +289,12 @@ class Configuration(object):
         super(Configuration, self).__init__()
         self.__configuration = kwargs
 
-    def __getitem__(self, key):
-        return self.__configuration.get(key, None)
-
     def __iter__(self):
         for key in self.__configuration:
             yield key
+
+    def __getitem__(self, key):
+        return self.__configuration.get(key, None)
 
     def update(self, iterable=None, **kwargs):
         if iterable:

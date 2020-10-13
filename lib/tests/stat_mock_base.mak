@@ -17,7 +17,7 @@ INCLUDES = \
 DUMMY_INTERFACES = user_like_dummy.h
 
 # Preprocessor definitions
-DEFINES = $(DEFINES)
+DEFINES := $(DEFINES) \
 
 # Include the STAT build rules
-!INCLUDE ./output/stat.mak
+include ./output/stat.mak

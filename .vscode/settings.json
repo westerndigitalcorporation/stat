@@ -13,6 +13,7 @@
   "python.testing.unittestEnabled": true,
   "python.linting.enabled": true,
   "cSpell.words": [
+    "NMAKE",
     "executables",
     "makefiles",
     "makestat",

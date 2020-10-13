@@ -2,13 +2,14 @@ import os
 import re
 # noinspection PyUnresolvedReferences
 from xml.dom.minidom import parseString as parseXmlString
+from xml.sax.saxutils import escape
 
 import stat_attributes as attributes
 from build_tools_crawler import BuildToolsCrawler
 from msvs_tools import MsvsTools
 from ide_writer import IdeXmlWriter
 from msvs_ide_writer import MsvsSolutionWriter, MsvsLegacyWriter, MsvsWriter, Msvs2010ProjectWriter
-from services import locateResource, readTextFileAtOnce, toNativePath, isWindows
+from services import locateResource, readTextFileAtOnce, toNativePath, isWindows, formatMakeCommand
 from stat_makefile_project import StatMakefileProject
 from tests.testing_tools import convertXmlToDictionary, FileBasedTestCase, Mock, PropertyMock, call
 
@@ -25,7 +26,7 @@ TEST_VERSION = 15
 TEST_YEAR = 2013
 TEST_TOOL_PATH = '/root/tools/'
 TEST_DEV_BATCH_FILE = '/root/tools/common/dev.bat'
-TEST_NMAKE_FILE = '/root/tools/bin/nmake.exe'
+TEST_MAKE_COMMAND = '/root/tools/bin/make.exe'
 TEST_VCPROJ_TEMPLATE_FILE = './extra/template.vcproj'
 TEST_VCXPROJ_TEMPLATE_FILE = './extra/template.vcxproj'
 
@@ -37,11 +38,15 @@ class MsvsWriterTestCase(FileBasedTestCase):
         self.year = PropertyMock(return_value=TEST_YEAR)
         type(self.tools).path = PropertyMock(return_value=TEST_TOOL_PATH)
         type(self.tools).devBatchFile = PropertyMock(return_value=TEST_DEV_BATCH_FILE)
-        type(self.tools).nmakeFilePath = PropertyMock(return_value=TEST_NMAKE_FILE)
+        type(self.tools).nmakeFilePath = PropertyMock(return_value='wrong_path')
         type(self.tools).versionId = PropertyMock(return_value=TEST_VERSION)
         type(self.tools).year = self.year
         type(self.tools).solutionFormat = PropertyMock(return_value=TEST_SOLUTION_FORMAT)
         self.makefileProject = StatMakefileProject(TEST_MAKEFILE)
+
+    def formatCommandLine(self, target):
+        command = formatMakeCommand(TEST_MAKEFILE, [target], STAT_NAMESPACE='ide_' + self.makefileProject.name)
+        return escape("cd..&&" + " ".join(command), {'"': '&quot;', "'": "&apos;"})
 
 
 class TestMsvsWriter(MsvsWriterTestCase):
@@ -55,14 +60,14 @@ class TestMsvsWriter(MsvsWriterTestCase):
 
     def test_factory_uponLegacyToolsVersion(self):
         self.year.return_value = 2008
-        writer = MsvsWriter(MsvsWriter.IDE, self.makefileProject)
+        writer = MsvsWriter(self.makefileProject)
         self.assertEqual(0, len(writer.writers))
-        self.assertCalls(self.msvsLegacyWriter, [call(MsvsWriter.IDE, self.makefileProject, self.tools)])
+        self.assertCalls(self.msvsLegacyWriter, [call(self.makefileProject, self.tools)])
 
     def test_factory_uponNewerToolsVersion(self):
-        writer = MsvsWriter(MsvsWriter.IDE, self.makefileProject)
+        writer = MsvsWriter(self.makefileProject)
         self.assertEqual(0, len(writer.writers))
-        self.assertCalls(self.msvs2010ProjectWriter, [call(MsvsWriter.IDE, self.makefileProject, self.tools)])
+        self.assertCalls(self.msvs2010ProjectWriter, [call(self.makefileProject, self.tools)])
 
 
 class TestMsvsSolutionWriter(MsvsWriterTestCase):
@@ -103,16 +108,18 @@ class TestMsvsLegacyWriter(MsvsWriterTestCase):
         self.msvsSolutionWriter = self.patch(CUT, MsvsSolutionWriter.__name__, autospec=True)
         self.ideXmlWriter_write = self.patch(CUT, '{0}.{1}'.format(IdeXmlWriter.__name__, IdeXmlWriter.write.__name__))
 
-        self.writer = MsvsLegacyWriter('msvs', self.makefileProject, self.tools)
+        self.writer = MsvsLegacyWriter(self.makefileProject, self.tools)
 
     def test_init(self):
         actual = convertXmlToDictionary(self.writer._doc)
-        output = os.path.join('..', attributes.OUTPUT_DIRECTORY, self.makefileProject.outputName,
-                              'msvs_' + self.makefileProject.name)
+        target = 'ide_' + self.makefileProject.name
+        output = os.path.join('..', attributes.OUTPUT_DIRECTORY, self.makefileProject.outputName, target)
         expected = convertXmlToDictionary(
             parseXmlString(self.PROJECT_TEMPLATE.format(
-                version=TEST_VERSION, name=self.makefileProject.name, guid=self.writer._PROJECT_GUID,
-                nmake=TEST_NMAKE_FILE, filename=TEST_MAKEFILE, output=output,
+                version=TEST_VERSION, name=self.makefileProject.name, guid=self.writer._PROJECT_GUID, output=output,
+                build=self.formatCommandLine("build"),
+                rebuild=self.formatCommandLine("rebuild"),
+                clean=self.formatCommandLine("clean"),
                 executable="{0}.exe".format(self.makefileProject.outputName),
                 definitions=";".join(self.makefileProject.definitions)
             )))
@@ -187,16 +194,18 @@ class TestMsvs2010ProjectWriter(MsvsWriterTestCase):
         self.msvsSolutionWriter = self.patch(CUT, MsvsSolutionWriter.__name__, autospec=True)
         self.ideXmlWriter_write = self.patch(CUT, '{0}.{1}'.format(IdeXmlWriter.__name__, IdeXmlWriter.write.__name__))
 
-        self.writer = Msvs2010ProjectWriter('msvs', self.makefileProject, self.tools)
+        self.writer = Msvs2010ProjectWriter(self.makefileProject, self.tools)
 
     def test_init(self):
         self.maxDiff = None
         actual = convertXmlToDictionary(self.writer._doc)
-        output = os.path.join('..', attributes.OUTPUT_DIRECTORY, self.makefileProject.outputName,
-                              'msvs_' + self.makefileProject.name)
+        target = 'ide_' + self.makefileProject.name
+        output = os.path.join('..', attributes.OUTPUT_DIRECTORY, self.makefileProject.outputName, target)
         expected = convertXmlToDictionary(parseXmlString(self.PROJECT_TEMPLATE.format(
-            version=TEST_VERSION, name=self.makefileProject.name, guid=self.writer._PROJECT_GUID,
-            nmake=TEST_NMAKE_FILE, filename=TEST_MAKEFILE, output=output,
+            version=TEST_VERSION, name=self.makefileProject.name, guid=self.writer._PROJECT_GUID, output=output,
+            build=self.formatCommandLine("build"),
+            rebuild=self.formatCommandLine("rebuild"),
+            clean=self.formatCommandLine("clean"),
             executable="{0}.exe".format(self.makefileProject.outputName),
             definitions=";".join(self.makefileProject.definitions)
         )))

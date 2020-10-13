@@ -6,7 +6,7 @@
 # DEFINES - list of definitions to be invoked via command-line
 
 NAME = simplified
-OUTPUT_NAME = simplified_output
+PRODUCT_FLAVOR = simplified_output
 
 # Source files
 SOURCES = \
@@ -28,4 +28,4 @@ DUMMY_INTERFACES = first_dummy.h second_dummy.h duplicated.h
 DEFINES = PROJECT_EXAMPLE DEFINITION_VALUED=7 DEFINITION_SIMPLE
 
 # Include the STAT build rules
-!INCLUDE ./../stat_core.mak
+include ./../build/stat_executive.mak

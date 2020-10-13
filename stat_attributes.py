@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-VERSION = '1.2.4-alpha'
+VERSION = '1.2.4'
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -26,8 +26,9 @@ REPORT_FILENAME = 'report.json'
 IGNORE_FILENAME = '.statignore'
 CONFIG_FILENAME = '.statconfig'
 AUTO_GENERATED_MAKEFILE = '/'.join([OUTPUT_DIRECTORY, "stat.mak"])
-REBUILD_TARGET = 'cli_rebuild'
+REBUILD_TARGET = 'rebuild'
 CLEAN_TARGET = 'clean'
+MAKE_TOOL = {"Windows32": "gmake\\gnumake32.exe", "Windows64": "gmake\\gnumake.exe"}
 
 OUTPUT_SUB_DIRECTORIES = ['inc', 'obj', 'bin']
 ALL_OUTPUT_DIRECTORIES = [OUTPUT_DIRECTORY, IDE_DIRECTORY, LOGS_DIRECTORY]

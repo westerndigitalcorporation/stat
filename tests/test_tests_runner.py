@@ -1,14 +1,14 @@
 import os
 
 import stat_attributes as attributes
-from services import execute, remove
+from services import execute, remove, formatMakeCommand
 from stat_makefile import StatMakefile
 from tests_runner import TestsRunner, TestsRunnerException
 from tests.testing_tools import FileBasedTestCase, call
 
 CUT = TestsRunner.__module__
 
-TEST_COMMAND_TO_COMPILE = '<compile makefile "{0}">'
+TEST_MAKE_ARGUMENTS = ['clean', 'build']
 TEST_MAKEFILE_NAME = 'simple.mak'
 TEST_PACKAGE_NAME = TEST_MAKEFILE_NAME[:-4]
 TEST_LOGFILE_NAME = TEST_PACKAGE_NAME + '.log'
@@ -16,7 +16,11 @@ TEST_ENVIRONMENT_MOCK = dict(user='Arseniy Aharonov', path='/the/right/way', enc
 
 
 def createRunner(isVerbose=True):
-    return TestsRunner(TEST_MAKEFILE_NAME, TEST_COMMAND_TO_COMPILE, isVerbose)
+    return TestsRunner(TEST_MAKEFILE_NAME, TEST_MAKE_ARGUMENTS, isVerbose)
+
+
+def formatMakeCommandFake(filename, args):
+    return filename + ":" + ",".join(args)
 
 
 class TestTestsRunner(FileBasedTestCase):
@@ -25,14 +29,15 @@ class TestTestsRunner(FileBasedTestCase):
         self.makefile = StatMakefile(TEST_MAKEFILE_NAME)
         self.execute = self.patch(CUT, execute.__name__, return_value=(0, []))
         self.patch(CUT, 'os.environ', new=TEST_ENVIRONMENT_MOCK)
+        self.patch(CUT, formatMakeCommand.__name__, side_effect=formatMakeCommandFake)
+        self.expectedCommand = formatMakeCommandFake(TEST_MAKEFILE_NAME, TEST_MAKE_ARGUMENTS)
 
     def test_compile(self):
         runner = createRunner()
         runner.compile()
 
-        expectedEnv = dict(TEST_ENVIRONMENT_MOCK, PRIVATE_NAME=self.makefile.name)
-        self.assertCalls(self.execute, [call(TEST_COMMAND_TO_COMPILE.format(TEST_MAKEFILE_NAME),
-                                             beSilent=False, env=expectedEnv)])
+        expectedEnv = dict(TEST_ENVIRONMENT_MOCK, STAT_NAMESPACE=self.makefile.name)
+        self.assertCalls(self.execute, [call(self.expectedCommand, beSilent=False, env=expectedEnv)])
 
     def test_run(self):
         runner = createRunner()
@@ -56,12 +61,9 @@ class TestTestsRunner(FileBasedTestCase):
         runner.compile()
         runner.run()
 
-        expectedEnv = dict(TEST_ENVIRONMENT_MOCK, PRIVATE_NAME=self.makefile.name)
+        expectedEnv = dict(TEST_ENVIRONMENT_MOCK, STAT_NAMESPACE=self.makefile.name)
         execPath = os.path.join(attributes.OUTPUT_DIRECTORY, TEST_PACKAGE_NAME, 'bin', self.makefile[StatMakefile.EXEC])
-        expected = [
-            call(TEST_COMMAND_TO_COMPILE.format(TEST_MAKEFILE_NAME), beSilent=True, env=expectedEnv),
-            call(execPath, beSilent=True)
-        ]
+        expected = [call(self.expectedCommand, beSilent=True, env=expectedEnv), call(execPath, beSilent=True)]
         self.assertCalls(self.execute, expected)
 
     def test_compile_uponFailure(self):

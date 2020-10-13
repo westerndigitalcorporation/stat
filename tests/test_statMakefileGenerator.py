@@ -1,15 +1,20 @@
 import os
 
 import stat_attributes as attributes
+from build_tools import BuildTools
+from build_tools_crawler import BuildToolsCrawler
 from stat_makefile_generator import StatMakefileGenerator, StatMakefileGeneratorException
 from services import isWindows, remove
 from stat_configuration import StatConfiguration
 from stat_makefile import StatMakefile
-from tests.test_services import FileBasedTestCase
+from tests.test_services import FileBasedTestCase, Mock
 
 TEST_PRODUCT_NAME = "product"
 TEST_PRODUCT_FILE = TEST_PRODUCT_NAME + ".mak"
 TEST_PRODUCT_EXEC = TEST_PRODUCT_NAME + (".exe" if isWindows() else "")
+TEST_TOOL_ATTRIBUTES = {"some_path": "some/path/to/the/tool", "some_version": "1.3.0.7"}
+
+CUT = StatMakefileGenerator.__module__
 
 
 class TestStatMakefileGenerator(FileBasedTestCase):
@@ -17,6 +22,10 @@ class TestStatMakefileGenerator(FileBasedTestCase):
     def setUp(self):
         directory = os.path.dirname(attributes.AUTO_GENERATED_MAKEFILE)
         remove(directory)
+        tools = Mock(spec=BuildTools)
+        tools.getAttributes.return_value = TEST_TOOL_ATTRIBUTES
+        self.buildToolsCrawler = self.patch(CUT, BuildToolsCrawler.__name__, auto_spec=True)
+        self.buildToolsCrawler.return_value.retrieve.return_value = tools
 
     def tearDown(self):
         directory = os.path.dirname(attributes.AUTO_GENERATED_MAKEFILE)
@@ -39,8 +48,11 @@ class TestStatMakefileGenerator(FileBasedTestCase):
 
         self.parser = StatMakefile(makFile)
 
+        # noinspection PyTypeChecker
         for parameter in config:
             self.assertEqual(config[parameter], self.parser[parameter])
+        for parameter in TEST_TOOL_ATTRIBUTES:
+            self.assertEqual(TEST_TOOL_ATTRIBUTES[parameter], self.parser[parameter])
         self.assertEqual(TEST_PRODUCT_NAME, self.parser[StatMakefile.NAME])
         self.assertEqual(TEST_PRODUCT_EXEC, self.parser[StatMakefile.EXEC])
 

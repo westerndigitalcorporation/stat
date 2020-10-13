@@ -25,5 +25,5 @@ DEFINES = SIMPLE_DEFINE ANOTHER_DEFINE ADDITIONAL_DEFINE \
 	LAST_DEFINE DEFINITION_VALUED=7 DEFINITION_SIMPLE
 
 # Include the STAT build rules
-!INCLUDE ./core/stat_core.mak
+include ./core/build/stat_executive.mak
 

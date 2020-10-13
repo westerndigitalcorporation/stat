@@ -8,11 +8,11 @@
 import os
 import re
 
-_STAT_FILE_NAMES_TO_IGNORE = ["stat_core.mak"]
+_STAT_FILE_NAMES_TO_IGNORE = ["stat_executive.mak"]
 
-_REG_EXP_VARIABLE = r'\s*(\w+)\s*=\s*(.+)\s*'
+_REG_EXP_VARIABLE = r'\s*(?P<name>\w+)\s*(?P<operand>[:\+]?=)(?P<value>.*)$'
 _REG_EXP_SUBSTITUTION = r'\$\((?P<variable>[^\(\)\$]+)\)'
-_REG_EXP_INCLUDE = r'^\s*!INCLUDE\s+(<)?(?P<path>[^><]+)(?(1)>|\s*)$'
+_REG_EXP_INCLUDE = r'^(?:\s+)?(?:\binclude\b)\s+(?P<path>.+\S)(?:\s+)?$'
 
 
 class StatMakefile(object):
@@ -23,7 +23,7 @@ class StatMakefile(object):
     INCLUDES = 'INCLUDES'
     INTERFACES = 'DUMMY_INTERFACES'
     DEFINES = 'DEFINES'
-    NAME = 'OUTPUT_NAME'
+    NAME = 'PRODUCT_FLAVOR'
     EXEC = 'OUTPUT_EXEC'
 
     def __init__(self, filePath):
@@ -60,18 +60,22 @@ class StatMakefile(object):
     def __parseForInclude(self, currentLine):
         regexResults = re.search(_REG_EXP_INCLUDE, currentLine, re.IGNORECASE)
         if regexResults:
-            fileName = regexResults.group('path')
-            if os.path.basename(fileName) not in _STAT_FILE_NAMES_TO_IGNORE:
-                self.__file.includeNestedFile(fileName)
-                return True
+            names = regexResults.group('path').split()
+            for filename in names:
+                if os.path.basename(filename) not in _STAT_FILE_NAMES_TO_IGNORE:
+                    self.__file.includeNestedFile(filename)
+            return True
         else:
             return False
 
     def __parseForVariable(self, currentLine):
         regexResults = re.search(_REG_EXP_VARIABLE, currentLine)
         if regexResults:
-            variable, values = regexResults.groups()
-            self[variable] = values
+            name, operand, value = regexResults.groups()
+            if operand == "+=":
+                self[name] += value
+            else:
+                self[name] = value
 
     def __interpretString(self, string):
         def interpretVariable(regMatch):
