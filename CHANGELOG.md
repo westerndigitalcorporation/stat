@@ -21,6 +21,16 @@ Release name format: [2.2.1] - 2020-02-02
 
 None
 
+##  [1.2.4] - 2020-10-15:
+
+### Added
+
+- Added a precompiled version of GNU Make tool for Windows platform
+
+### Changed
+
+- Migrated build scripts from NMAKE to GNU Make tool
+
 ##  [1.2.3] - 2020-08-29:
 
 ### Added
