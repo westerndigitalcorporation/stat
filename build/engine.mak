@@ -24,32 +24,36 @@ define NEW_LINE_BREAK
 endef
 
 
-.PHONY: build rebuild
+.PHONY: build rebuild link recompile
 
 
 build: $(EXECUTABLE)
-	@echo ...complete.
 
 
-rebuild: $(HEADERS) | $(BINARY_DIR)/ $(HEADERS_DIR)/ $(OBJECTS_DIR)/
-	@echo Re-compile...
-	$(foreach SOURCE_FILE, $(SOURCES), $(COMPILE_COMMAND_LINE) $(NEW_LINE_BREAK))
-	@echo Re-link...
-	$(LINK_COMMAND_LINE)
+rebuild: recompile | link
 
 
 %/ :
 	$(eval NEW_DIRECTORY=$@)
-	$(MKDIR_COMMAND_LINE)
+	$(CREATE.directory)
 
 
-$(EXECUTABLE) : $(HEADERS) $(SOURCES) $(OBJECTS) $(STAT_AUTO_MAKEFILE) | $(BINARY_DIR)/
+link: $(BINARY_DIR)/
 	@echo Linking...
 	$(LINK_COMMAND_LINE)
 
 
+$(EXECUTABLE) : $(OBJECTS) | link
+
+
+RECOMPILE_COMMAND=$(eval OBJECT_FILE=$(OBJECTS_DIR)/$(notdir $(SOURCE_FILE:.c=.$(OBJEXT)))) $(COMPILE_COMMAND_LINE)
+recompile: $(HEADERS) | $(OBJECTS_DIR)/
+	@echo Compiling all...
+	$(foreach SOURCE_FILE, $(SOURCES), $(RECOMPILE_COMMAND) $(NEW_LINE_BREAK))
+
+
 define composeIncludesRule
-$(HEADERS_DIR)/%.h : $(1)/%.h | $(HEADERS_DIR)/
+$(HEADERS_DIR)/%.h : $(1)/%.h $(filter clean, $(MAKECMDGOALS)) | $(HEADERS_DIR)/
 	$$(eval SOURCE_HEADER=$$<)
 	$$(eval TARGET_HEADER=$$@)
 	$(if $(COPY_HEADERS), $$(HEADER_COPY_COMMAND_LINE), $$(HEADER_LINK_COMMAND_LINE))
@@ -58,17 +62,21 @@ $(foreach includeDir, $(INCLUDE_DIRS), $(eval $(call composeIncludesRule, $(incl
 
 
 define composeCompilationRule
-$(OBJECTS_DIR)/%.d : $(1)%.c $(STAT_AUTO_MAKEFILE) | $(OBJECTS_DIR)/
+$(OBJECTS_DIR)/%.d : $(1)%.c $(HEADERS) | $(OBJECTS_DIR)/
 	$$(eval SOURCE_FILE=$$<)
 	$$(eval DEP_FILE=$$@)
 	$$(DEP_COMMAND_LINE)
 
-$(OBJECTS_DIR)/%.$(OBJEXT) : $(1)%.c $(OBJECTS_DIR)/%.d $(STAT_AUTO_MAKEFILE)
+$(OBJECTS_DIR)/%.$(OBJEXT) : $(1)%.c $(STAT_AUTO_MAKEFILE)
+	@echo $$(<F)
 	$$(eval SOURCE_FILE=$$<)
+	$$(eval OBJECT_FILE=$$@)
 	$$(COMPILE_COMMAND_LINE)
 endef
 $(foreach sourceDir, $(SOURCE_DIRS), $(eval $(call composeCompilationRule, $(sourceDir))))
 
+ifeq ("$(filter rebuild, $(MAKECMDGOALS))", "")
 -include $(DEPENDENCIES)
+endif
 
 .PRECIOUS: $(OBJECTS_DIR)/%.d | $(BINARY_DIR)/ $(OBJECTS_DIR)/ $(HEADERS_DIR)/

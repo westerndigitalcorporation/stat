@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-2016, windows-latest]
+        os: [windows-2016, windows-latest, ubuntu-16.04, ubuntu-20.04]
         python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
   
     steps:
@@ -48,6 +48,16 @@ jobs:
       run: |
         python makestat.py -g
       working-directory: ./lib/tests
+
+    - name: Archive unit-test results
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: STAT Lib unit-test logs
+        path: |
+          ./lib/tests/logs/*.*
+          ./lib/tests/ouput/*.mak
+        retention-days: 2
  
     - name: Lint with flake8
       run: |

@@ -11,8 +11,12 @@ $(error Target namesapce is not properly configured!)
 endif
 
 # Execution makefiles
+ifeq ("$(OS_NAME)", "Windows")
 TOOLS_CONFIG_MAKEFILE = $(STAT_ROOT)/build/msvs/config.mak
-STAT_BUILD_MAKEFILE = $(STAT_ROOT)/build/make_engine.mak
+else
+TOOLS_CONFIG_MAKEFILE = $(STAT_ROOT)/build/gcc/config.mak
+endif
+STAT_BUILD_MAKEFILE = $(STAT_ROOT)/build/engine.mak
 STAT_AUTO_MAKEFILE := $(OUTPUT_DIR)/stat.mak
 
 # Declare output directories
@@ -24,8 +28,14 @@ BINARY_DIR := $(OUTPUT_DIR)/bin
 -include $(TOOLS_CONFIG_MAKEFILE)
 -include $(STAT_BUILD_MAKEFILE)
 
+ifneq ("$(TOOLS_NAME)", "")
+$(info <tools="$(TOOLS_NAME)">)
+endif
+
 .PHONY: clean
 clean:
-	$(info Clean...)
+	@echo Cleaning...
 	$(eval DIRECTORY=$(OUTPUT_DIR))
-	$(RMDIR_COMMAND_LINE)
+	$(REMOVE.directory)
+	@echo complete.
+

@@ -39,6 +39,7 @@ def isWindows():
 
 
 def getPlatform():
+    # 'Linux32/64', 'Darwin32/64', 'Java32/64', 'Windows32/64'
     return platform.system() + ("64" if isPlatform64Bit() else "32")
 
 
@@ -185,6 +186,40 @@ def readTextFileAtOnce(filePath):
     return text
 
 
+def locateFile(filename, mode=None, path=None):
+    def _locateFileOnPath(_filename, _path):
+        _filepath = os.path.join(_path, _filename)
+        if isWindows() and mode and mode & os.X_OK:
+            _, _ext = os.path.splitext(_filepath)
+            exeExtensions = os.environ.get("PATHEXT", "").split(os.pathsep)
+            if not _ext:
+                return _matchExtensionToFile(_filepath, exeExtensions)
+            elif _ext not in exeExtensions:
+                return ""
+        return _filepath if _isFileAccessible(_filepath) else ""
+
+    def _matchExtensionToFile(_filepath, _extensions):
+        for _ext in _extensions:
+            if _isFileAccessible(_filepath + _ext):
+                return _filepath + _ext
+        else:
+            return ""
+
+    def _isFileAccessible(_filepath):
+        return os.path.isfile(_filepath) and (not mode or os.access(_filepath, mode))
+
+    if isinstance(path, str):
+        return _locateFileOnPath(filename, path)
+    else:
+        paths = [os.path.abspath(".")] + os.environ.get("PATH", "").split(os.pathsep) if not path else path
+        for _path in paths:
+            filepath = _locateFileOnPath(filename, _path)
+            if filepath:
+                return filepath
+        else:
+            return ""
+
+
 def locateResource(filename):
     resource = os.path.join(attributes.TOOL_PATH, attributes.RESOURCES_DIRECTORY, filename)
     if not os.path.isfile(resource):
@@ -193,9 +228,8 @@ def locateResource(filename):
 
 
 def formatMakeCommand(makefile, args=(), **variables):
-    _platform = attributes.MAKE_TOOL.get(getPlatform(), None)
-    makeTool = locateResource(_platform) if _platform else "make"
-    command = [makeTool, " ".join(["-f", makefile])]
+    makeTool = attributes.MAKE_TOOL.get(getPlatform(), "make")
+    command = [makeTool, "-f", makefile]
     command.extend(args)
     command.extend(['{0}="{1}"'.format(*pair) for pair in variables.items()])
     return command

@@ -1353,7 +1353,6 @@ static void Test_TestInfiniteEmptyMock(void)
   _UU32 index;
   _UU32 useCount = Stat_RandRange(5, 27);
   _UU32 spyA = Stat_Rand();
-  _UU32 spyB = Stat_Rand();
   _UU32 callOrder = 0;
   
   STAT_ADD_INFINITE_EMPTY_MOCK(Test_TestInfiniteEmptyMock);
@@ -1374,7 +1373,6 @@ static void Test_TestInfiniteCallbackMock(void)
   _UU32 index;
   _UU32 useCount = Stat_RandRange(5, 27);
   _UU32 spyA = Stat_Rand();
-  _UU32 spyB = Stat_Rand();
   _UU32 callOrder = 0;
   
   STAT_ADD_INFINITE_CALLBACK_MOCK(Test_TestInfiniteCallbackMock, Test_HandleMockCallbackA);

@@ -8,6 +8,5 @@
 @echo OFF
 setlocal EnableExtensions
 call "%MSVS_DEV:/=\%" >nul
-echo ^<tools="%VSINSTALLDIR%"^>
 %*
 endlocal

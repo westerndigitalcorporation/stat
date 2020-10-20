@@ -81,6 +81,7 @@ class StatMain(object):
 
     def adjustCommandLineWithCleaningLevel(self):
         cleaningLevel = self.__parser.getRequestedCleaningLevel()
+        # self.__makeArguments.append("--debug=b")
         if cleaningLevel > 0:
             if cleaningLevel > 1:
                 self.__makeArguments.append(attributes.CLEAN_TARGET)

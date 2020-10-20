@@ -4,8 +4,6 @@
 
 The ultimate goal that was stated for STAT-framework was to enable instant initiation of practicing TDD, with almost no requirements from the development platform and from everybody to commit to the process. 
 
->As it was mentioned in [README](../README.md) document STAT was designed to run on _Windows_ machine with only _Visual Studio_ and _Python_. But it being extended to support more (e.g. GCC, Linux).
-
 ## Table of Contents <!-- omit in toc -->
 
 - [1. Framework Setup](#1-framework-setup)

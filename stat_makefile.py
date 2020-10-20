@@ -8,7 +8,7 @@
 import os
 import re
 
-_STAT_FILE_NAMES_TO_IGNORE = ["stat_executive.mak"]
+_STAT_FILE_NAMES_TO_IGNORE = ["stat_build.mak"]
 
 _REG_EXP_VARIABLE = r'\s*(?P<name>\w+)\s*(?P<operand>[:\+]?=)(?P<value>.*)$'
 _REG_EXP_SUBSTITUTION = r'\$\((?P<variable>[^\(\)\$]+)\)'
@@ -25,6 +25,7 @@ class StatMakefile(object):
     DEFINES = 'DEFINES'
     NAME = 'PRODUCT_FLAVOR'
     EXEC = 'OUTPUT_EXEC'
+    OS = 'OS_NAME'
 
     def __init__(self, filePath):
         self.__name = os.path.splitext(os.path.basename(filePath))[0]

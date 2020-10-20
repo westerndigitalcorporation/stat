@@ -66,8 +66,15 @@ class AdvancedTestCase(TestCase):
         """
         target = '{0}.{1}'.format(moduleName, objectName)
         patcher = patch(target, *args, **kwargs)
-        self.addCleanup(patcher.stop)
-        return patcher.start()
+        return self.__addPatcher(patcher)
+
+    def patchDict(self, target, values=(), clear=False, **kwargs):
+        patcher = patch.dict(target, values, clear, **kwargs)
+        return self.__addPatcher(patcher)
+
+    def patchObject(self, targetObject, attribute, *args, **kwargs):
+        patcher = patch.object(targetObject, attribute, *args, **kwargs)
+        return self.__addPatcher(patcher)
 
     def patchMultiple(self, moduleName, objectName, *args, **kwargs):
         """
@@ -75,8 +82,7 @@ class AdvancedTestCase(TestCase):
         """
         target = '{0}.{1}'.format(moduleName, objectName)
         patcher = patch.multiple(target, *args, **kwargs)
-        self.addCleanup(patcher.stop)
-        return patcher.start()
+        return self.__addPatcher(patcher)
 
     def patchOpen(self, return_value=None, side_effect=None, read_data=''):
         newCallable = mock_open(read_data=read_data) if read_data else mock_open()
@@ -93,8 +99,7 @@ class AdvancedTestCase(TestCase):
 
     def patchWithSpy(self, moduleName, objectName):
         patcher = patch('{0}.{1}'.format(moduleName, objectName), SpyClass.getSpy(objectName, moduleName))
-        self.addCleanup(patcher.stop)
-        return patcher.start()
+        return self.__addPatcher(patcher)
 
     def assertSameItems(self, first, second, msg=None):
         if self.__assertSameItems is None:
@@ -115,6 +120,10 @@ class AdvancedTestCase(TestCase):
             self.assertEqual(expectedCalls, receivedCalls)
         else:
             self.assertSameItems(expectedCalls, receivedCalls)
+
+    def __addPatcher(self, patcher):
+        self.addCleanup(patcher.stop)
+        return patcher.start()
 
 
 class FileBasedTestCase(AdvancedTestCase):
