@@ -51,7 +51,7 @@ The *CUT-Isolation* principle was the one where most of the evaluated solutions 
 In addition, there were some simply technical reasons that also made frameworks existing at that time less suitable. 
 Our lab machines were beyond control of our team, and those were equipped with *Windows* OS, *Python* 2.7, *MS Visual Studio* and our target build tool-chain.
   
->No Ruby, lua, CMake or any other things of that kind.
+>No lua, Ruby, CMake or any other things of that kind.
 
 Eventually, it was decided to build our own framework that will fit the bill. 
 
@@ -96,17 +96,19 @@ Here is additional helpful Unity documentation:
 
 ### 4.1. OS
 
-STAT-framework is built to run on Windows. 
-
->The support for Linux is still in the process.
+STAT-framework is built to run both on Windows and Linux.
 
 ### 4.2. Build Tools
 
-STAT-framework has an integrated support for build-tools that include _Microsoft Visual Studio_ of any version starting from 2008 up to 2019 and of any edition (i.e. Community, Professional and Enterprise editions).  
+STAT-framework has an integrated support for build-tools, which are determined based on OS, localy instlled tools and user-configuration:
 
->There is an effort to add support for some other built-tools (like GCC).
+- On Windows: _Microsoft Visual Studio_ including all versions from 2005 up to 2019 (any edition, i.e. Community, Professional and Enterprise).  
 
-STAT is designed to minimize its requirements from the system. Therefore, it uses integral make-file infrastructure of build-tools (e.g. NMAKE for MSVS) instead of complimentary ones like CMake. This decision was dictated by restrictions of our lab machines to install additional software.
+- On Linux: _GNU Compiler_, i.e. GCC
+
+STAT is designed to minimize its requirements from the system. Therefore, it uses a precompiled _GNU Make Tool_ (included in the repo) instead of complimentary ones like CMake.  
+
+> This decision was dictated by restrictions of our lab, which didn't allow installing of any additional software.
 
 ***MSVS Versioning***
 
@@ -119,7 +121,7 @@ Framework provides services to generate project files for certain IDEs, by the m
   * The generated project file for this IDE support step-by-step debugging 
 * _Source Insight 4.0_ - it is a unique IDE, which also is a code-analyzer, actually one of a kind.
 
->There is an effort to add support for some additional IDEs.
+>There is an effort to add support for some additional IDEs, e.g. VS Code
 
 ## 5. Maintainer
 

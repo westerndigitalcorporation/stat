@@ -11,9 +11,9 @@ EXPECTED_PATH = 'tool-chain-path'
 EMULATED_OS_ENVIRON = \
     {'VS90COMNTOOLS': '/c/vs/oldest/tools', 'VS130COMNTOOLS': EXPECTED_TOOL, 'VS120COMNTOOLS': '/c/vs/medium/tools', }
 
-VSWHERE_BASE_PATH = os.path.join(attributes.TOOL_PATH, attributes.RESOURCES_DIRECTORY)
-VSWHERE_VERSION_COMMAND_LINE = VSWHERE_BASE_PATH + "\\vswhere.exe -legacy -property installationVersion -latest"
-VSWHERE_PATH_COMMAND_LINE = VSWHERE_BASE_PATH + "\\vswhere.exe -legacy {0} -property installationPath -latest"
+VSWHERE_BASE_PATH = os.path.join(attributes.TOOL_PATH, attributes.RESOURCES_DIRECTORY, "vswhere.exe")
+VSWHERE_VERSION_COMMAND_LINE = VSWHERE_BASE_PATH + " -legacy -property installationVersion -latest"
+VSWHERE_PATH_COMMAND_LINE = VSWHERE_BASE_PATH + " -legacy {0} -property installationPath -latest"
 TOOLS_BASE_PATH_MOCK = "./test/tools/path"
 TOOLS_FULL_PATH_MOCK = os.path.join(TOOLS_BASE_PATH_MOCK, "Common7", "Tools")
 MSVS_DEV_BATCH_MOCK = os.path.join(TOOLS_FULL_PATH_MOCK, "VsDevCmd.bat")
@@ -25,7 +25,6 @@ DUMMY_ENVIRONMENT = {'VS{0}0COMNTOOLS'.format(version): TOOLS_FULL_PATH_MOCK
 class TestMsvsTools(AdvancedTestCase):
 
     def setUp(self):
-        self.skipWindowsTest()
         self.isfile = self.patch(CUT, 'os.path.isfile', side_effect=lambda pathName: True)
 
     def test_find_byEnvironmentOlder(self):

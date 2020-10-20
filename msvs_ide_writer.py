@@ -268,7 +268,7 @@ class MsvsWriter(IdeCompositeWriter):
         :type contents: StatMakefileProject
         """
         super(MsvsWriter, self).__init__(contents, args)
-        tools = BuildToolsCrawler().retrieve()
+        tools = BuildToolsCrawler().retrieveMsvs()
         if isinstance(tools, MsvsTools):
             writer = Msvs2010ProjectWriter if tools.year >= 2010 else MsvsLegacyWriter
             self._instances.append(writer(contents, tools))

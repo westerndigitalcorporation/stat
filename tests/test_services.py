@@ -231,11 +231,32 @@ class TestServices(FileBasedTestCase):
         else:
             self.fail('The operation should have raised an exception')
 
+    def test_formatMakeCommand_onLinux64(self):
+        self.patch(CUT, services.getPlatform.__name__, return_value="Linux64")
+        makeTool = attributes.MAKE_TOOL["Linux64"]
+        filename = "some_make_file.mak"
+        expected = [makeTool, "-f", filename]
+
+        command = services.formatMakeCommand(filename)
+
+        self.assertEqual(expected, command)
+
+    def test_formatMakeCommand_onLinux32WithMakeInstalled(self):
+        self.patch(CUT, services.getPlatform.__name__, return_value="Linux32")
+        makeTool = "make"
+        self.patch(CUT, services.locateFile.__name__, return_value=makeTool)
+        filename = "some_make_file.mak"
+        expected = [makeTool, "-f", filename]
+
+        command = services.formatMakeCommand(filename)
+
+        self.assertEqual(expected, command)
+
     def test_formatMakeCommand_simpleOnWindows32Bit(self):
         self.patch(CUT, services.getPlatform.__name__, return_value="Windows32")
         filename = "some_make_file.mak"
-        makeTool = services.locateResource(attributes.MAKE_TOOL["Windows32"])
-        expected = [makeTool, "-f {file}".format(file=filename)]
+        makeTool = attributes.MAKE_TOOL["Windows32"]
+        expected = [makeTool, "-f", filename]
 
         command = services.formatMakeCommand(filename)
 
@@ -244,8 +265,8 @@ class TestServices(FileBasedTestCase):
     def test_formatMakeCommand_simpleOnWindows64Bit(self):
         self.patch(CUT, services.getPlatform.__name__, return_value="Windows64")
         filename = "some_make_file.mak"
-        makeTool = services.locateResource(attributes.MAKE_TOOL["Windows64"])
-        expected = [makeTool, "-f {file}".format(file=filename)]
+        makeTool = attributes.MAKE_TOOL["Windows64"]
+        expected = [makeTool, "-f", filename]
 
         command = services.formatMakeCommand(filename)
 
@@ -254,9 +275,9 @@ class TestServices(FileBasedTestCase):
     def test_formatMakeCommand_withArguments(self):
         self.patch(CUT, services.getPlatform.__name__, return_value="Windows64")
         filename = "some_make_file.mak"
-        makeTool = services.locateResource(attributes.MAKE_TOOL["Windows64"])
+        makeTool = attributes.MAKE_TOOL["Windows64"]
         args = ["clean", "build"]
-        expected = [makeTool, "-f {file}".format(file=filename)] + args
+        expected = [makeTool, "-f", filename] + args
 
         command = services.formatMakeCommand(filename, args)
 
@@ -275,7 +296,7 @@ class TestServices(FileBasedTestCase):
     def test_formatMakeCommand_uponUnknownPlatform(self):
         self.patch(CUT, services.getPlatform.__name__, return_value="unknown-fake")
         filename = "some_make_file.mak"
-        expected = ["make", "-f {file}".format(file=filename)]
+        expected = ["make", "-f", filename]
 
         command = services.formatMakeCommand(filename)
 
@@ -323,6 +344,62 @@ class TestServices(FileBasedTestCase):
 
         for filename in listByFileExtension(directory='.', extension='.c'):
             copyfile(filename, os.path.join(OUTPUT_DIRECTORY, filename.replace('.c', '.obj')))
+
+
+class TestLocateFile(FileBasedTestCase):
+
+    def test_locateFile_overExplicitPath(self):
+        filepath = services.locateFile("some_file.txt", path=".")
+        self.assertEqual("", filepath)
+
+        filepath = services.locateFile("simple.mak", path=".")
+        self.assertEqual(os.path.join(".", "simple.mak"), filepath)
+
+        filepath = services.locateFile("stat_another_example.c", path=['.', '..'])
+        self.assertEqual("", filepath)
+
+        filepath = services.locateFile("stat_another_example.c", path=['.', './tests/example', '..'])
+        self.assertEqual(os.path.join("./tests/example", "stat_another_example.c"), filepath)
+
+    def test_locateFile_inAllImplicitlyAvailableLocations(self):
+        self.patchDict(os.environ, {"PATH": os.pathsep.join([os.path.abspath("./tests"),
+                                                             os.path.abspath("./tests/example"),
+                                                             os.path.abspath("./prducts")])})
+
+        filepath = services.locateFile("simple.mak")
+        self.assertEqual(os.path.abspath(os.path.join(".", "simple.mak")), filepath)
+
+        filepath = services.locateFile("stat_another_example.c")
+        self.assertEqual(os.path.abspath(os.path.join("./tests/example", "stat_another_example.c")), filepath)
+
+    def test_locateFile_withExplicitAccessMode(self):
+        filepath = services.locateFile("simple.mak", os.X_OK)
+        self.assertEqual("", filepath)
+
+    def test_locateFile_executableOnWindowsWithSpecifiedExtension(self):
+        self.patchDict(os.environ, {"PATHEXT": os.pathsep.join([".EXE", ".COM"])})
+        _isWindows = self.patch(CUT, isWindows.__name__)
+        self.patchObject(os, os.access.__name__, return_value=True)
+
+        _isWindows.return_value = False
+        filepath = services.locateFile("simple.mak", os.X_OK)
+        self.assertEqual(os.path.abspath(os.path.join(".", "simple.mak")), filepath)
+
+        _isWindows.return_value = True
+        filepath = services.locateFile("simple.mak", os.X_OK)
+        self.assertEqual("", filepath)
+
+    def test_locateFile_executableOnWindowsWithoutExtension(self):
+        self.patchDict(os.environ, {"PATHEXT": os.pathsep.join([".bat", ".exe", ".com"])})
+        self.patch(CUT, isWindows.__name__, return_value=True)
+        self.patchObject(os, os.access.__name__, return_value=True)
+
+        print(os.path.abspath(os.curdir))
+        filepath = services.locateFile("vswhere", os.X_OK, "../resources")
+        self.assertEqual(os.path.join("../resources", "vswhere.exe"), filepath)
+
+        filepath = services.locateFile("vswhere", path="../resources")
+        self.assertEqual("", filepath)
 
 
 TEST_PATH = './{0}/path/to/check'.format(OUTPUT_DIRECTORY)

@@ -2,7 +2,7 @@
 
 File `.statconfig` is an optional file that contains configuration values and directives. If exists, it is located in the root directory (see [Getting Started](./stat_getting_started.md)) of the STAT instance within the code of the codebase.  
 
-The configuration feature is not yet reach with many options, as it's only the beginning. Currently it supports only selection of MS-VS version selection.
+> Currently it supports only selection of MS-VS version selection.
 
 ## MS Visual Studio Version
 

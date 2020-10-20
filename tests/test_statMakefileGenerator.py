@@ -1,4 +1,5 @@
 import os
+import platform
 
 import stat_attributes as attributes
 from build_tools import BuildTools
@@ -12,7 +13,7 @@ from tests.test_services import FileBasedTestCase, Mock
 TEST_PRODUCT_NAME = "product"
 TEST_PRODUCT_FILE = TEST_PRODUCT_NAME + ".mak"
 TEST_PRODUCT_EXEC = TEST_PRODUCT_NAME + (".exe" if isWindows() else "")
-TEST_TOOL_ATTRIBUTES = {"some_path": "some/path/to/the/tool", "some_version": "1.3.0.7"}
+TEST_TOOL_ATTRIBUTES = {"SOME_PATH": "some/path/to/the/tool", "SOME_VERSION": "1.3.0.7"}
 
 CUT = StatMakefileGenerator.__module__
 
@@ -22,10 +23,8 @@ class TestStatMakefileGenerator(FileBasedTestCase):
     def setUp(self):
         directory = os.path.dirname(attributes.AUTO_GENERATED_MAKEFILE)
         remove(directory)
-        tools = Mock(spec=BuildTools)
-        tools.getAttributes.return_value = TEST_TOOL_ATTRIBUTES
         self.buildToolsCrawler = self.patch(CUT, BuildToolsCrawler.__name__, auto_spec=True)
-        self.buildToolsCrawler.return_value.retrieve.return_value = tools
+        self.buildToolsCrawler.return_value.getBuildAttributes.return_value = TEST_TOOL_ATTRIBUTES
 
     def tearDown(self):
         directory = os.path.dirname(attributes.AUTO_GENERATED_MAKEFILE)
@@ -48,13 +47,13 @@ class TestStatMakefileGenerator(FileBasedTestCase):
 
         self.parser = StatMakefile(makFile)
 
-        # noinspection PyTypeChecker
-        for parameter in config:
-            self.assertEqual(config[parameter], self.parser[parameter])
-        for parameter in TEST_TOOL_ATTRIBUTES:
-            self.assertEqual(TEST_TOOL_ATTRIBUTES[parameter], self.parser[parameter])
+        parserDictionary = {k: self.parser[k] for k in self.parser}
+        configDictionary = {k: config[k] for k in iter(config)}
+        self.assertDictContainsSubset(configDictionary, parserDictionary)
+        self.assertDictContainsSubset(TEST_TOOL_ATTRIBUTES, parserDictionary)
         self.assertEqual(TEST_PRODUCT_NAME, self.parser[StatMakefile.NAME])
         self.assertEqual(TEST_PRODUCT_EXEC, self.parser[StatMakefile.EXEC])
+        self.assertEqual(platform.system(), self.parser[StatMakefile.OS])
 
         self.__verifyProductMakfileIsIncluded()
         self.__verifyToolsMakfileIsIncluded()

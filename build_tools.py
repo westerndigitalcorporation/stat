@@ -14,3 +14,9 @@ class BuildTools(object):
 
     @abstract_method
     def getAttributes(self): pass
+
+
+class GccBuildTools(BuildTools):
+
+    def getAttributes(self):
+        return {}

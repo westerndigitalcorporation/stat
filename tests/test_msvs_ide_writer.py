@@ -54,7 +54,7 @@ class TestMsvsWriter(MsvsWriterTestCase):
     def setUp(self):
         self.mockCommonObjects()
         toolsCrawler = self.patch(CUT, BuildToolsCrawler.__name__)
-        toolsCrawler.return_value.retrieve.return_value = self.tools
+        toolsCrawler.return_value.retrieveMsvs.return_value = self.tools
         self.msvsLegacyWriter = self.patch(CUT, MsvsLegacyWriter.__name__)
         self.msvs2010ProjectWriter = self.patch(CUT, Msvs2010ProjectWriter.__name__)
 
@@ -123,7 +123,7 @@ class TestMsvsLegacyWriter(MsvsWriterTestCase):
                 executable="{0}.exe".format(self.makefileProject.outputName),
                 definitions=";".join(self.makefileProject.definitions)
             )))
-        self.assertEqual(expected, actual)
+        self.assertSameItems(expected, actual)
 
     def test_createRootToken(self):
         writer = self.writer
@@ -209,7 +209,7 @@ class TestMsvs2010ProjectWriter(MsvsWriterTestCase):
             executable="{0}.exe".format(self.makefileProject.outputName),
             definitions=";".join(self.makefileProject.definitions)
         )))
-        self.assertEqual(expected, actual)
+        self.assertSameItems(expected, actual)
 
     def test_addFile_forSourceFiles(self):
         sources = ['./root_main.c', './sub_directory/file_a.c', './sub_directory/file_b.c']

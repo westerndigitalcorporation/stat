@@ -3,7 +3,7 @@
 ***synopsis***
 
 ```shell
-makestat.py [-h] [-r | -b | -vs | -si] [-s | -g [{2-12}]]
+makestat.py [-h] [-r | -b | -vs | -si] [-c] [-s | -g [{2-12}]]
             [-p <product> | -a]
             [<mak file> [<mak file> ...]]
 ```
