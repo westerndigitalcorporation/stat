@@ -59,7 +59,8 @@ class TestStatMakefileProject(FileBasedTestCase):
 
         project = StatMakefileProject(self.PROJECT_EXAMPLE_PATH)
 
-        self.assertSameItems(expected, project.files())
+        actual = list(project.files())
+        self.assertSameItems(expected, actual)
 
     def test_headerDuplicationConflictIsResolvedByOrderOfInclusion(self):
         project = StatMakefileProject(self.PROJECT_EXAMPLE_PATH)
@@ -69,7 +70,7 @@ class TestStatMakefileProject(FileBasedTestCase):
         files, dirs = expected
 
         self.assertSameItems(files, [received[_file] for _file in received.files])
-        self.assertSameItems(dirs, received.dirs)
+        self.assertSameItems(list(dirs), list(received.dirs))
 
         for dirNode in dirs:
             self.__verifyTree(dirs[dirNode], received[dirNode])

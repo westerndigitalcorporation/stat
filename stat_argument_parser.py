@@ -11,6 +11,7 @@ import stat_attributes as attributes
 from si_ide_writer import SourceInsightWriter
 from msvs_ide_writer import MsvsWriter
 from services import listMakefiles, countCpuCores
+from vscode_writer import VsCodeWriter
 
 STAT_MINIMAL_PARALLELISM = 2
 STAT_PROG_NAME = 'makestat.py'
@@ -102,8 +103,10 @@ class StatArgumentParser(object):
                                       '\nimplicitly assumed upon no other user-choice')
         targetGroup.add_argument('-b', '--build-only', action='store_true',
                                  help='only compile, don not run the test-package executables')
+        targetGroup.add_argument('-vc', '--vs-code', action='store_const', dest='ide',
+                                 const=VsCodeWriter.IDE, help='creates VS-Code Workspace for the makefile')
         targetGroup.add_argument('-vs', '--visual-studio', action='store_const', dest='ide',
-                                 const=MsvsWriter.IDE, help='creates Visual Studio Solution for the makefile')
+                                 const=MsvsWriter.IDE, help='creates MS Visual Studio Solution for the makefile')
         targetGroup.add_argument('-si', '--source-insight', action='store_const', dest="ide",
                                  const=SourceInsightWriter.IDE, help='creates Source-Insight project for the makefile;'
                                                                      '\ncurrently only version 4.0 is supported')

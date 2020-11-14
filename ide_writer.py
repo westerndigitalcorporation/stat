@@ -33,6 +33,13 @@ class IdeWriter(meta_class(FactoryByLegacy, object, uidAttribute='IDE')):
     @abstract_method
     def write(self): pass
 
+    @property
+    def namespace(self):
+        return "ide_{0}".format(self._contents.name)
+
+    def formatMakeCommand(self, target):
+        return formatMakeCommand(self._contents.makefile, [target], STAT_NAMESPACE=self.namespace)
+
 
 class IdeCompositeWriter(IdeWriter):
     writers = []
@@ -91,8 +98,7 @@ class IdeXmlWriter(IdeWriter):
         _file.close()
 
     def formatCommandLine(self, target):
-        namespace = "ide_{0}".format(self._contents.name)
-        return "cd..&&" + " ".join(formatMakeCommand(self._contents.makefile, [target], STAT_NAMESPACE=namespace))
+        return "cd..&&" + " ".join(self.formatMakeCommand(target))
 
 
 class IdeWorkspaceWriter(object):
