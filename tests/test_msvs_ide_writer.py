@@ -111,6 +111,7 @@ class TestMsvsLegacyWriter(MsvsWriterTestCase):
         self.writer = MsvsLegacyWriter(self.makefileProject, self.tools)
 
     def test_init(self):
+        self.maxDiff = None
         actual = convertXmlToDictionary(self.writer._doc)
         target = 'ide_' + self.makefileProject.name
         output = os.path.join('..', attributes.OUTPUT_DIRECTORY, self.makefileProject.outputName, target)

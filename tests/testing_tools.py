@@ -21,7 +21,7 @@ BUILTINS_NAME = builtinsModuleName = '__builtin__' if sys.version_info.major < 3
 
 def isUnderIde():
     return "PYCHARM_HOSTED" in os.environ or 'VSCODE_PID' in os.environ or \
-        os.getenv("SESSIONNAME") == "Console" or os.getenv("TERM_PROGRAM") == "vscode"
+           os.getenv("SESSIONNAME") == "Console" or os.getenv("TERM_PROGRAM") == "vscode"
 
 
 def readFileLines(filePath):
@@ -34,18 +34,19 @@ def readFileLines(filePath):
 def convertXmlToDictionary(xml):
     def recursive_dict(element):
         if isinstance(element, Text):
-            return "#text", str(element.data)
+            value = str(element.data).replace("\\", "/") if not isWindows() else str(element.data)
+            return "#text", str(value)
         contents = {}
         if element.attributes is not None:
             for name, value in element.attributes.items():
-                contents.setdefault(str(name), []).append(str(value))
+                _value = str(value).replace("\\", "/") if not isWindows() else str(value)
+                contents.setdefault(str(name), []).append(_value)
         children = map(recursive_dict, element.childNodes)
         if children:
             for name, value in children:
-                if not isWindows():
-                    value = str(value).replace("\\", "/")
                 contents.setdefault(str(name), []).append(value)
         return str(element.nodeName), contents
+
     return dict(map(recursive_dict, xml.childNodes))
 
 
@@ -102,9 +103,38 @@ class AdvancedTestCase(TestCase):
         return self.__addPatcher(patcher)
 
     def assertSameItems(self, first, second, msg=None):
-        if self.__assertSameItems is None:
-            self.__assertSameItems = getattr(self, 'assertCountEqual', getattr(self, 'assertItemsEqual', None))
-        self.__assertSameItems(first, second, msg)
+        difference = self.__findDifference(first, second)
+        if difference:
+            lines = ["Found difference in items:\n"]
+            lines.extend([str(item) for item in difference])
+            errorMessage = "\n\t".join(lines)
+            msg = self._formatMessage(msg, errorMessage)
+            self.fail(msg)
+
+    def __findDifference(self, first, second):
+        if not type(first) == type(second):
+            return first, second
+        elif hasattr(first, "__iter__") and not isinstance(first, type("string")):
+            if not len(first) == len(second):
+                return first, second
+            if isinstance(first, dict):
+                for key in list(first):
+                    if key not in list(second):
+                        return first[key], None
+                    result = self.__findDifference(first[key], second[key])
+                    if result:
+                        return result
+            else:
+                for _first in first:
+                    for _second in second:
+                        if not self.__findDifference(_first, _second):
+                            break
+                    else:
+                        return _first, None
+        elif first == second:
+            return None
+        else:
+            return first, second
 
     @staticmethod
     def getMockCalls(patchedObject):
@@ -112,6 +142,7 @@ class AdvancedTestCase(TestCase):
             callDescription = tuple(callEntry)[0]
             result = callDescription.find('__str__') + callDescription.find('__eq__')
             return result >= 0
+
         return [aCall for aCall in patchedObject.mock_calls if not __isDebuggerCall(aCall)]
 
     def assertCalls(self, patchedObject, expectedCalls, ordered=True):
@@ -170,6 +201,7 @@ class SpyClass(object):
             def __getattr__(self, attribute):
                 def spyCall(*args, **kwargs):
                     return getattr(classToSpy, attribute)(*args, **kwargs)
+
                 if hasattr(getattr(classToSpy, attribute), '__call__'):
                     return spyCall
                 else:
@@ -269,6 +301,7 @@ class SpyModule(object):
                 return self._extractMockReturnValue(functionName)
             else:
                 return self.__issueActualFunctionCall(functionName, *args, **kwargs)
+
         return spyHandler
 
     def _substituteFunctionCall(self, functionName, arguments=SpyArguments()):

@@ -46,7 +46,11 @@ class StatMakefileProject(object):
         return self.__makefile[StatMakefile.DEFINES].split()
 
     def files(self):
-        return chain(self.__sourceFiles(), self.__headerFiles())
+        return chain(self.sources(), self.__headerFiles())
+
+    def sources(self):
+        for source in self.__makefile[StatMakefile.SOURCES].split():
+            yield source
 
     def __getitem__(self, key):
         return self.__makefile[key]
@@ -59,10 +63,6 @@ class StatMakefileProject(object):
         for _file in self.files():
             tree.addFile(_file)
         return tree
-
-    def __sourceFiles(self):
-        for source in self.__makefile[StatMakefile.SOURCES].split():
-            yield source
 
     def __headerFiles(self):
         files = []

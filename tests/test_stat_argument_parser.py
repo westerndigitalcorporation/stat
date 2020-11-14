@@ -5,6 +5,7 @@ from si_ide_writer import SourceInsightWriter
 from msvs_ide_writer import MsvsWriter
 from stat_argument_parser import StatArgumentParser, STAT_MINIMAL_PARALLELISM
 from tests.testing_tools import AdvancedTestCase, call
+from vscode_writer import VsCodeWriter
 
 CUT = 'stat_argument_parser'
 SINGLE_PRODUCT = 'single_product'
@@ -200,6 +201,26 @@ class TestStatArgumentParserUponSingleProduct(TestStatArgumentParser):
         self.listMakefiles.return_value = MANY_MAKEFILES
         try:
             self.parser.parse(['-si'])
+        except SystemExit:
+            pass
+        else:
+            self.fail("Upon many packages '-si' option is invalid")
+
+    def test_parse_vscodeOverSinglePackage(self):
+        fakeWildcard = ['*single*']
+        arguments = ['-vc'] + fakeWildcard
+        self.listMakefiles.return_value = [SINGLE_MAKEFILE]
+        parser = self.parser
+
+        parser.parse(arguments)
+
+        self.assertEqual(VsCodeWriter.IDE, parser.ide)
+        self._verifyCanonicalIdeCreationOutcomes()
+
+    def test_parse_vscodeOverManyPackages(self):
+        self.listMakefiles.return_value = MANY_MAKEFILES
+        try:
+            self.parser.parse(['-vc'])
         except SystemExit:
             pass
         else:
