@@ -22,8 +22,13 @@ Release name format: [2.2.1] - 2020-02-02
 ### Added
 
 - Added support for GCC compiler on Linux Platform
+- Added support for VS-Code on Linux Platform to enable debugging
 
-##  [2.0.0-alpha] - 2020-10-15:
+### Changed
+
+- Updated the documentation with the proper guidelines following the intriduced porting and support for the Linux environment
+
+## [2.0.0-alpha] - 2020-10-15
 
 ### Added
 
@@ -33,7 +38,7 @@ Release name format: [2.2.1] - 2020-02-02
 
 - Migrated build scripts from NMAKE to GNU Make tool
 
-##  [1.2.3] - 2020-08-29:
+## [1.2.3] - 2020-08-29
 
 ### Added
 
@@ -47,13 +52,13 @@ Release name format: [2.2.1] - 2020-02-02
 
 - Fixed incorrect logging in case of internal failure of a test-package
 
-##  [1.2.2-alpha] - 2020-08-24:
+## [1.2.2-alpha] - 2020-08-24
 
 ### Fixed 
 
 - Fixed an issue related to inconsistency of NMAKE to deal with assignments of environment variables, which caused occasional failures of incremental build
 
-##  [1.2.1] - 2020-08-17:
+## [1.2.1] - 2020-08-17
 
 ### Fixed 
 
@@ -64,7 +69,7 @@ Release name format: [2.2.1] - 2020-02-02
 - Improved the performance of the incremental build mode to ensure efficient running for automation
 - Added a rule to MSVS core-makefiles that bypasses an issue with makefiles having bad syntax that caused incremental build to fail
 
-##  [1.2.0] - 2020-08-12:
+## [1.2.0] - 2020-08-12
 
 ### Added
 
@@ -73,14 +78,14 @@ Release name format: [2.2.1] - 2020-02-02
 ### Changed
 
 - Modified the way that tool's root-path is referred to allow more flexibility
-    - Supports execution of STAT-own unit-test from different IDEs (e.g. VS Code, PyCharm)
-    - Reduces full-path references to minimum -> replaced (where possible) with relative path
+  - Supports execution of STAT-own unit-testfrom different IDEs (e.g. VS Code, PyCharm)
+  - Reduces full-path references to minimum-> replaced (where possible) with relative path
 
 ### Fixed 
 
 - Fixed the limitation within MSVS IDE that prevented compilation errors from being clickable from the debugger
 
-##  [1.1.0] - 2020-07-05:
+## [1.1.0] - 2020-07-05
 
 ### Added
 
@@ -90,13 +95,13 @@ Release name format: [2.2.1] - 2020-02-02
 ### Changed
 
 - Changed processor counting method so that it doesn't mandatory requires `psutil` package
-- Made additional adjustments to handling of `multiprocessing`-related flows, based on: 
-    - Issues discovered during Python 3 adjustments  
+- Made additional adjustments to handling of `multiprocessing`-related flows, based on:
+  - Issues discovered during Python 3 adjustments  
     and
-    - Issues reported by other developers in the community
+  - Issues reported by other developers in the community
 - Code-style changes to meet pep-8 (except for naming conventions)
 
-## [1.0.0] - 2020-06-26 
+## [1.0.0] - 2020-06-26
 
 ### Added
 
@@ -113,11 +118,11 @@ Release name format: [2.2.1] - 2020-02-02
 
 ### Changed
 
-- Adjusted README.md to fit format defined by [standard-readme](https://github.com/RichardLitt/standard-readme) 
+- Adjusted README.md to fit format defined by [standard-readme](https://github.com/RichardLitt/standard-readme)
 - Licensing ths entire repo with MIT license
 - Changed response to redundant arguments from termination to warning
-- Upgraded _Unity_ harness to latest version 
+- Upgraded _Unity_ harness to latest version
 
 ### Removed
 
-- Cleaned outdated history preceding the deployment to Open Source 
+- Cleaned outdated history preceding the deployment to Open Source
