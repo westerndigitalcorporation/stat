@@ -8,7 +8,7 @@ File `.statconfig` is an optional file that contains configuration values and di
 
 This configuration parameter defines the version of
 MS Visual-Studio that STAT shall seek to build the
-test-packages. 
+test-packages.
 
 *For example:*  
 
@@ -17,4 +17,3 @@ test-packages.
 * The version shall be specified by the year
 * The supported versions are from `2005` up to `2019`
 * If the parameter is not explicitly specified, *STAT-framework determines the **latest** version* and uses it as a default choice
-

@@ -2,7 +2,7 @@
 
 ## Introduction <!-- omit in toc -->
 
-The ultimate goal that was stated for STAT-framework was to enable instant initiation of practicing TDD, with almost no requirements from the development platform and from everybody to commit to the process. 
+The ultimate goal that was stated for STAT-framework was to enable instant initiation of practicing TDD, with almost no requirements from the development platform and from everybody to commit to the process.
 
 ## Table of Contents <!-- omit in toc -->
 
@@ -44,7 +44,6 @@ With STAT each CUT has its own test-package that is compiled into a separate exe
 
 Each test-package in STAT-framework is represented by a simple text-file that uses semantics of a *makefile*. It doesn't require from the developer to be a makefile savvy to setup a package. However, some knowledge of its syntax might give certain benefits, but once again not mandatory.
 
-
 _Test-package makefile has the following structure:_
 
 ```makefile
@@ -73,13 +72,13 @@ DEFINES = <definition> <definition>=<value> ...
 include ./output/stat.mak
 ```
 
-Whereas the last line in the file is for STAT-framework needs and shall be inserted as it is, other variables in the file have certain meaning: 
+Whereas the last line in the file is for STAT-framework needs and shall be inserted as it is, other variables in the file have certain meaning:
 
-* `SOURCES` - a space-separated list of source files that shall compile for the test-package
-* `INCLUDES` - a space-separated list of relative paths to be included by the test-package
-* `DUMMY_INTERFACES` - a space-separated list of *Dummy Interfaces* to substitute original DOC API-header files
-* `DEFINES` - a space-separated list of global definitions for the preprocessor to be applied to the test-package 
-    
+- `SOURCES` - a space-separated list of source files that shall compile for the test-package
+- `INCLUDES` - a space-separated list of relative paths to be included by the test-package
+- `DUMMY_INTERFACES` - a space-separated list of *Dummy Interfaces* to substitute original DOC API-header files
+- `DEFINES` - a space-separated list of global definitions for the preprocessor to be applied to the test-package
+
 > Note that all paths in the *makefile* shall appear in POSIX format only.
 
 ### 2.2. Test Source-File
@@ -126,25 +125,25 @@ _UU32 Stat_Main(void)
 ### 2.3. Test Setup and Teardown Handlers
 
 It is important to ensure each test has a clean start:
-* Test should not assume that any preceding test leaves a certain state
-* Test should not have any impact even from a failing test
- 
+
+- Test should not assume that any preceding test leaves a certain state
+- Test should not have any impact even from a failing test
+
 In almost all frameworks there is a facility that allows installation of `setup` and `teardown` handlers, exactly for this purpose. STAT-framework is no different in this from other unit-tests solutions.
 
 Before any group of test-registrations that issued with `RUN_TEST(...)` the developer may call the following API:
 
 ```c
-  void Stat_SetTestSetupTeardownHandlers(STAT_HANDLER setup, STAT_HANDLER teardown) 
+  void Stat_SetTestSetupTeardownHandlers(STAT_HANDLER setup, STAT_HANDLER teardown)
 ```
 
 If at least one of the passed function-pointers points to a real function rather than NULL, it will be called automatically before and/or after each test depending on whether it's a setup or a teardown handler.
 
 This API can be called several times in the same test-package. Each time it is called, it overrides the preceding call for all the tests registered after this one.
 
-
 ## 3. Product-Level Setup
 
-STAT-framework supports product-level makefile. This file is mostly like a test-package, with only difference that it affects all test-packages. 
+STAT-framework supports product-level makefile. This file is mostly like a test-package, with only difference that it affects all test-packages.
 
 _Product-level makefile has the following format:_
 
@@ -180,8 +179,8 @@ In this case, it makes sense to run tests for each of the products, to make sure
 
 There are setup and teardown at the product-level, which are called for each test of all the test-packages:
 
-* `void Stat_SetupProductTest(void)` – setup common for all test-packages
-* `void Stat_TeardownProductTest(void)` – cleanup common for all test-packages
+- `void Stat_SetupProductTest(void)` – setup common for all test-packages
+- `void Stat_TeardownProductTest(void)` – cleanup common for all test-packages
 
 >Defining these handlers is a must, but can be empty functions.
 
@@ -189,19 +188,18 @@ There are setup and teardown at the product-level, which are called for each tes
 
 The instance directory has certain structure, which can be extended for the convenience of the user:
 
-* `dummies` - this directory shall be used for 'Dummy Interfaces' (if this concept is followed)
-  * It's not mandatory, but highly recommended
-  * Please see [Conceptual Model](,/../conceptual_model.md) 
+- `dummies` - this directory shall be used for 'Dummy Interfaces' (if this concept is followed)
+  - It's not mandatory, but highly recommended
+  - Please see [Conceptual Model](,/../conceptual_model.md)
   for the description of this concept
-* `[ide]` - this is an auto-created output directory that contains ide solutions/projects generated upon user's request
-* `[log]` - this is an auto-created output directory that contains logs with verbose printout of the test-packages that have failed during the last run
-* `[output]` - this is an auto-created output directory that contains all the compiled/linked artifacts/object-files/etc that are generated as a result of framework run
-    * Unlike other output directories, this one is rather for the internal use of STAT  
-* `products` - this directory contains product-level makefiles 
-* `shared` - like directory `dummies`, this directory is not mandatory, but strongly advised for keeping the shared test-doubles that are implemented generic enough to serve more then single test-package
+- `[ide]` - this is an auto-created output directory that contains ide solutions/projects generated upon user's request
+- `[log]` - this is an auto-created output directory that contains logs with verbose printout of the test-packages that have failed during the last run
+- `[output]` - this is an auto-created output directory that contains all the compiled/linked artifacts/object-files/etc that are generated as a result of framework run
+  - Unlike other output directories, this one is rather for the internal use of STAT  
+- `products` - this directory contains product-level makefiles \
+- `shared` - like directory `dummies`, this directory is not mandatory, but strongly advised for keeping the shared test-doubles that are implemented generic enough to serve more then single test-package
 
->Note that all directory names highlighted with square brackets are of directories auto-created by STAT.
-
+>Note that all directory names highlighted with square brackets are of directories auto-created by STAT.  
 >It is highly recommended to add a directory for the source files of the test-packages, e.g. by name `tests`. Moreover, for more convenient navigation through out this directory it is also recommended to maintain the tree structure close to the one of the code-base.  
 >The same should be applied to the contents of directory `shared`.
 
@@ -209,24 +207,25 @@ The instance directory has certain structure, which can be extended for the conv
 
 The the instance directory also has the following files:
 
-* `makestat.py` - this is the execution script of STAT-framework
-    * See guide for STAT [*command-line options*](./stat_commandline.md)
-* `.statignore` - an optional file that similar to `.gitignore` is used to make STAT ignore certain test-package
-    * This file might contain file-names and wildcards
-* `.statconfig` - an optional file that contains configuration values and directives, see all [*'.statconfig'* options](./statconfig.md)
-* `[report.json]` - an automatically generated report describing the latest run of the framework; written in '*json*' format
-* `*.mak` - many makefiles, each representing a certain test-package
+- `makestat.py` - this is the execution script of STAT-framework
+  - See guide for STAT [*command-line options*](./stat_commandline.md)
+- `.statignore` - an optional file that similar to `.gitignore` is used to make STAT ignore certain test-package
+  - This file might contain file-names and wildcards
+*- `.statconfig` - an optional file that contains configuration values and directives, see all [*'.statconfig'* options](./statconfig.md)
+- `[report.json]` - an automatically generated report describing the latest run of the framework; written in '*json*' format
+- `*.mak` - many makefiles, each representing a certain test-package
 
-### 4.2. CFiles within Products-Directory 
+### 4.2. CFiles within Products-Directory
 
 The `products` directory in the root of STAT instance is dedicated to contain everything related to the product-level:
-*   It contains at least one makefile (i.e.`*.mak`) that configures a specific product
-    *   There can be more than single product-level makefile
-* `.statignore` - an optional file that similar to `.gitignore` is used to make STAT ignore certain product-level makefiles
-    * This file might contain file-names and wildcards
-    * This can be used to share configurations between products 
-        *   Create a basic product-level `makefile`
-        *   Add it to the `.statignore` file
-        *   Than create the all the anticipated product-level `makefiles` and make them include the first ignored
-        
-This directory can be also used to contain header-files and source-files that are intended to compile for all test-packages, i.e. on a product-level. 
+
+- It contains at least one makefile (i.e.`*.mak`) that configures a specific product
+  - There can be more than single product-level makefile
+- `.statignore` - an optional file that similar to `.gitignore` is used to make STAT ignore certain product-level makefiles
+  - This file might contain file-names nd wildcards
+  - This can be used to share onfigurations between products
+    - Create a basic product-level `makefile`
+    - Add it to the `.statignore` file
+    - Than create the all the anticipatedproduct-level `makefiles` and makethem include the first ignored
+
+This directory can be also used to contain header-files and source-files that are intended to compile for all test-packages, i.e. on a product-level.

@@ -19,5 +19,6 @@
     "makestat",
     "pylint",
     "statignore"
-  ]
+  ],
+  "python.pythonPath": "/home/arsenique/miniconda3/envs/py_3_5_4/bin/python"
 }

@@ -2,7 +2,7 @@ import os
 import ast
 from json import load, dumps
 import stat_attributes as attributes
-from services import remove, formatMakeCommand
+from services import remove, formatMakeCommand, isWindows
 from stat_makefile import StatMakefile
 
 from stat_makefile_project import StatMakefileProject
@@ -19,6 +19,8 @@ TEST_FOLDERS_INIT_CONFIG = [{"name": TEST_IDE_DIRECTORY, "path": os.path.abspath
 class TestVsCodeWriter(FileBasedTestCase):
 
     def setUp(self):
+        if isWindows():
+            self.skipTest("VS-Code is not yest supported on Windows.")
         self.maxDiff = None
         if not os.path.isdir(attributes.IDE_DIRECTORY):
             os.mkdir(attributes.IDE_DIRECTORY)
@@ -29,6 +31,7 @@ class TestVsCodeWriter(FileBasedTestCase):
         command = formatMakeCommand(TEST_MAKEFILE, STAT_NAMESPACE=namespace)
         self.makeTool = command[0]
         self.makeArguments = command[1:]
+        self.foldersInitConfig = [{"name": TEST_IDE_DIRECTORY, "path": os.path.abspath(TEST_IDE_DIRECTORY)}]
 
     def tearDown(self):
         remove(TEST_IDE_DIRECTORY)
@@ -175,7 +178,7 @@ class TestVsCodeWriter(FileBasedTestCase):
         return expected
 
     def test_initFolders(self):
-        expected = TEST_FOLDERS_INIT_CONFIG
+        expected = self.foldersInitConfig
         workspace = self.writer._workspace
         
         self.assertSameItems(expected, workspace["folders"])
@@ -183,7 +186,7 @@ class TestVsCodeWriter(FileBasedTestCase):
     def test_addFile(self):
         _file = "./tests/example/stat_test_example.c"
         _path = os.path.normpath(os.path.dirname(_file))
-        expected = TEST_FOLDERS_INIT_CONFIG[:] + [dict(name=_path, path=os.path.abspath(_path))]
+        expected = self.foldersInitConfig[:] + [dict(name=_path, path=os.path.abspath(_path))]
 
         self.writer.addFile(_file, None)
 
@@ -193,7 +196,7 @@ class TestVsCodeWriter(FileBasedTestCase):
     def test_addFilesMany(self):
         files = ["../unity/unity.c", "../lib/src/stat.c", "../lib/src/stat_rng.c"]
         paths = list(set(os.path.normpath(os.path.dirname(_file)) for _file in files))
-        expected = TEST_FOLDERS_INIT_CONFIG[:] + [dict(name=_path, path=os.path.abspath(_path)) for _path in paths]
+        expected = self.foldersInitConfig[:] + [dict(name=_path, path=os.path.abspath(_path)) for _path in paths]
 
         files.append(os.path.join(attributes.DUMMIES_DIRECTORY, "first_dummy.h"))
 
@@ -213,7 +216,7 @@ class TestVsCodeWriter(FileBasedTestCase):
             self.assertSameItems(self.__getExpectedSettings(), contents.get("settings", None))
             self.assertSameItems(self.__getExpectedLaunchConfigurations(), contents.get("launch", None))
             self.assertSameItems(self.__getExpectedTaskConfigurations(), contents.get("tasks", None))
-            self.assertSameItems(TEST_FOLDERS_INIT_CONFIG, contents.get("folders", None))
+            self.assertSameItems(self.foldersInitConfig, contents.get("folders", None))
 
     def test_createTokens(self):
         writer = self.writer
