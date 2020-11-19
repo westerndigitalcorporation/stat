@@ -11,20 +11,15 @@ from tests.testing_tools import *  # pylint: disable=unused-wildcard-import
 CUT = services.__name__
 
 
-def _rmtree(treePath):
-    if os.path.isdir(treePath):
-        rmtree(treePath)
-
-
 class TestServices(FileBasedTestCase):
 
     def setUp(self):
         self._fakeOs = FakeOs('services')
-        _rmtree(OUTPUT_DIRECTORY)
+        services.remove(OUTPUT_DIRECTORY)
 
     def tearDown(self):
         self._fakeOs.restoreOriginalModule()
-        _rmtree(OUTPUT_DIRECTORY)
+        services.remove(OUTPUT_DIRECTORY)
 
     def test_isWindows(self):
         self.patch(CUT, 'platform.system', side_effect=['linux', 'Windows'])
@@ -408,7 +403,7 @@ TEST_PATH = './{0}/path/to/check'.format(OUTPUT_DIRECTORY)
 class TestMkdir(FileBasedTestCase):
 
     def setUp(self):
-        _rmtree(OUTPUT_DIRECTORY)
+        services.remove(OUTPUT_DIRECTORY)
 
     def test_mkdir_basic(self):
         services.mkdir(TEST_PATH)
