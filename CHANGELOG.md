@@ -19,6 +19,10 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [Unreleased]
 
+None
+
+## [2.1.0] - 2020-11-19
+
 ### Added
 
 - Added support for GCC compiler on Linux Platform
