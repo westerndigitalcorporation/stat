@@ -10,7 +10,7 @@ from json import dump
 import stat_attributes as attributes
 
 from ide_writer import IdeWriter
-from services import mkdir
+from services import mkdir, createLink, nameExecutable, isWindows
 from stat_makefile import StatMakefile
 
 
@@ -34,12 +34,12 @@ class VsCodeWriter(IdeWriter):
         mkdir(dummiesLocation, exist_ok=True)
         target = os.path.abspath(os.path.join(self.__ideLocation, contents.makefile))
         if not os.path.isfile(target):
-            os.link(contents.makefile, target)
+            createLink(contents.makefile, target)
         for name in self.__getItems(StatMakefile.INTERFACES):
             target = os.path.abspath(os.path.join(dummiesLocation, name))
             source = os.path.join(attributes.DUMMIES_DIRECTORY, name)
             if not os.path.isfile(target):
-                os.link(source, target)
+                createLink(source, target)
 
     def __buildSettings(self):
         includes = ["${workspaceFolder}/dummies"]
@@ -62,16 +62,18 @@ class VsCodeWriter(IdeWriter):
     def __buildLaunchConfiguration(self):
         cwd = os.path.abspath(".")
         program = os.path.join(cwd, attributes.OUTPUT_DIRECTORY, self._contents.outputName,
-                               'ide_' + self._contents.name, "bin", self._contents.outputName)
-        setupCommands = [
-            dict(description="Enable pretty-printing for gdb", text="-enable-pretty-printing", ignoreFailures=True),
-        ]
+                               'ide_' + self._contents.name, "bin", nameExecutable(self._contents.outputName))
         debug = dict(
-            name="Debug {0}".format(self._contents.name),
-            cwd=cwd, program=program,
-            type="cppdbg", MIMode="gdb", request="launch",
-            args=[], environment=[], stopAtEntry=False, externalConsole=False, setupCommands=setupCommands,
+            name="Debug {0}".format(self._contents.name), cwd=cwd, program=program, preLaunchTask="Build",
+            request="launch", args=[], environment=[], stopAtEntry=False, externalConsole=False,
         )
+        if isWindows():
+            debug["type"] = "cppvsdbg"
+        else:
+            setupCommands = [
+                dict(description="Enable pretty-printing for gdb", text="-enable-pretty-printing", ignoreFailures=True),
+            ]
+            debug.update(dict(type="cppdbg", MIMode="gdb", setupCommands=setupCommands))
         self._workspace["launch"] = {"configurations": [debug]}
 
     def __buildTaskConfigurations(self):

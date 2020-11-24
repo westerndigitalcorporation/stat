@@ -61,7 +61,7 @@ class TestServices(FileBasedTestCase):
         target = "/home/tests/fw/inc/example.h"
         services.createLink(source, target)
 
-        commandLine = services.formatCommandLine('cmd /c mklink "{target}" "{source}"'.format(
+        commandLine = services.formatCommandLine('cmd /c mklink "{target}" "{source}" >nul'.format(
             target=services.toWindowsPath(target), source=services.toWindowsPath("../../../product/fw/inc/example.h")))
         self.assertCalls(patcher, [call.Popen(commandLine, shell=True), call.Popen().wait()])
         self.assertEqual(0, len(self._fakeOs['symlink']))
@@ -76,7 +76,7 @@ class TestServices(FileBasedTestCase):
         services.createLink(source, target)
 
         self.assertEqual(0, len(self._fakeOs['symlink']))
-        commandLine = services.formatCommandLine('cmd /c mklink /D "{target}" "{source}"'.format(
+        commandLine = services.formatCommandLine('cmd /c mklink /D "{target}" "{source}" >nul'.format(
             target=services.toWindowsPath(target), source=services.toWindowsPath("../../product/fw/inc")))
         self.assertCalls(patcher, [call.Popen(commandLine, shell=True), call.Popen().wait()])
 

@@ -59,6 +59,10 @@ def toNativePath(path):
     return toWindowsPath(path) if isWindows() else toPosixPath(path)
 
 
+def nameExecutable(fileOnlyName):
+    return fileOnlyName + '.exe' if isWindows() else fileOnlyName
+
+
 def mkdir(path, exist_ok=False):
     if exist_ok and os.path.isdir(path):
         return
@@ -129,9 +133,9 @@ def createLink(sourcePath, targetPath):
         source = toWindowsPath(source)
         target = toWindowsPath(target)
         if os.path.isdir(source):
-            commandLine = 'cmd /c mklink /D "{target}" "{source}"'
+            commandLine = 'cmd /c mklink /D "{target}" "{source}" >nul'
         else:
-            commandLine = 'cmd /c mklink "{target}" "{source}"'
+            commandLine = 'cmd /c mklink "{target}" "{source}" >nul'
         subprocess.Popen(formatCommandLine(commandLine.format(target=target, source=source)), shell=True).wait()
     else:
         os.symlink(source, target)  # pylint: disable=no-member

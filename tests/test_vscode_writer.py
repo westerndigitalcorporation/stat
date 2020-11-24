@@ -1,13 +1,16 @@
 import os
 import ast
 from json import load, dumps
+
 import stat_attributes as attributes
-from services import remove, formatMakeCommand, isWindows
+from services import remove, formatMakeCommand, isWindows, nameExecutable
 from stat_makefile import StatMakefile
 
 from stat_makefile_project import StatMakefileProject
 from tests.testing_tools import FileBasedTestCase
 from vscode_writer import VsCodeWriter
+
+CUT = VsCodeWriter.__module__
 
 TEST_MAKEFILE = 'simplified_example.mak'
 TEST_TARGET_NAME = TEST_MAKEFILE[:-len('.mak')]
@@ -16,11 +19,14 @@ TEST_MAKEFILE_LINK = os.path.join(TEST_IDE_DIRECTORY, TEST_MAKEFILE)
 TEST_FOLDERS_INIT_CONFIG = [{"name": TEST_IDE_DIRECTORY, "path": os.path.abspath(TEST_IDE_DIRECTORY)}]
 
 
-class TestVsCodeWriter(FileBasedTestCase):
+class TestVsCodeWriterOnNativeOs(FileBasedTestCase):
+
+    def _doBeforeSetup(self):
+        self.isOnWindows = isWindows()
 
     def setUp(self):
-        if isWindows():
-            self.skipTest("VS-Code is not yest supported on Windows.")
+        self._doBeforeSetup()
+        self.patch(CUT, isWindows.__name__, return_value=self.isOnWindows)
         self.maxDiff = None
         if not os.path.isdir(attributes.IDE_DIRECTORY):
             os.mkdir(attributes.IDE_DIRECTORY)
@@ -44,12 +50,12 @@ class TestVsCodeWriter(FileBasedTestCase):
             self.assertTrue(os.path.isfile(os.path.join(TEST_IDE_DIRECTORY, "dummies", name)))
 
     def test_innitSettings(self):
-        expected = self.__getExpectedSettings()
+        expected = self._getExpectedSettings()
         workspace = self.writer._workspace
 
         self.assertSameItems(expected, workspace["settings"])
 
-    def __getExpectedSettings(self):
+    def _getExpectedSettings(self):
         includes = ["${workspaceFolder}/dummies"]
         includes.extend([os.path.abspath(_path) for _path in self.makefileProject[StatMakefile.INCLUDES].split()])
         expected = {
@@ -64,49 +70,13 @@ class TestVsCodeWriter(FileBasedTestCase):
         }
         return expected
 
-    def test_initLaunchConfigurations(self):
-        expected = self.__getExpectedLaunchConfigurations()
-        workspace = self.writer._workspace
-
-        self.assertSameItems(expected, workspace["launch"])
-
-    def __getExpectedLaunchConfigurations(self):
-        workingDirectory = os.path.abspath(".")
-        target = 'ide_' + self.makefileProject.name
-        output = os.path.join(workingDirectory, attributes.OUTPUT_DIRECTORY, self.makefileProject.outputName, target)
-        program = os.path.join(output, "bin", self.makefileProject.outputName)
-        expected = {
-            "configurations": [
-                {
-                    "name": "Debug {0}".format(TEST_TARGET_NAME),
-                    "type": "cppdbg",
-                    "request": "launch",
-                    "program": program,
-                    "args": [],
-                    "stopAtEntry": False,
-                    "cwd": workingDirectory,
-                    "environment": [],
-                    "externalConsole": False,
-                    "MIMode": "gdb",
-                    "setupCommands": [
-                        {
-                            "description": "Enable pretty-printing for gdb",
-                            "text": "-enable-pretty-printing",
-                            "ignoreFailures": True
-                        }
-                    ]
-                },
-            ],
-        }
-        return expected
-
     def test_initTaskConfigurations(self):
-        expected = self.__getExpectedTaskConfigurations()
+        expected = self._getExpectedTaskConfigurations()
         workspace = self.writer._workspace
 
         self.assertSameItems(expected, workspace["tasks"])
 
-    def __getExpectedTaskConfigurations(self):
+    def _getExpectedTaskConfigurations(self):
         expected = {
             "version": "2.0.0",
             "tasks": [
@@ -177,10 +147,46 @@ class TestVsCodeWriter(FileBasedTestCase):
         }
         return expected
 
+    def _getExpectedLaunchConfigurations(self):
+        workingDirectory = os.path.abspath(".")
+        target = 'ide_' + self.makefileProject.name
+        output = os.path.join(workingDirectory, attributes.OUTPUT_DIRECTORY, self.makefileProject.outputName, target)
+        program = os.path.join(output, "bin", nameExecutable(self.makefileProject.outputName))
+        debug = {
+            "name": "Debug {0}".format(TEST_TARGET_NAME),
+            "request": "launch",
+            "preLaunchTask": "Build",
+            "program": program,
+            "args": [],
+            "stopAtEntry": False,
+            "cwd": workingDirectory,
+            "environment": [],
+            "externalConsole": False,
+        }
+        if self.isOnWindows:
+            debug["type"] = "cppvsdbg"
+        else:
+            debug["type"] = "cppdbg"
+            debug["MIMode"] = "gdb"
+            debug["setupCommands"] = [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": True
+                }
+            ]
+        return {"configurations": [debug]}
+
+    def test_initLaunchConfigurations(self):
+        expected = self._getExpectedLaunchConfigurations()
+        workspace = self.writer._workspace
+
+        self.assertSameItems(expected, workspace["launch"])
+
     def test_initFolders(self):
         expected = self.foldersInitConfig
         workspace = self.writer._workspace
-        
+
         self.assertSameItems(expected, workspace["folders"])
 
     def test_addFile(self):
@@ -213,9 +219,9 @@ class TestVsCodeWriter(FileBasedTestCase):
         self.assertTrue(os.path.isfile(workspacePath))
         with open(workspacePath) as jsonFile:
             contents = ast.literal_eval(dumps(load(jsonFile)).replace("true", "True").replace("false", "False"))
-            self.assertSameItems(self.__getExpectedSettings(), contents.get("settings", None))
-            self.assertSameItems(self.__getExpectedLaunchConfigurations(), contents.get("launch", None))
-            self.assertSameItems(self.__getExpectedTaskConfigurations(), contents.get("tasks", None))
+            self.assertSameItems(self._getExpectedSettings(), contents.get("settings", None))
+            self.assertSameItems(self._getExpectedLaunchConfigurations(), contents.get("launch", None))
+            self.assertSameItems(self._getExpectedTaskConfigurations(), contents.get("tasks", None))
             self.assertSameItems(self.foldersInitConfig, contents.get("folders", None))
 
     def test_createTokens(self):
@@ -223,3 +229,15 @@ class TestVsCodeWriter(FileBasedTestCase):
 
         self.assertEqual(".", writer.createRootToken())
         self.assertEqual(os.path.sep.join(("parent", "child")), writer.createDirectoryToken("child", "parent"))
+
+
+class TestVsCodeWriterLinux(TestVsCodeWriterOnNativeOs):
+
+    def _doBeforeSetup(self):
+        self.isOnWindows = False
+
+
+class TestVsCodeWriterWindows(TestVsCodeWriterOnNativeOs):
+
+    def _doBeforeSetup(self):
+        self.isOnWindows = True
