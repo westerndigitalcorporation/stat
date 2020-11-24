@@ -19,6 +19,10 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [Unreleased]
 
+### Added 
+
+- Added support for VS-Code on Windows Platform with full IDE integration
+
 ### Fixed
 
 - Fixed the issue with precedence of header-files that are overwritten with test-double

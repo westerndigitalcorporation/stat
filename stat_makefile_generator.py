@@ -9,7 +9,7 @@ import os
 import platform
 
 import stat_attributes as attributes
-from services import toPosixPath, isWindows, mkdir
+from services import toPosixPath, mkdir, nameExecutable
 from stat_configuration import StatConfiguration
 from build_tools_crawler import BuildToolsCrawler
 from stat_makefile import StatMakefile
@@ -54,7 +54,7 @@ class StatMakefileGenerator(object):
         values = [
             _formatAssignment(StatMakefile.OS, platform.system()),
             _formatAssignment(StatMakefile.NAME, self.__targetName),
-            _formatAssignment(StatMakefile.EXEC, self.__targetName + '.exe' if isWindows() else self.__targetName)
+            _formatAssignment(StatMakefile.EXEC, nameExecutable(self.__targetName))
         ]
         values += _getValues(StatConfiguration(), BuildToolsCrawler().getBuildAttributes())
         return '\n'.join(values)

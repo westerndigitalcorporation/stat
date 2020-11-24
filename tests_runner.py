@@ -26,7 +26,8 @@ class TestsRunner(object):
 
     def compile(self):
         environ = dict(os.environ, STAT_NAMESPACE=self.__makefile.name)
-        status, log = execute(formatMakeCommand(self.__fileName, self.__arguments, ), beSilent=self.__beSilent, env=environ)
+        makeCommand = formatMakeCommand(self.__fileName, self.__arguments, )
+        status, log = execute(makeCommand, beSilent=self.__beSilent, env=environ)
         self.__log.extend(log)
         if status:
             raise TestsRunnerException('Package "{0}" failed to compile.'.format(self.__fileName))
