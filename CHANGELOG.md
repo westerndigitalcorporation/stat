@@ -19,7 +19,9 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [Unreleased]
 
-None
+### Fixed
+
+- Fixed the issue with precedence of header-files that are overwritten with test-double
 
 ## [2.1.0] - 2020-11-19
 

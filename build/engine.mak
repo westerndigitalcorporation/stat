@@ -7,7 +7,7 @@
 
 # Format build inputs
 DEFINES := $(addprefix -D, $(DEFINES))
-INCLUDE_DIRS := $(sort $(DUMMIES_DIR) $(INCLUDES))
+INCLUDE_DIRS := $(DUMMIES_DIR) $(INCLUDES)
 DEPENDENT_HEADERS := $(addprefix $(DUMMIES_DIR)/,$(DUMMY_INTERFACES)) $(wildcard $(addsuffix /*.h,$(INCLUDES)))
 SOURCE_DIRS := $(sort $(dir $(SOURCES)))
 SOURCES := $(wildcard $(SOURCES))
@@ -53,9 +53,10 @@ recompile: $(HEADERS) | $(OBJECTS_DIR)/
 
 
 define composeIncludesRule
-$(HEADERS_DIR)/%.h : $(1)/%.h $(filter clean, $(MAKECMDGOALS)) | $(HEADERS_DIR)/
-	$$(eval SOURCE_HEADER=$$<)
+$(HEADERS_DIR)/%.h : | $(filter clean, $(MAKECMDGOALS)) $(1)/%.h $(HEADERS_DIR)/
+	$$(eval SOURCE_HEADER=$(1)/$$(@F))
 	$$(eval TARGET_HEADER=$$@)
+	@echo $$(SOURCE_HEADER) == $$(TARGET_HEADER)
 	$(if $(COPY_HEADERS), $$(HEADER_COPY_COMMAND_LINE), $$(HEADER_LINK_COMMAND_LINE))
 endef
 $(foreach includeDir, $(INCLUDE_DIRS), $(eval $(call composeIncludesRule, $(includeDir))))
