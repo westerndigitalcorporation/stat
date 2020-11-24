@@ -19,6 +19,10 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [Unreleased]
 
+None
+
+## [2.1.1] - 2020-11-24
+
 ### Added 
 
 - Added support for VS-Code on Windows Platform with full IDE integration
