@@ -1,8 +1,11 @@
 # STAT _(Unit-test Framework)_ <!-- omit in toc -->
 
-![Programming C](https://img.shields.io/badge/programming-TDD%20|%20Embedded-orange.svg?style=flat&logo=c&logoColor=white)
-![MSVS](https://img.shields.io/badge/MSVS-2005--2008%20|%202010--2019-blue?style=flat&logo=Visual-Studio&logoColor=white)
-![Windows](https://img.shields.io/badge/Windows-7%20|%2010-blue?style=flat&logo=Windows&logoColor=white)
+
+![Programming C](https://img.shields.io/badge/programming-TDD%20|%20Embedded-orange.svg?style=flat&logo=c&logoColor=white) 
+![MSVS](https://img.shields.io/badge/MSVS-2005--2008%20|%202010--2019-blue?style=flat&logo=Visual-Studio&logoColor=white) 
+![GNU](https://img.shields.io/badge/GNU-Make%20|%20GCC-blue?style=flat&logo=GNU&logoColor=white) 
+![Windows](https://img.shields.io/badge/Windows-7%20|%2010-blue?style=flat&logo=Windows&logoColor=white) 
+![Linux](https://img.shields.io/badge/Linux-Debian%20Derivatives%20+-blue?style=flat&logo=Linux&logoColor=white) 
 ![python](https://img.shields.io/badge/python-2.7%20|%203.5--3.8-blue?style=flat&logo=Python&logoColor=white)  
 [![standard-readme compliant](https://img.shields.io/badge/readme_style-standard-brightgreen)](https://github.com/RichardLitt/standard-readme)
 [![REUSE Compliance](https://github.com/westerndigitalcorporation/stat/workflows/REUSE%20Compliance/badge.svg?branch=master)](https://api.reuse.software/info/git.fsfe.org/reuse/api)
