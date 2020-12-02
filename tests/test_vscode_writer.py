@@ -63,7 +63,7 @@ class TestVsCodeWriterOnNativeOs(FileBasedTestCase):
             "debug.inlineValues": True,
             "debug.showBreakpointsInOverviewRuler": True,
             "debug.toolBarLocation": "docked",
-            "terminal.integrated.cwd": "${workspaceFolder}/../../",
+            "terminal.integrated.cwd": "${workspaceFolder}/../..",
             "C_Cpp.default.includePath": includes,
             "C_Cpp.default.defines": self.makefileProject.definitions,
             # "files.exclude": {"**/node_modules": True,},
@@ -98,13 +98,13 @@ class TestVsCodeWriterOnNativeOs(FileBasedTestCase):
                         "isDefault": True
                     },
                     "options": {
-                        "cwd": "../.."
+                        "cwd": "${workspaceFolder}/../.."
                     },
                     "problemMatcher": {
                         "owner": "cpp",
                         "fileLocation": [
                             "relative",
-                            "../.."
+                            "${workspaceFolder}/../.."
                         ],
                         "pattern": {
                             "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
@@ -130,7 +130,7 @@ class TestVsCodeWriterOnNativeOs(FileBasedTestCase):
                     "command": self.makeTool,
                     "args": self.makeArguments + ["clean"],
                     "options": {
-                        "cwd": "../.."
+                        "cwd": "${workspaceFolder}/../.."
                     },
                     "problemMatcher": []
                 },
