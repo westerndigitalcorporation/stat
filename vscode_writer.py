@@ -50,7 +50,7 @@ class VsCodeWriter(IdeWriter):
             "debug.inlineValues": True,
             "debug.showBreakpointsInOverviewRuler": True,
             "debug.toolBarLocation": "docked",
-            "terminal.integrated.cwd": "${workspaceFolder}/../../",
+            "terminal.integrated.cwd": "${workspaceFolder}/../..",
             "C_Cpp.default.includePath": includes,
             "C_Cpp.default.defines": defines,
         }
@@ -92,7 +92,7 @@ class VsCodeWriter(IdeWriter):
             "command": command[0],
             "args": command[1:],
             "options": {
-                "cwd": "../.."
+                "cwd": "${workspaceFolder}/../.."
             },
             "problemMatcher": []
         }
@@ -102,7 +102,7 @@ class VsCodeWriter(IdeWriter):
         build["args"].remove("clean")
         build["problemMatcher"] = {
             "owner": "cpp",
-            "fileLocation": ["relative", "../.."],
+            "fileLocation": ["relative", "${workspaceFolder}/../.."],
             "pattern": {"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
                         "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5}
         }

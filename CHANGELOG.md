@@ -21,6 +21,12 @@ Release name format: [2.2.1] - 2020-02-02
 
 None
 
+## [2.1.2] - 2020-12-12
+
+## Fixed
+
+- In REH-based Linux the VS-Code workspace had issues with relative paths used for CWD of build-tasks
+
 ## [2.1.1] - 2020-11-24
 
 ### Added 
