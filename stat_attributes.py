@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: MIT
 
 # ----------------------------------------------------------------------------------------------------------------------
-VERSION = '2.1.2'
+VERSION = '2.1.3'
 
 WEB_URL = "https://github.com/westerndigitalcorporation/stat#3-usage"
 RESOURCES_DIRECTORY = 'resources'

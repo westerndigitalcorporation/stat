@@ -19,7 +19,11 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [Unreleased]
 
-None
+## Changed
+
+- Improved incremental building - based on concepts by [Mad Scientist](http://make.mad-scientist.net/papers/advanced-auto-dependency-generation/)
+- Optimized timing of rebuild
+- Better encapsulation of Make definitions divided between OS and Tool-Chain
 
 ## [2.1.2] - 2020-12-12
 
