@@ -11,7 +11,7 @@ import stat_attributes as attributes
 from ide_writer import IdeWriter
 
 
-WORKSPACE_PATH = "{basePath}/{name}.si4project"
+WORKSPACE_PATH = "{basePath}/{name}"
 SOURCE_INSIGHT_4 = "si4project.zip"
 FILE_LIST_FILENAME = "{path}/si_filelist.txt"
 SI_FILES_PREFIX = 'stat'

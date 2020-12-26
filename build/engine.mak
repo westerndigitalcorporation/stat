@@ -14,9 +14,13 @@ SOURCES := $(wildcard $(SOURCES))
 
 # Declare build outputs
 HEADERS := $(addprefix $(HEADERS_DIR)/,$(notdir $(DEPENDENT_HEADERS)))
-OBJECTS := $(addprefix $(OBJECTS_DIR)/,$(subst .c,.$(OBJEXT),$(notdir $(SOURCES))))
-DEPENDENCIES := $(subst .$(OBJEXT),.d,$(OBJECTS)))
+OBJECTS := $(addprefix $(OBJECTS_DIR)/,$(subst .c,.$(TOOLS.OBJEXT),$(notdir $(SOURCES))))
+DEPENDENCIES := $(subst .$(TOOLS.OBJEXT),.d,$(OBJECTS)))
 EXECUTABLE := $(BINARY_DIR)/$(OUTPUT_EXEC)
+
+ifneq ("$(TOOLS.NAME)", "")
+$(info <tools="$(TOOLS.NAME)">)
+endif
 
 define NEW_LINE_BREAK
 
@@ -34,19 +38,18 @@ rebuild: recompile | link
 
 
 %/ :
-	$(eval NEW_DIRECTORY=$@)
-	$(CREATE.directory)
+	$(call OS.MAKE_DIR, $@)
 
 
 link: $(BINARY_DIR)/
 	@echo Linking...
-	$(LINK_COMMAND_LINE)
+	$(TOOLS.LINK)
 
 
 $(EXECUTABLE) : $(OBJECTS) | link
 
 
-RECOMPILE_COMMAND=$(eval OBJECT_FILE=$(OBJECTS_DIR)/$(notdir $(SOURCE_FILE:.c=.$(OBJEXT)))) $(COMPILE_COMMAND_LINE)
+RECOMPILE_COMMAND=$(eval OBJECT_FILE=$(OBJECTS_DIR)/$(notdir $(SOURCE_FILE:.c=.$(TOOLS.OBJEXT)))) $(TOOLS.COMPILE)
 recompile: $(HEADERS) | $(OBJECTS_DIR)/
 	@echo Compiling all...
 	$(foreach SOURCE_FILE, $(SOURCES), $(RECOMPILE_COMMAND) $(NEW_LINE_BREAK))
@@ -54,29 +57,24 @@ recompile: $(HEADERS) | $(OBJECTS_DIR)/
 
 define composeIncludesRule
 $(HEADERS_DIR)/%.h : | $(filter clean, $(MAKECMDGOALS)) $(1)/%.h $(HEADERS_DIR)/
-	$$(eval SOURCE_HEADER=$(1)/$$(@F))
-	$$(eval TARGET_HEADER=$$@)
-	$(if $(COPY_HEADERS), $$(HEADER_COPY_COMMAND_LINE), $$(HEADER_LINK_COMMAND_LINE))
+	$(if $(COPY_HEADERS), $$(call OS.COPY, $(1)/$$(@F), $$@), $$(call OS.LINK, $(1)/$$(@F), $$@))
 endef
 $(foreach includeDir, $(INCLUDE_DIRS), $(eval $(call composeIncludesRule, $(includeDir))))
 
+$(OBJECTS_DIR)/%.d : $(HEADERS)
+	@echo $(subst .d,.c, $(@F))
 
 define composeCompilationRule
-$(OBJECTS_DIR)/%.d : $(1)%.c $(HEADERS) | $(OBJECTS_DIR)/
-	$$(eval SOURCE_FILE=$$<)
-	$$(eval DEP_FILE=$$@)
-	$$(DEP_COMMAND_LINE)
-
-$(OBJECTS_DIR)/%.$(OBJEXT) : $(1)%.c $(STAT_AUTO_MAKEFILE)
-	@echo $$(<F)
+$(OBJECTS_DIR)/%.$(TOOLS.OBJEXT) : $(1)%.c $(OBJECTS_DIR)/%.d $(STAT_AUTO_MAKEFILE) | $(OBJECTS_DIR)/
 	$$(eval SOURCE_FILE=$$<)
 	$$(eval OBJECT_FILE=$$@)
-	$$(COMPILE_COMMAND_LINE)
+	$$(eval DEP_FILE=$$(subst .$$(TOOLS.OBJEXT),.d, $$@))
+	$$(TOOLS.COMPILE)
 endef
 $(foreach sourceDir, $(SOURCE_DIRS), $(eval $(call composeCompilationRule, $(sourceDir))))
 
 ifeq ("$(filter rebuild, $(MAKECMDGOALS))", "")
--include $(DEPENDENCIES)
+include $(wildcard $(DEPENDENCIES))
 endif
 
 .PRECIOUS: $(OBJECTS_DIR)/%.d | $(BINARY_DIR)/ $(OBJECTS_DIR)/ $(HEADERS_DIR)/

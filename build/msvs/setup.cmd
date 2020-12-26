@@ -7,6 +7,7 @@
 
 @echo OFF
 setlocal EnableExtensions
+SET STAT_MSVS_IN_LOOP=YES
 call "%MSVS_DEV:/=\%" >nul
 %*
 endlocal

@@ -10,13 +10,7 @@ ifeq ("$(STAT_NAMESPACE)", "")
 $(error Target namesapce is not properly configured!)
 endif
 
-# Execution makefiles
-ifeq ("$(OS_NAME)", "Windows")
-TOOLS_CONFIG_MAKEFILE = $(STAT_ROOT)/build/msvs/config.mak
-else
-TOOLS_CONFIG_MAKEFILE = $(STAT_ROOT)/build/gcc/config.mak
-endif
-STAT_BUILD_MAKEFILE = $(STAT_ROOT)/build/engine.mak
+# Declare path to auto-generated STAT makefile
 STAT_AUTO_MAKEFILE := $(OUTPUT_DIR)/stat.mak
 
 # Declare output directories
@@ -25,17 +19,12 @@ HEADERS_DIR := $(OUTPUT_DIR)/inc
 OBJECTS_DIR := $(OUTPUT_DIR)/obj
 BINARY_DIR := $(OUTPUT_DIR)/bin
 
--include $(TOOLS_CONFIG_MAKEFILE)
--include $(STAT_BUILD_MAKEFILE)
-
-ifneq ("$(TOOLS_NAME)", "")
-$(info <tools="$(TOOLS_NAME)">)
-endif
+include $(STAT_ROOT)/build/$(OS_NAME).mak
+include $(STAT_ROOT)/build/$(OS.DEFAULT_TOOLS)/config.mak
 
 .PHONY: clean
 clean:
 	@echo Cleaning...
-	$(eval DIRECTORY=$(OUTPUT_DIR))
-	$(REMOVE.directory)
+	$(call OS.REMOVE_DIR, $(OUTPUT_DIR))
 	@echo complete.
 
