@@ -6,8 +6,9 @@
 :: SPDX-License-Identifier: MIT
 
 @echo OFF
+
 setlocal EnableExtensions
-SET STAT_MSVS_IN_LOOP=YES
+set STAT_MSVS_IN_LOOP=YES
 call "%MSVS_DEV:/=\%" >nul
 %*
 endlocal
