@@ -24,7 +24,8 @@ include $(STAT_ROOT)/build/$(OS.DEFAULT_TOOLS)/config.mak
 
 .PHONY: clean
 clean:
+	$(info  )
 	@echo Cleaning...
 	$(call OS.REMOVE_DIR, $(OUTPUT_DIR))
-	@echo complete.
+	@echo Done.
 

@@ -18,9 +18,9 @@ OBJECTS := $(addprefix $(OBJECTS_DIR)/,$(subst .c,.$(TOOLS.OBJEXT),$(notdir $(SO
 DEPENDENCIES := $(subst .$(TOOLS.OBJEXT),.d,$(OBJECTS)))
 EXECUTABLE := $(BINARY_DIR)/$(OUTPUT_EXEC)
 
-ifneq ("$(TOOLS.NAME)", "")
-$(info <tools="$(TOOLS.NAME)">)
-endif
+$(info  )
+$(info Building '$(firstword $(MAKEFILE_LIST))' for '$(PRODUCT_FLAVOR)')
+$(info $(if $(TOOLS.NAME),with <tools="$(TOOLS.NAME)">,)...)
 
 define NEW_LINE_BREAK
 
@@ -32,46 +32,45 @@ endef
 
 
 build: $(EXECUTABLE)
-
-
-rebuild: recompile | link
+	@echo $(if $(LINKING_DONE),Done.,Up-to-date already.)
 
 
 %/ :
-	$(call OS.MAKE_DIR, $@)
+	$(call OS.MAKE_DIR,$@)
 
 
-link: $(BINARY_DIR)/
+$(EXECUTABLE) : $(OBJECTS) | $(BINARY_DIR)/
 	@echo Linking...
 	$(TOOLS.LINK)
-
-
-$(EXECUTABLE) : $(OBJECTS) | link
+	$(eval LINKING_DONE="TRUE")
 
 
 RECOMPILE_COMMAND=$(eval OBJECT_FILE=$(OBJECTS_DIR)/$(notdir $(SOURCE_FILE:.c=.$(TOOLS.OBJEXT)))) $(TOOLS.COMPILE)
-recompile: $(HEADERS) | $(OBJECTS_DIR)/
+rebuild: $(HEADERS) | $(OBJECTS_DIR)/ $(BINARY_DIR)/
 	@echo Compiling all...
-	$(foreach SOURCE_FILE, $(SOURCES), $(RECOMPILE_COMMAND) $(NEW_LINE_BREAK))
+	$(foreach SOURCE_FILE,$(SOURCES),$(RECOMPILE_COMMAND) $(NEW_LINE_BREAK))
+	@echo Linking...
+	$(TOOLS.LINK)
+	@echo Done.
 
 
 define composeIncludesRule
 $(HEADERS_DIR)/%.h : | $(filter clean, $(MAKECMDGOALS)) $(1)/%.h $(HEADERS_DIR)/
-	$(if $(COPY_HEADERS), $$(call OS.COPY, $(1)/$$(@F), $$@), $$(call OS.LINK, $(1)/$$(@F), $$@))
+	$$(if $(COPY_HEADERS),$$(call OS.COPY,$(1)/$$(@F),$$@),$$(call OS.LINK,$(1)/$$(@F),$$@))
 endef
-$(foreach includeDir, $(INCLUDE_DIRS), $(eval $(call composeIncludesRule, $(includeDir))))
+$(foreach includeDir,$(INCLUDE_DIRS),$(eval $(call composeIncludesRule,$(includeDir))))
 
 $(OBJECTS_DIR)/%.d : $(HEADERS)
-	@echo $(subst .d,.c, $(@F))
+	@echo $(subst .d,.c,$(@F))
 
 define composeCompilationRule
 $(OBJECTS_DIR)/%.$(TOOLS.OBJEXT) : $(1)%.c $(OBJECTS_DIR)/%.d $(STAT_AUTO_MAKEFILE) | $(OBJECTS_DIR)/
 	$$(eval SOURCE_FILE=$$<)
 	$$(eval OBJECT_FILE=$$@)
-	$$(eval DEP_FILE=$$(subst .$$(TOOLS.OBJEXT),.d, $$@))
+	$$(eval DEP_FILE=$$(subst .$$(TOOLS.OBJEXT),.d,$$@))
 	$$(TOOLS.COMPILE)
 endef
-$(foreach sourceDir, $(SOURCE_DIRS), $(eval $(call composeCompilationRule, $(sourceDir))))
+$(foreach sourceDir,$(SOURCE_DIRS),$(eval $(call composeCompilationRule,$(sourceDir))))
 
 ifeq ("$(filter rebuild, $(MAKECMDGOALS))", "")
 include $(wildcard $(DEPENDENCIES))

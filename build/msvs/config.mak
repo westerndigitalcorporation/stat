@@ -28,7 +28,7 @@ CC=cl
 LINK=link
 COMPILE_WITH_DEPS=\
 	$(file >$(abspath $(DEP_FILE)), $(subst .d,.$(TOOLS.OBJEXT),$(DEP_FILE)) : $(HEADERS))\
-	$(NEW_LINE_BREAK)  @$(CC) $(CFLAGS) "$(subst /,\,$(abspath $(SOURCE_FILE)))"
+	$(NEW_LINE_BREAK)  @$(CC) $(CFLAGS) "$(subst /,\,$(abspath $(SOURCE_FILE)))" >nul
 
 # MSVS tool-chain global definitions
 TOOLS.OBJEXT:=obj
