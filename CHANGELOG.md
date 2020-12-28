@@ -19,7 +19,11 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [Unreleased]
 
-## Changed
+None
+
+## [2.1.3] - 2020-12-28
+
+### Changed
 
 - Improved incremental building - based on concepts by [Mad Scientist](http://make.mad-scientist.net/papers/advanced-auto-dependency-generation/)
 - Optimized timing of rebuild
@@ -27,7 +31,7 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [2.1.2] - 2020-12-12
 
-## Fixed
+### Fixed
 
 - In REH-based Linux the VS-Code workspace had issues with relative paths used for CWD of build-tasks
 
