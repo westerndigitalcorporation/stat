@@ -98,6 +98,7 @@ static void Test_TestCallOrderTrackingUponNoViolation(void);
 static void Test_TestCallOrderTrackingUponOrderViolation(void);
 static void Test_TestSingleCallToOverriddenMock(void);
 static void Test_TestMultipleCallToOverriddenMock(void);
+static void Test_TestOverriddenMockCompliesWithOrderEnforcement(void);
 static void Test_TestAddReusableMockForSingleUse(void);
 static void Test_TestAddNumericReusableMock(void);
 static void Test_TestSpiedDataUponReusableMock(void);
@@ -187,6 +188,7 @@ _UU32 Test_RunMockMainTests(void)
   RUN_TEST(Test_TestCallOrderTrackingUponOrderViolation);
   RUN_TEST(Test_TestSingleCallToOverriddenMock);
   RUN_TEST(Test_TestMultipleCallToOverriddenMock);
+  RUN_TEST(Test_TestOverriddenMockCompliesWithOrderEnforcement);
   RUN_TEST(Test_TestAddReusableMockForSingleUse);
   RUN_TEST(Test_TestAddNumericReusableMock);
   RUN_TEST(Test_TestSpiedDataUponReusableMock);
@@ -985,7 +987,28 @@ static void Test_TestMultipleCallToOverriddenMock(void)
   TEST_ASSERT_EQUAL(5, Stat_CountAllCalls());
 }
 
-// TODO: ???Check that overridden mock doesn't distort the call order enforcing?????
+static void Test_TestOverriddenMockCompliesWithOrderEnforcement(void)
+{
+  _UU32 spyData = Stat_Rand();
+  STAT_ADD_CALLBACK_MOCK(Test_TestAddCallbackMock, Test_EnforceCallOrderTracking);
+  STAT_ADD_EMPTY_MOCK(Test_TestAddEmptyMock);
+  STAT_ADD_EMPTY_MOCK(Test_TestOverriddenMockCompliesWithOrderEnforcement);
+  STAT_ADD_EMPTY_MOCK(Test_TestAddMock);
+  STAT_OVERRIDE_MOCK(Test_TestOverriddenMockCompliesWithOrderEnforcement, Test_OverrideMock);
+  STAT_ADD_EMPTY_MOCK(Test_TestAddManyMocks);
+  STAT_ADD_CALLBACK_MOCK(Test_TestAddCallbackMock, Test_CeaseCallOrderTracking);
+
+  STAT_POP_MOCK(Test_TestAddCallbackMock);
+  STAT_POP_MOCK(Test_TestAddEmptyMock);
+  TEST_ASSERT_NULL(STAT_POP_MOCK(Test_TestOverriddenMockCompliesWithOrderEnforcement));
+  STAT_POP_MOCK(Test_TestAddMock);
+  TEST_ASSERT_EQUAL_PTR(Test_statMock.overrideHandler.mock_p, 
+    STAT_POP_MOCK_WITH_SPYING(Test_TestOverriddenMockCompliesWithOrderEnforcement, spyData));
+  TEST_ASSERT_EQUAL_PTR(Test_statMock.overrideHandler.mock_p, 
+    STAT_POP_MOCK_WITH_SPYING(Test_TestOverriddenMockCompliesWithOrderEnforcement, spyData));
+  STAT_POP_MOCK(Test_TestAddManyMocks);
+  STAT_POP_MOCK(Test_TestAddCallbackMock);
+}
 
 static void Test_TestAddReusableMockForSingleUse(void)
 {

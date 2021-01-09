@@ -63,6 +63,8 @@ static _UU32 Stat_HasExtendedEntryAnExtendedMockMetadata(const _StatMockBasicEnt
 static _UU32  Stat_IsBasicTestDouble(const _StatMockBasicEntry_t *entry_p);
 static _UU32 Stat_IsPureSpy(const _StatMockBasicEntry_t *entry_p);
 static _UU32 Stat_IsMockOverridden(const _StatMockBasicEntry_t *entry_p);
+static _UU32 Stat_IsTheOneAndUnconsumed(const _StatMockBasicEntry_t *entry_p, const char *declarator_p);
+static _UU32 Stat_IsMockConsumed(const _StatMockBasicEntry_t *entry_p);
 static _StatMockBasicEntry_t* Stat_PopNextMockEntry(const char *declarator_p);
 static void* Stat_CallOverridingHandler(_StatMockBasicEntry_t *entry_p, const void* dataToSpy_p);
 static void Stat_CollectCallData(_StatMockBasicEntry_t *entry_p, const void* dataToSpy_p, _UU32 dataSize);
@@ -472,13 +474,13 @@ void* Stat_FindUnconsumedMock(const char *declarator_p)
 
   while (STAT_IS_MOCK_ITERATION_VALID(entry_p))
   {
-    if (!(entry_p->metadata.callOrder) && Stat_AreStringsEqual(entry_p->declarator_p, declarator_p))
+    if (Stat_IsTheOneAndUnconsumed(entry_p, declarator_p))
     {
       return entry_p;
     }
     else if (Stat_mocks.doCallOrderTracking)
     {
-      STAT_MOCK_ASSERT(entry_p->metadata.callOrder, "Consumed mock out of order for ", entry_p->declarator_p);
+      STAT_MOCK_ASSERT(Stat_IsMockConsumed(entry_p), "Consumed mock out of order for ", declarator_p);
     }
     entry_p = Stat_GetNextMockEntry(entry_p);
   }
@@ -616,6 +618,16 @@ static _UU32 Stat_IsMockOverridden(const _StatMockBasicEntry_t *entry_p)
   STAT_MOCK_HANDLER_T *handler_p = (void*)(entry_p + 1);
   return (entry_p->metadata.isExtended) && (entry_p->metadata.hasCallback) && 
     ((void*)(handler_p + 1) == (void*)Stat_GetNextMockEntry(entry_p));
+}
+
+static _UU32 Stat_IsTheOneAndUnconsumed(const _StatMockBasicEntry_t *entry_p, const char *declarator_p)
+{
+  return !(entry_p->metadata.callOrder) && Stat_AreStringsEqual(entry_p->declarator_p, declarator_p);
+}
+
+static _UU32 Stat_IsMockConsumed(const _StatMockBasicEntry_t *entry_p)
+{
+  return entry_p->metadata.callOrder || Stat_IsMockOverridden(entry_p);
 }
 
 static _StatMockBasicEntry_t* Stat_PopNextMockEntry(const char *declarator_p)
@@ -865,5 +877,4 @@ static _UU32 Stat_HasCallDataNoExtendedMetadata(const _StatMockBasicEntry_t *ent
 /******************************************************************************/
 /*     END OF FILE                                                            */
 /******************************************************************************/
-
 
