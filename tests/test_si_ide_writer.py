@@ -20,7 +20,7 @@ class TestSourceInsightWriter(FileBasedTestCase):
         if not os.path.isdir(attributes.IDE_DIRECTORY):
             os.mkdir(attributes.IDE_DIRECTORY)
         self.contents = StatMakefileProject(TEST_MAKEFILE)
-        self.writer = SourceInsightWriter(SourceInsightWriter.IDE, self.contents)
+        self.writer = SourceInsightWriter(self.contents)
 
     def tearDown(self):
         if os.path.isdir(attributes.IDE_DIRECTORY):

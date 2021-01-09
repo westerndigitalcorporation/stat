@@ -15,12 +15,13 @@ WORKSPACE_PATH = "{basePath}/{name}"
 SOURCE_INSIGHT_4 = "si4project.zip"
 FILE_LIST_FILENAME = "{path}/si_filelist.txt"
 SI_FILES_PREFIX = 'stat'
+SI_PROJECT_EXT = ".siproj"
 
 
 class SourceInsightWriter(IdeWriter):
     IDE = 'SourceInsight'
 
-    def __init__(self, ide, contents, *args):
+    def __init__(self, contents, *args):
         super(SourceInsightWriter, self).__init__(contents, *args)
         self.__files = [self._contents.makefile]
         self.__workspacePath = \
@@ -36,7 +37,8 @@ class SourceInsightWriter(IdeWriter):
         self.__files.append(filePath)
 
     def write(self):
-        if not os.path.isdir(self.__workspacePath):
+        projectFile = os.path.join(self.__workspacePath, self._contents.name + SI_PROJECT_EXT)
+        if not os.path.isfile(projectFile):
             self.__createWorkspace()
             outputText = 'Source-Insight project "{path}" has been build.'
         else:
