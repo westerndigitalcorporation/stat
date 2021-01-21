@@ -82,11 +82,12 @@
 /*     TYPES                                                                  */
 /******************************************************************************/
 
-typedef enum _STAT_EXTENDED_MOCK_TYPES
+typedef enum _STAT_TEST_DOUBLE_TYPES
 {
-  STAT_EXTENDED_MOCK_REUSABLE,
-  STAT_EXTENDED_MOCK_INFINITE,
-}STAT_EXTENDED_MOCK_TYPES_T;
+  STAT_NOT_APPLICABLE_TYPE,
+  STAT_MOCK_REUSABLE_TYPE,
+  STAT_MOCK_INFINITE_TYPE,
+}STAT_TEST_DOUBLE_TYPES_T;
 
 typedef struct _StatMockBasicMetadata
 {
