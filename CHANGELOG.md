@@ -19,6 +19,10 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [Unreleased]
 
+None
+
+## [2.1.4] - 2021-01-21
+
 ### Added
 
 - Completed implementation of new Mock type Infinite-Mock
