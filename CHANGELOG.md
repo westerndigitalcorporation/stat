@@ -19,7 +19,14 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [Unreleased]
 
-None
+### Added
+
+- Completed implementation of new Mock type Infinite-Mock
+
+### Fixed
+
+- Integrated Overridden Mock into functionality of Order-Tracking
+- Fixed creation of Source-Insight project creation
 
 ## [2.1.3] - 2020-12-28
 

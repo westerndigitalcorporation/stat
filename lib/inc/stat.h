@@ -120,8 +120,6 @@
 #define STAT_ADD_MANY_MOCKS_WITH_CALLBACK(_declarator_, _mocks_ptr_, _mock_amount_, _callback_) \
   _STAT_ADD_MANY_MOCKS(_declarator_, _mocks_ptr_, _mock_amount_, _callback_)
 
-#ifdef STAT_FUTURE
-
 #define STAT_ADD_INFINITE_EMPTY_MOCK(_declarator_) \
   _STAT_ADD_INFINITE_EMPTY_MOCK(_declarator_, NULL)
 
@@ -139,8 +137,6 @@
 
 #define STAT_ADD_INFINITE_NUMERIC_MOCK_WITH_CALLBACK(_declarator_, _mock_, _callback_) \
   _STAT_ADD_INFINITE_MOCK_WITH_CALLBACK(_declarator_, _mock_, _callback_)
-
-#endif // STAT_FUTURE
 
 #define STAT_ADD_REUSABLE_EMPTY_MOCK(_declarator_, _use_count_) \
   _STAT_ADD_REUSABLE_EMPTY_MOCK(_declarator_, _use_count_, NULL)

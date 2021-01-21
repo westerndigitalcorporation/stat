@@ -146,6 +146,13 @@ This set of APIs is designed for the Setup phase of the Four-Phase Test pattern.
     Could be useful for loops of CUT:
   * `STAT_ADD_MANY_MOCKS(_declarator_,_mocks_ptr_, _mock_amount_)`
   * `STAT_ADD_MANY_MOCKS_WITH_CALLBAC(_declarator_, _mocks_ptr_, _mock_amount_, _callback_)`
+* To create a mock-object for a mock-driven test-double with undefined amount of calls:
+  * `STAT_ADD_INFINITE_EMPTY_MOCK(_declarator_)`
+  * `STAT_ADD_INFINITE_CALLBACK_MOCK(_declarator_, _callback_)`
+  * `STAT_ADD_INFINITE_MOCK(_declarator_, _mock_)`
+  * `STAT_ADD_INFINITE_MOCK_WITH_CALLBACK(_declarator_, _mock_, _callback_)`
+  * `STAT_ADD_INFINITE_NUMERIC_MOCK(_declarator_, _mock_)`
+  * `STAT_ADD_INFINITE_NUMERIC_MOCK_WITH_CALLBACK(_declarator_, _mock_, _callback_)`
 * To create a mock-object that shall be consumed more then once:  
     Could be useful for loops of CUT:
   * `STAT_ADD_REUSABLE_EMPTY_MOC(_declarator_, _use_count_)`
@@ -157,7 +164,7 @@ This set of APIs is designed for the Setup phase of the Four-Phase Test pattern.
 * To override a mock-driven test-double with a proprietary handler:
   * `STAT_OVERRIDE_MOCK(_declarator_, _handler_)`
 
-### _'Exercise-CUT' Phase_ Macros
+### _'Exercise-CUT' Phase_ APIs
 
 This set of APIs is designed for the Exercise-CUT phase of the Four-Phase Test pattern. As the matter of fact, though officially this phase is a second one in this test-pattern, the set of this phase is the first one to be used by the developer. These macros are used to implement the test-doubles themselves, which are usually implemented before the tests and CUT.
 
@@ -172,7 +179,7 @@ This set of APIs is designed for the Exercise-CUT phase of the Four-Phase Test p
   * `STAT_POP_MOCK_WITH_SPYIN(_declarator_, _data_to_spy_)`
   * `STAT_POP_MOCK_WITH_SPYING_NUMERI(_declarator_, _numeric_to_spy_)`
 
-### *Verification-Phase* Macros
+### *Verification-Phase* APIs
 
 This set of APIs is designed for the Verify phase of the Four-Phase Test pattern. These macros are used by the developer to extract the collected data (e.g. spied-data) and the statistics (e.g different counters).
 

@@ -60,9 +60,10 @@ static void* Stat_AllocateMockEntryWithCallback(const char *declarator_p, _UU32 
 static _StatMockBasicEntry_t* Stat_AllocateEntry(const char *declarator_p, _UU32 size, _UU32 isExtended, _UU32 hasCallback);
 static _UU32 Stat_IsExtendedWithMockMetadata(const _StatMockBasicEntry_t *entry_p);
 static _UU32 Stat_HasExtendedEntryAnExtendedMockMetadata(const _StatMockBasicEntry_t *entry_p);
-static _UU32  Stat_IsBasicTestDouble(const _StatMockBasicEntry_t *entry_p);
+static _UU32 Stat_IsPrimitiveTestDouble(const _StatMockBasicEntry_t *entry_p);
 static _UU32 Stat_IsPureSpy(const _StatMockBasicEntry_t *entry_p);
 static _UU32 Stat_IsMockOverridden(const _StatMockBasicEntry_t *entry_p);
+static _UU32 Stat_IsInfiniteMock(const _StatMockBasicEntry_t *entry_p);
 static _UU32 Stat_IsTheOneAndUnconsumed(const _StatMockBasicEntry_t *entry_p, const char *declarator_p);
 static _UU32 Stat_IsMockConsumed(const _StatMockBasicEntry_t *entry_p);
 static _StatMockBasicEntry_t* Stat_PopNextMockEntry(const char *declarator_p);
@@ -205,7 +206,7 @@ void Stat_AddInfiniteMock(const char *declarator_p, const void* mock_p, _UU32 mo
   _UU32 totalSize = mockSize + sizeof(_StatReusableMockMetadata_t);
   _StatReusableMockMetadata_t *container_p = Stat_AllocateMockEntry(declarator_p, totalSize, !0, callback);
 
-  container_p->typePlaceholder = STAT_EXTENDED_MOCK_INFINITE;
+  container_p->typePlaceholder = STAT_MOCK_INFINITE_TYPE;
   container_p->usedCount = 0;
   container_p->countToUse = 0;
   
@@ -230,7 +231,7 @@ void Stat_AddReusableMock(const char *declarator_p, const void* mock_p, _UU32 mo
   _UU32 totalSize = mockSize + sizeof(_StatReusableMockMetadata_t);
   _StatReusableMockMetadata_t *container_p = Stat_AllocateMockEntry(declarator_p, totalSize, !0, callback);
 
-  container_p->typePlaceholder = STAT_EXTENDED_MOCK_REUSABLE;
+  container_p->typePlaceholder = STAT_MOCK_REUSABLE_TYPE;
   container_p->usedCount = 0;
   container_p->countToUse = useCount;
 
@@ -390,7 +391,7 @@ _UU32 Stat_CountCalls(const char *declarator_p)
   {
     if (Stat_AreStringsEqual(entry_p->declarator_p, declarator_p))
     {
-      if ((entry_p->metadata.callOrder) && Stat_IsBasicTestDouble(entry_p))
+      if ((entry_p->metadata.callOrder) && Stat_IsPrimitiveTestDouble(entry_p))
       {
         count++;
       }
@@ -603,7 +604,7 @@ static _UU32 Stat_HasExtendedEntryAnExtendedMockMetadata(const _StatMockBasicEnt
   return (extendedData_p == Stat_GetNextMockEntry(entry_p));
 }
 
-static _UU32  Stat_IsBasicTestDouble(const _StatMockBasicEntry_t *entry_p)
+static _UU32 Stat_IsPrimitiveTestDouble(const _StatMockBasicEntry_t *entry_p)
 {
   return !entry_p->metadata.isExtended || ((entry_p + 1) == Stat_GetNextMockEntry(entry_p));
 }
@@ -620,6 +621,14 @@ static _UU32 Stat_IsMockOverridden(const _StatMockBasicEntry_t *entry_p)
     ((void*)(handler_p + 1) == (void*)Stat_GetNextMockEntry(entry_p));
 }
 
+static _UU32 Stat_IsInfiniteMock(const _StatMockBasicEntry_t *entry_p)
+{
+  STAT_MOCK_HANDLER_T *handler_p = (void*)(entry_p + 1);
+  _StatMockExtendedMetadata_t *extended_p = (void*)(entry_p->metadata.hasCallback? (handler_p + 1): handler_p);
+  return (entry_p->metadata.isExtended) && (extended_p != (void*)Stat_GetNextMockEntry(entry_p)) && 
+    (STAT_MOCK_INFINITE_TYPE == extended_p->extendedType);
+}
+
 static _UU32 Stat_IsTheOneAndUnconsumed(const _StatMockBasicEntry_t *entry_p, const char *declarator_p)
 {
   return !(entry_p->metadata.callOrder) && Stat_AreStringsEqual(entry_p->declarator_p, declarator_p);
@@ -627,7 +636,7 @@ static _UU32 Stat_IsTheOneAndUnconsumed(const _StatMockBasicEntry_t *entry_p, co
 
 static _UU32 Stat_IsMockConsumed(const _StatMockBasicEntry_t *entry_p)
 {
-  return entry_p->metadata.callOrder || Stat_IsMockOverridden(entry_p);
+  return entry_p->metadata.callOrder || Stat_IsMockOverridden(entry_p) || Stat_IsInfiniteMock(entry_p);
 }
 
 static _StatMockBasicEntry_t* Stat_PopNextMockEntry(const char *declarator_p)
@@ -736,7 +745,7 @@ static void* Stat_ConsumeExtendedMock(_StatMockBasicEntry_t *entry_p)
   void *mock_p;
   
   reusable_p->usedCount++;
-  if ((STAT_EXTENDED_MOCK_REUSABLE == extended_p->extendedType) && (reusable_p->usedCount == reusable_p->countToUse))
+  if ((STAT_MOCK_REUSABLE_TYPE == extended_p->extendedType) && (reusable_p->usedCount == reusable_p->countToUse))
   {
     entry_p->metadata.callOrder = STAT_MOCK_CALL_ORDER_NATURAL_MAX;
   }

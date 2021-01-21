@@ -109,6 +109,8 @@ static void Test_TestReusableEmptyMock(void);
 static void Test_TestReusableMockOverConsumption(void);
 static void Test_TestReusableMockWithOverflowDueToDataSizeInconsistency(void);
 static void Test_TestNonExistingSpyDataExtractionUponReusableMock(void);
+static void Test_TestReusableMockWorksWithOrderEnforcement(void);
+static void Test_TestReusableMockCompliesWithOrderEnforcement(void);
 static void Test_TestAddInfiniteMockUponSingleUse(void);
 static void Test_TestAddInfiniteMockUponSeveralUses(void);
 static void Test_TestAddNumericInfiniteMock(void);
@@ -116,6 +118,11 @@ static void Test_TestSpiedDataUponInfiniteMock(void);
 static void Test_TestStatisticsUponInfiniteMock(void);
 static void Test_TestInfiniteEmptyMock(void);
 static void Test_TestInfiniteCallbackMock(void);
+static void Test_TestMixedWithInfiniteMocks(void);
+static void Test_TestInfiniteMockWithOverflowDueToDataSizeInconsistency(void);
+static void Test_TestNonExistingSpyDataExtractionUponInfiniteMock(void);
+static void Test_InfiniteMockCompliesWithOrderEnforcement(void);
+
 
 // Helper fucntions
 static void Test_SetupTest(void);
@@ -199,6 +206,8 @@ _UU32 Test_RunMockMainTests(void)
   RUN_TEST(Test_TestReusableMockOverConsumption);
   RUN_TEST(Test_TestReusableMockWithOverflowDueToDataSizeInconsistency);
   RUN_TEST(Test_TestNonExistingSpyDataExtractionUponReusableMock);
+  RUN_TEST(Test_TestReusableMockWorksWithOrderEnforcement);
+  RUN_TEST(Test_TestReusableMockCompliesWithOrderEnforcement);
   RUN_TEST(Test_TestAddInfiniteMockUponSingleUse);
   RUN_TEST(Test_TestAddInfiniteMockUponSeveralUses);
   RUN_TEST(Test_TestAddNumericInfiniteMock);
@@ -206,6 +215,10 @@ _UU32 Test_RunMockMainTests(void)
   RUN_TEST(Test_TestStatisticsUponInfiniteMock);
   RUN_TEST(Test_TestInfiniteEmptyMock);
   RUN_TEST(Test_TestInfiniteCallbackMock);
+  RUN_TEST(Test_TestMixedWithInfiniteMocks);
+  RUN_TEST(Test_TestInfiniteMockWithOverflowDueToDataSizeInconsistency);
+  RUN_TEST(Test_TestNonExistingSpyDataExtractionUponInfiniteMock);
+  RUN_TEST(Test_InfiniteMockCompliesWithOrderEnforcement);
   return UNITY_END();
 }
 
@@ -1263,6 +1276,45 @@ static void Test_TestNonExistingSpyDataExtractionUponReusableMock(void)
   TEST_FAIL_MESSAGE("The test should not reach this point due to expected test-abort!");
 }
 
+static void Test_TestReusableMockWorksWithOrderEnforcement(void)
+{
+  STAT_ADD_CALLBACK_MOCK(Test_TestAddCallbackMock, Test_EnforceCallOrderTracking);
+  STAT_ADD_EMPTY_MOCK(Test_TestAddEmptyMock);
+  STAT_ADD_EMPTY_MOCK(Test_TestReusableMockWorksWithOrderEnforcement);
+  STAT_ADD_EMPTY_MOCK(Test_TestAddMock);
+  STAT_ADD_REUSABLE_EMPTY_MOCK(Test_TestReusableMockWorksWithOrderEnforcement, 2);
+  STAT_ADD_EMPTY_MOCK(Test_TestAddManyMocks);
+  STAT_ADD_CALLBACK_MOCK(Test_TestAddCallbackMock, Test_CeaseCallOrderTracking);
+
+  STAT_POP_MOCK(Test_TestAddCallbackMock);
+  STAT_POP_MOCK(Test_TestAddEmptyMock);
+  STAT_POP_MOCK(Test_TestReusableMockWorksWithOrderEnforcement);
+  STAT_POP_MOCK(Test_TestAddMock);
+  STAT_POP_MOCK(Test_TestReusableMockWorksWithOrderEnforcement);
+  STAT_POP_MOCK(Test_TestReusableMockWorksWithOrderEnforcement);
+  STAT_POP_MOCK(Test_TestAddManyMocks);
+  STAT_POP_MOCK(Test_TestAddCallbackMock);  
+}
+
+static void Test_TestReusableMockCompliesWithOrderEnforcement(void)
+{
+  STAT_ADD_CALLBACK_MOCK(Test_TestAddCallbackMock, Test_EnforceCallOrderTracking);
+  STAT_ADD_EMPTY_MOCK(Test_TestReusableMockCompliesWithOrderEnforcement);
+  STAT_ADD_EMPTY_MOCK(Test_TestAddEmptyMock);
+  STAT_ADD_REUSABLE_EMPTY_MOCK(Test_TestReusableMockCompliesWithOrderEnforcement, 2);
+  STAT_ADD_EMPTY_MOCK(Test_TestAddMock);
+
+  STAT_POP_MOCK(Test_TestAddCallbackMock);
+  STAT_POP_MOCK(Test_TestReusableMockCompliesWithOrderEnforcement);
+  STAT_POP_MOCK(Test_TestAddEmptyMock);
+  STAT_POP_MOCK(Test_TestReusableMockCompliesWithOrderEnforcement);
+
+  TEST_ABORT_UPON_NON_STAT_MOCK_PERMISSIVE_VALIDATION();
+  STAT_POP_MOCK(Test_TestAddMock);
+  STAT_POP_MOCK(Test_TestReusableMockCompliesWithOrderEnforcement);
+  TEST_FAIL_MESSAGE("The test should not reach this point due to expected test-abort!");
+}
+
 static void Test_TestAddInfiniteMockUponSingleUse(void)
 {
   _UU32 mock = Stat_Rand();
@@ -1416,11 +1468,78 @@ static void Test_TestInfiniteCallbackMock(void)
   TEST_ASSERT_EQUAL_PTR(STAT_GET_MOCK_SPY_DATA(Test_TestInfiniteCallbackMock, 0), Test_statMock.callbackA.dataToSpy_p);
 }
 
-// 7
-// TODO: static void Test_TestMixedWithInfiniteMocks(void);
-// TODO: static void Test_TestInfiniteMockWithOverflowDueToDataSizeInconsistency(void);
-// TODO: static void Test_TestNonExistingSpyDataExtractionUponInfiniteMock(void);
+static void Test_TestMixedWithInfiniteMocks(void)
+{
+  _UU32 reusable = Stat_Rand();
+  _UU8 simpleLong[] = {0xBB, 0xBE, 0xAF, 0xFA, 0xCE};
+  _TestMockOject_t infinite = {Stat_Rand(), Stat_Rand()};
+  
+  STAT_ADD_REUSABLE_MOCK(Test_TestMixedWithInfiniteMocks, reusable, 2);
+  STAT_ADD_MOCK(Test_TestMixedWithInfiniteMocks, simpleLong);
+  STAT_ADD_CALLBACK_MOCK(Test_TestMixedWithInfiniteMocks, Test_HandleMockCallbackA);
+  STAT_ADD_INFINITE_MOCK(Test_TestMixedWithInfiniteMocks, infinite);
 
+  TEST_ASSERT_EQUAL(reusable, *(_UU32*)STAT_POP_MOCK(Test_TestMixedWithInfiniteMocks));
+  TEST_ASSERT_EQUAL(reusable, *(_UU32*)STAT_POP_MOCK(Test_TestMixedWithInfiniteMocks));
+  TEST_ASSERT_EQUAL_HEX8_ARRAY(simpleLong, STAT_POP_MOCK(Test_TestMixedWithInfiniteMocks), STAT_ARRAY_LEN(simpleLong));
+  STAT_POP_MOCK(Test_TestMixedWithInfiniteMocks);
+  TEST_ASSERT_EQUAL(4, Test_statMock.callbackA.callOrder);
+  TEST_ASSERT_EQUAL_MEMORY(&infinite, STAT_POP_MOCK(Test_TestMixedWithInfiniteMocks), sizeof(_TestMockOject_t));
+  TEST_ASSERT_EQUAL_MEMORY(&infinite, STAT_POP_MOCK(Test_TestMixedWithInfiniteMocks), sizeof(_TestMockOject_t));
+  TEST_ASSERT_EQUAL_MEMORY(&infinite, STAT_POP_MOCK(Test_TestMixedWithInfiniteMocks), sizeof(_TestMockOject_t));
+}
+
+static void Test_TestInfiniteMockWithOverflowDueToDataSizeInconsistency(void)
+{
+  _UU32 initalSpyData = Stat_Rand();
+  _UU8 badSizeSpyData[sizeof(_UU32) + 1] = {(_UU8)-1};
+  
+  STAT_ADD_INFINITE_EMPTY_MOCK(Test_TestInfiniteEmptyMock);
+
+  STAT_POP_MOCK_WITH_SPYING(Test_TestInfiniteEmptyMock, initalSpyData);
+
+  TEST_ABORT_UPON_NON_STAT_MOCK_PERMISSIVE_VALIDATION();
+  STAT_POP_MOCK_WITH_SPYING(Test_TestInfiniteEmptyMock, badSizeSpyData);
+  TEST_FAIL_MESSAGE("The test should not reach this point due to expected test-abort!");
+}
+
+static void Test_TestNonExistingSpyDataExtractionUponInfiniteMock(void)
+{
+  _UU32 useCount = Stat_RandRange(10, 20);
+  _UU32 index;
+  
+  STAT_ADD_INFINITE_EMPTY_MOCK(Test_TestNonExistingSpyDataExtractionUponInfiniteMock);
+
+  for (index = 0; index < useCount; index++)
+  {
+    STAT_POP_MOCK(Test_TestNonExistingSpyDataExtractionUponInfiniteMock);
+  }
+
+  TEST_ASSERT_NULL(STAT_GET_MOCK_SPY_DATA(Test_TestNonExistingSpyDataExtractionUponInfiniteMock, 0));
+  
+  TEST_ABORT_UPON_NON_STAT_MOCK_PERMISSIVE_VALIDATION();
+  STAT_GET_MOCK_SPY_DATA(Test_TestNonExistingSpyDataExtractionUponInfiniteMock, useCount);
+  TEST_FAIL_MESSAGE("The test should not reach this point due to expected test-abort!");
+}
+
+static void Test_InfiniteMockCompliesWithOrderEnforcement(void)
+{
+  STAT_ADD_CALLBACK_MOCK(Test_TestAddCallbackMock, Test_EnforceCallOrderTracking);
+  STAT_ADD_EMPTY_MOCK(Test_TestAddEmptyMock);
+  STAT_ADD_EMPTY_MOCK(Test_InfiniteMockCompliesWithOrderEnforcement);
+  STAT_ADD_EMPTY_MOCK(Test_TestAddMock);
+  STAT_ADD_INFINITE_EMPTY_MOCK(Test_InfiniteMockCompliesWithOrderEnforcement);
+  STAT_ADD_EMPTY_MOCK(Test_TestAddManyMocks);
+
+  STAT_POP_MOCK(Test_TestAddCallbackMock);
+  STAT_POP_MOCK(Test_TestAddEmptyMock);
+  STAT_POP_MOCK(Test_InfiniteMockCompliesWithOrderEnforcement);
+  STAT_POP_MOCK(Test_TestAddMock);
+  STAT_POP_MOCK(Test_InfiniteMockCompliesWithOrderEnforcement);
+  STAT_POP_MOCK(Test_InfiniteMockCompliesWithOrderEnforcement);
+  STAT_POP_MOCK(Test_TestAddManyMocks);
+  STAT_POP_MOCK(Test_InfiniteMockCompliesWithOrderEnforcement);
+}
 
 static void Test_SetupTest(void)
 {
