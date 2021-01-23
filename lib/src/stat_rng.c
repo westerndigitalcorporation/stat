@@ -132,20 +132,20 @@ _UU32 Stat_RandRange(_UU32 rangeMin, _UU32 rangeMax)
 * Selects a next unique pseudo-random number within the range based on the      
 * previous given choice
 *
-* @param previouseSelection - the previously selected random from this range
+* @param previousSelection - the previously selected random from this range
 * @param rangeMax - the maximal number in the range
 * @param rangeMin - the minimal number in the range
 * @return the selected new unique random value
 * @remarks This function works only for ranges lesser then 
 *          D_STAT_LARGEST_32BIT_PRIME
 */
-_UU32 Stat_SelectNextUniqueRandInRange(_UU32 rangeMin, _UU32 rangeMax, _UU32 previouseSelection)
+_UU32 Stat_SelectNextUniqueRandInRange(_UU32 rangeMin, _UU32 rangeMax, _UU32 previousSelection)
 {
   _UU32 range;
   _UU32 nextSelection;
 
   range = rangeMax - rangeMin + 1;
-  nextSelection = (previouseSelection - rangeMin);
+  nextSelection = (previousSelection - rangeMin);
   nextSelection = nextSelection + ((STAT_LARGEST_32BIT_PRIME) % range);
   nextSelection = (nextSelection % range) + rangeMin;
 

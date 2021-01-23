@@ -69,7 +69,8 @@ class TestStatConfigurationWithFiles(TestStatConfiguration):
         self.assertCalls(self.statMakefile, [call(attributes.CONFIG_FILENAME)])
         self.assertEqual("Hello universe!", config['TEST_VARIABLE'])
         self.assertEqual(2008, config.getInt('MSVS_VERSION', 0))
-        self.assertCalls(self.isFile, [call(attributes.CONFIG_FILENAME), call(attributes.AUTO_GENERATED_MAKEFILE)])
+        self.assertCalls(self.isFile, [call(os.path.join(attributes.PRODUCT_DIRECTORY, attributes.IGNORE_FILENAME)),
+                                       call(attributes.CONFIG_FILENAME), call(attributes.AUTO_GENERATED_MAKEFILE)])
         self.assertCalls(self.statMakefile, [call(attributes.CONFIG_FILENAME)])
         self.assertCalls(self.readTextFileAtOnce, [call(attributes.AUTO_GENERATED_MAKEFILE)])
 
