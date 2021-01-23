@@ -822,6 +822,8 @@ static void* Stat_ExtractSpyData(const _StatMockBasicEntry_t *entry_p)
   _StatCallExtendedMetadata_t* callData_p = Stat_ExtractCollectedCallData(entry_p);
   if (Stat_HasCallDataNoExtendedMetadata(entry_p))
   {
+    STAT_MOCK_ASSERT((entry_p->metadata.callOrder) || (entry_p->metadata.callDataOffset), 
+      "The specified call wasn't issued for ", entry_p->declarator_p);
     return (entry_p->metadata.callOrder)? callData_p: NULL;
   }
   else

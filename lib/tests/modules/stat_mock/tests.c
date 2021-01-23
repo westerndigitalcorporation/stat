@@ -91,6 +91,7 @@ static void Test_TestPopMockWithSpyWithOverflow(void);
 static void Test_TestSpyOnWithoutOverflow(void);
 static void Test_TestSpyOnWithOverflow(void);
 static void Test_TestGetSpyDataOutOfBound(void);
+static void Test_TestGetSpyDataUponNoneSpiedData(void);
 static void Test_TestGetCallOrderDataOutOfBound(void);
 static void Test_TestCallOrderBeyondNaturalLimitForSpys(void);
 static void Test_TestCallOrderBeyondNaturalLimitForMocks(void);
@@ -188,6 +189,7 @@ _UU32 Test_RunMockMainTests(void)
   RUN_TEST(Test_TestSpyOnWithoutOverflow);
   RUN_TEST(Test_TestSpyOnWithOverflow);
   RUN_TEST(Test_TestGetSpyDataOutOfBound);
+  RUN_TEST(Test_TestGetSpyDataUponNoneSpiedData);
   RUN_TEST(Test_TestGetCallOrderDataOutOfBound);
   RUN_TEST(Test_TestCallOrderBeyondNaturalLimitForSpys);
   RUN_TEST(Test_TestCallOrderBeyondNaturalLimitForMocks);
@@ -261,7 +263,6 @@ static void Test_TestAddMock(void)
   TEST_ASSERT_NOT_NULL(_STAT_GET_MOCK_HANDLE(Test_TestAddMock, 0));
   TEST_ASSERT_EQUAL(0, STAT_GET_CALL_ORDER(Test_TestAddMock, 0));
   TEST_ASSERT_EQUAL_HEX(mock, *(_UU32*)STAT_GET_MOCK_DATA(Test_TestAddMock, 0));
-  TEST_ASSERT_NULL(STAT_GET_MOCK_SPY_DATA(Test_TestAddMock, 0));
   TEST_ASSERT_EQUAL_HEX(mock, *(_UU32*)STAT_POP_MOCK(Test_TestAddMock));
   TEST_ASSERT_NULL(STAT_GET_MOCK_SPY_DATA(Test_TestAddMock, 0));
   TEST_ASSERT_EQUAL(1, STAT_GET_CALL_ORDER(Test_TestAddMock, 0));
@@ -458,7 +459,6 @@ static void Test_TestAddEmptyMock(void)
   TEST_ASSERT_NOT_NULL(_STAT_GET_MOCK_HANDLE(Test_TestAddEmptyMock, 0));
   TEST_ASSERT_EQUAL(0, STAT_GET_CALL_ORDER(Test_TestAddEmptyMock, 0));
   TEST_ASSERT_NULL(STAT_GET_MOCK_DATA(Test_TestAddEmptyMock, 0));
-  TEST_ASSERT_NULL(STAT_GET_MOCK_SPY_DATA(Test_TestAddEmptyMock, 0));
   TEST_ASSERT_NULL(STAT_POP_MOCK(Test_TestAddEmptyMock));
   TEST_ASSERT_NULL(STAT_GET_MOCK_SPY_DATA(Test_TestAddEmptyMock, 0));
   TEST_ASSERT_EQUAL(1, STAT_GET_CALL_ORDER(Test_TestAddEmptyMock, 0));
@@ -478,7 +478,6 @@ static void Test_TestAddCallbackMock(void)
   TEST_ASSERT_NOT_NULL(_STAT_GET_MOCK_HANDLE(Test_TestAddCallbackMock, 0));
   TEST_ASSERT_EQUAL(0, STAT_GET_CALL_ORDER(Test_TestAddCallbackMock, 0));
   TEST_ASSERT_NULL(STAT_GET_MOCK_DATA(Test_TestAddCallbackMock, 0));
-  TEST_ASSERT_NULL(STAT_GET_MOCK_SPY_DATA(Test_TestAddCallbackMock, 0));
   TEST_ASSERT_NULL(STAT_POP_MOCK(Test_TestAddCallbackMock));
   TEST_ASSERT_NULL(STAT_GET_MOCK_SPY_DATA(Test_TestAddCallbackMock, 0));
   TEST_ASSERT_EQUAL(1, STAT_GET_CALL_ORDER(Test_TestAddCallbackMock, 0));
@@ -830,6 +829,19 @@ static void Test_TestGetSpyDataOutOfBound(void)
   TEST_ABORT_UPON_NON_STAT_MOCK_PERMISSIVE_VALIDATION();
 
   STAT_GET_MOCK_SPY_DATA(Test_TestGetSpyDataOutOfBound, index);
+  TEST_FAIL_MESSAGE("The test should not reach this point due to expected test-abort!");
+}
+
+static void Test_TestGetSpyDataUponNoneSpiedData(void)
+{
+  _UU32 mocks[] = {0, 0};
+  STAT_ADD_MANY_MOCKS(Test_TestGetSpyDataUponNoneSpiedData, mocks, 2);
+  STAT_POP_MOCK_WITH_SPYING_NUMERIC(Test_TestGetSpyDataUponNoneSpiedData, 7);
+  
+  TEST_ABORT_UPON_NON_STAT_MOCK_PERMISSIVE_VALIDATION();
+    
+  STAT_GET_MOCK_SPY_DATA(Test_TestGetSpyDataUponNoneSpiedData, 1);
+  
   TEST_FAIL_MESSAGE("The test should not reach this point due to expected test-abort!");
 }
 
