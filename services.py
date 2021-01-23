@@ -164,28 +164,34 @@ def getFileLocationThroughoutCurrentPath(fileName, currentPath='.'):
     return None
 
 
+def listFilenames(pathName, encompassingPattern, *patternsForSubsets):
+    files = filterFileNames(os.listdir(pathName), encompassingPattern)
+    return __selectFilesByPatterns(files, patternsForSubsets) if patternsForSubsets else set(files)
+
+
 def listMakefiles(pathName, *patterns):
-    allFiles = filterFileNames(os.listdir(pathName), '*.mak')
-    if patterns:
-        selected = __selectFilesByPatterns(allFiles, patterns)
-    else:
-        selected = set(allFiles)
-    ignored = __selectIgnoredFiles(allFiles, pathName)
-    if ignored:
-        selected.difference_update(ignored)
-    return sorted(selected)
+    files = listFilenames(pathName, '*.mak', *patterns)
+    if len(patterns) != len(files) or set(patterns) != files:
+        ignored = __selectIgnoredFiles(files, pathName)
+        if ignored:
+            files.difference_update(ignored)
+    return sorted(files)
 
 
-def readTextFileLines(filePath):
-    _file = open(filePath)
-    for line in _file.readlines():
-        yield line.rstrip()
-    else:
-        _file.close()
+def readFileLines(filepath):
+    with open(filepath, 'r') as _file:
+        return _file.readlines()
 
 
-def readTextFileAtOnce(filePath):
-    with open(filePath, 'r') as aFile:
+def readNonEmptyLines(filepath):
+    for line in readFileLines(filepath):
+        line = line.strip()
+        if line:
+            yield line
+
+
+def readTextFileAtOnce(filepath):
+    with open(filepath, 'r') as aFile:
         text = aFile.read()
     return text
 
@@ -240,11 +246,9 @@ def formatMakeCommand(makefile, args=(), **variables):
 
 
 def __selectIgnoredFiles(makefiles, pathName):
-    statIgnoreFile = os.path.join(pathName, attributes.IGNORE_FILENAME)
-    if os.path.exists(statIgnoreFile):
-        ignoreFile = open(statIgnoreFile, 'r')
-        ignoreList = [line.strip() for line in ignoreFile.readlines()]
-        ignoreFile.close()
+    ignoreFilePathname = os.path.join(pathName, attributes.IGNORE_FILENAME)
+    if os.path.isfile(ignoreFilePathname):
+        ignoreList = [line.strip() for line in readNonEmptyLines(ignoreFilePathname)]
         if ignoreList:
             return __selectFilesByPatterns(makefiles, ignoreList)
     return set()

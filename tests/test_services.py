@@ -136,34 +136,38 @@ class TestServices(FileBasedTestCase):
         location = services.getFileLocationThroughoutCurrentPath(os.path.basename(filePath))
         self.assertEqual(filePath, location)
 
-    def test_listMakfiles(self):
+    def test_listMakefiles(self):
         pathName = '.'
-        makfiles = ['full_example.mak', 'simple.mak', 'simplified_example.mak']
-        self.assertSameItems(makfiles, services.listMakefiles(pathName))
+        makefiles = ['full_example.mak', 'simple.mak', 'simplified_example.mak']
+        self.assertSameItems(makefiles, services.listMakefiles(pathName))
 
-        exampleMakfiles = ['full_example.mak', 'simplified_example.mak']
-        self.assertSameItems(exampleMakfiles, services.listMakefiles(pathName, '*example*.*'))
+        exampleMakefiles = ['full_example.mak', 'simplified_example.mak']
+        self.assertSameItems(exampleMakefiles, services.listMakefiles(pathName, '*example*.*'))
 
         noteOverlappingPatternFiles = ['full_example.mak', 'simple.mak']
         self.assertSameItems(noteOverlappingPatternFiles, services.listMakefiles(pathName, 'full*.*', 'simple*.*'))
 
-        self.assertSameItems(makfiles, services.listMakefiles(pathName, '*example.*', 's*.*'))
+        self.assertSameItems(makefiles, services.listMakefiles(pathName, '*example.*', 's*.*'))
 
         pathName = './' + PRODUCT_DIRECTORY
-        makfiles = ['product.mak', 'product_derived.mak']
-        self.assertSameItems(makfiles, services.listMakefiles(pathName))
+        makefiles = ['product.mak', 'product_derived.mak']
+        self.assertSameItems(makefiles, services.listMakefiles(pathName))
 
-        makfiles = ['product_derived.mak']
-        self.assertSameItems(makfiles, services.listMakefiles(pathName, '*_*.*'))
+        makefiles = ['product_derived.mak']
+        self.assertSameItems(makefiles, services.listMakefiles(pathName, '*_*.*'))
 
-    def test_readTextFileLines(self):
+        makefiles = ['product_ignored.mak']
+        self.assertSameItems(makefiles, services.listMakefiles(pathName, 'product_ignored.mak'))
+
+        self.assertSameItems([], services.listMakefiles(pathName, '*example*.*'))
+
+    def test_readNonEmptyLines(self):
         filePath = '/c/some_file.txt'
         expected = ['first line', 'second line', 'third line']
         openPatcher = self.patchOpen()
-        openPatcher.return_value.readlines.return_value = [line + '\n' for line in expected]
-        received = list(services.readTextFileLines(filePath))
+        openPatcher.return_value.readlines.return_value = [' \n'] + [' ' + line + ' \n' for line in expected[:-1]] + expected[-1:]
+        received = list(services.readNonEmptyLines(filePath))
         self.assertListEqual(expected, received)
-        self.assertCalls(openPatcher, [call(filePath), call().readlines(), call().close()])
 
     def test_readTextFileAtOnce(self):
         filePath = '/root/some_text_file.txt'
