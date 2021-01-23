@@ -23,6 +23,10 @@ Release name format: [2.2.1] - 2020-02-02
 
 - Changed ability to run an ignored makefile if specified explicitly
 
+### Fixed
+
+- Fixed an issue with Spied-Data getter to assert whether the call was issued instead of returning null if it wasn't
+
 ## [2.1.4] - 2021-01-21
 
 ### Added

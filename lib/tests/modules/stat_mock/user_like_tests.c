@@ -101,14 +101,12 @@ static void Test_VerifyCallDetailsBeforeActualCalls(const _UU32 mocksCount)
   _UU32 index;
 
   TEST_ASSERT_EQUAL(0, STAT_GET_CALL_ORDER(Test_TestAddMock, 0));
-  TEST_ASSERT_NULL(STAT_GET_MOCK_SPY_DATA(Test_TestAddMock, 0));
   
   TEST_ASSERT_EQUAL(0, STAT_COUNT_CALLS(Test_TestAddMock));
   TEST_ASSERT_EQUAL(0, STAT_COUNT_CALLS(Test_TestGetMockHandle));  
   for (index = 0; index < mocksCount; index++)
   {
     TEST_ASSERT_EQUAL(0, STAT_GET_CALL_ORDER(Test_TestGetMockHandle, index));
-    TEST_ASSERT_NULL(STAT_GET_MOCK_SPY_DATA(Test_TestGetMockHandle, index));
   }
 }
 
