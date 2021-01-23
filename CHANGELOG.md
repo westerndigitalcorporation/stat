@@ -19,7 +19,9 @@ Release name format: [2.2.1] - 2020-02-02
 
 ## [Unreleased]
 
-None
+### Changed
+
+- Changed ability to run an ignored makefile if specified explicitly
 
 ## [2.1.4] - 2021-01-21
 
