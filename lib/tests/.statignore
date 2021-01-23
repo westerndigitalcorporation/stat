@@ -1,1 +1,3 @@
 stat_mock_base.mak
+stat_mock_compilation_error.mak
+stat_mock_link_error.mak

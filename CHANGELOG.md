@@ -26,6 +26,7 @@ Release name format: [2.2.1] - 2020-02-02
 ### Fixed
 
 - Fixed an issue with Spied-Data getter to assert whether the call was issued instead of returning null if it wasn't
+- Fixed an issue with erroneous handling of build failures upon incremental build
 
 ## [2.1.4] - 2021-01-21
 
