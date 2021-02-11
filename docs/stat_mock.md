@@ -362,9 +362,9 @@ static void Test_TestSomething(void)
 {
   ...
   // The loop within CUT will cycle trice and then will exit
-  STAT_ADD_EMPTY_MOCK(Os_Wait);
-  STAT_ADD_EMPTY_MOCK(Os_Wait);
-  STAT_ADD_CALLBACK_MOCK(Os_Wait, Test_SetDone);
+  STAT_ADD_EMPTY_MOCK(Os_Sleep);
+  STAT_ADD_EMPTY_MOCK(Os_Sleep);
+  STAT_ADD_CALLBACK_MOCK(Os_Sleep, Test_SetDone);
   ...
   Cut_DoSomething(...); // Calls DOC API
   ...
