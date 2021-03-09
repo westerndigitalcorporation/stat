@@ -109,7 +109,7 @@ Framework provides services to generate project files for certain IDEs, by the m
 ## 5. Maintainer
 
 &nbsp;&nbsp;&nbsp;*Arseniy Aharonov* - the maintainer and the main contributor  
-&nbsp;&nbsp;&nbsp;[![GitHub](https://img.shields.io/badge/%20-@are&minus;scenic-blue.svg?style=social&logo=GitHub)](https://github.com/are-scenic) [![GitHub](https://img.shields.io/badge/Contact-@arseniy@aharonov.icu-blue.svg?style=social)](mailto:arseniy@aharonov.icu)
+&nbsp;&nbsp;&nbsp;[![GitHub](https://img.shields.io/badge/%20-@are&minus;scenic-blue.svg?style=social&logo=GitHub)](https://github.com/are-scenic) [![GitHub](https://img.shields.io/badge/arseniy@aharonov.icu-blue.svg?style=social&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAANCAYAAACgu+4kAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAFZSURBVDhPlZK7S8NgFMXz5dE8WwSRYJcMTrqICDo7BBdBiy4OdRb/AsFRR0Fwc9XNVXfdnESQgo+Cg4K6qIMUB2Pi74ag0KrEA4fv5txzz/cgyjTNvSRJJjRN+4Cloeu6YVnWvqK4hk1CHopeKTAznWXZpqaUerZte6rQS4OTr7K8S52S1gqCYFg+SkD5vh+z8T11Jid4gqeEHJM6iWjlth8QRZHDvRfx3+A/R8pP0EIcNQxjnUabkBW0npBqtdqPZ4vBM/xLjuM0kTvSa8FBSa9UKmsYrniTZbQ+aQKdI4cMbdNr45lHM1hnWb8DpACKxgw7XcBd3mWEsJjBI3joed6YeMT4W4BAr9VqQwSccKU7eMu1DggboJcPC/4KyOG6bp2QBozDMPQL+QvdAXUo6d3UC/b0CJhj7cifeJmm6Q4fL7A0uNo4bGg80gbFK9rbf8jGj67rLnwCZYNQShjAlXoAAAAASUVORK5CYII=)](mailto:arseniy@aharonov.icu)
 
 ## 6. Contribution
 
@@ -126,7 +126,7 @@ An open source project thrives on contribution of different people, and it may c
 - Oran DeBotton  
 [![GitHub](https://img.shields.io/badge/SolarEdge-oran.debotton@SolarEdge.com-blue.svg?style=social)](mailto:oran.debotton@SolarEdge.com)
 - Luna Benarroch  
-[![GitHub](https://img.shields.io/badge/luna.benarroch@ibm.com-blue.svg?style=social&logo=IBM)](mailto:luna.benarroch@ibm.com)
+[![GitHub](https://img.shields.io/badge/@luna--benarroch-blue.svg?style=social&logo=GitHub)](https://github.com/luna-benarroch) [![GitHub](https://img.shields.io/badge/luna.benarroch@ibm.com-blue.svg?style=social&logo=IBM)](mailto:luna.benarroch@ibm.com)
 
 ### 6.2. Imported Components
 
