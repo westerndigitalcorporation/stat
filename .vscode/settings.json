@@ -20,5 +20,4 @@
     "pylint",
     "statignore"
   ],
-  "python.pythonPath": "/home/arsenique/miniconda3/envs/py27/bin/python"
 }
