@@ -21,6 +21,12 @@ Release name format: [2.2.1] - 2020-02-02
 
 None
 
+## [2.1.6] - 2021-04-03
+
+### Fixed
+
+- Fixed an issue due to which dummy interfaces always overwrote production headers even when it's required
+
 ## [2.1.5] - 2021-03-31
 
 ### Changed

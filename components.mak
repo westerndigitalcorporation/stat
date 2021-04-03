@@ -9,18 +9,17 @@
 # INCLUDES - list of all include directories
 # DUMMY_INTERFACES - list of all dummy header-files to be used instead FW-version
 # DEFINES - list of definitions to be invoked via command-line
-    
-# Source files
-SOURCES:=$(SOURCES) $(PRODUCT_SOURCES) \
-    $(STAT_ROOT)/unity/unity.c \
+
+STAT_SOURCES=$(STAT_ROOT)/unity/unity.c \
     $(STAT_ROOT)/lib/src/stat.c \
     $(STAT_ROOT)/lib/src/stat_rng.c \
     $(STAT_ROOT)/lib/src/stat_mock.c \
 
+# Source files
+SOURCES:=$(SOURCES) $(PRODUCT_SOURCES) $(STAT_SOURCES)
+
 # Include directories
-INCLUDES:=$(INCLUDES) $(PRODUCT_INCLUDES) \
-    $(STAT_ROOT)/unity \
-    $(STAT_ROOT)/lib/inc \
+INCLUDES:=$(INCLUDES) $(PRODUCT_INCLUDES) $(STAT_ROOT)/unity $(STAT_ROOT)/lib/inc
 
 # Dummy interfaces
 DUMMY_INTERFACES:=$(DUMMY_INTERFACES) $(PRODUCT_DUMMY_INTERFACES)

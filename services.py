@@ -40,11 +40,9 @@ def isWindows():
 
 def getPlatform():
     # 'Linux32/64', 'Darwin32/64', 'Java32/64', 'Windows32/64'
-    return platform.system() + ("64" if isPlatform64Bit() else "32")
-
-
-def isPlatform64Bit():
-    return sys.maxsize > 2**32
+    machine = "64" if platform.machine()[-2:] == "64" else "32"
+    platformMode = platform.system() + machine
+    return platformMode
 
 
 def toWindowsPath(path):

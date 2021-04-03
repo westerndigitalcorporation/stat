@@ -15,7 +15,8 @@ INCLUDES = \
     ./modules/stat_mock/inc
 
 # Dummy interfaces used to replace real ones
-DUMMY_INTERFACES = user_like_dummy.h
+DUMMY_INTERFACES = \
+	user_like_dummy.h
 
 # Preprocessor definitions
 DEFINES := $(DEFINES) \
