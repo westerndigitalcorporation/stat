@@ -23,7 +23,7 @@ build rebuild:
 else
 
 # MSVS tool-chain local definitions
-CFLAGS=-FD -FS -WX -W3 -Zi -c -nologo $(DEFINES) -Fd$(OBJECTS_DIR)/ -I$(HEADERS_DIR)/ -Fo$(OBJECTS_DIR)/
+CFLAGS=-FD -WX -W3 -Zi -c -nologo $(DEFINES) -Fd$(OBJECTS_DIR)/ -I$(HEADERS_DIR)/ -Fo$(OBJECTS_DIR)/
 CC=cl
 LINK=link
 COMPILE_WITH_DEPS=\
