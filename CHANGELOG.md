@@ -25,7 +25,7 @@ None
 
 ### Fixed
 
-- Fixed an issue due to which dummy interfaces always overwrote production headers even when it's required
+- Fixed an issue due to which dummy interfaces always overwrote production headers even when it was not required
 
 ## [2.1.5] - 2021-03-31
 
