@@ -66,7 +66,7 @@ class StatMain(object):
     def __init__(self):
         self.__config = StatConfiguration()
         self.__parser = StatArgumentParser(self.__config.products, self.__config.defaultProduct)
-        self.__makeArguments = ['COPY_HEADERS="TRUE"']
+        self.__makeArguments = ['INSTALL_BY_COPY="TRUE"']
         self.__report = StatReport()
 
     def _run(self, manualArguments):

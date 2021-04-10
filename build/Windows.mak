@@ -4,10 +4,12 @@
 #                             Arseniy Aharonov <arseniy.aharonov@gmail.com>
 #
 # SPDX-License-Identifier: MIT
+WIN.COMMA=,
+WIN.COPY_SCRIPT:=$(subst /,\,$(STAT_ROOT))\build\copy.cmd
 
-OS.REMOVE_DIR = @if exist $(1) @rmdir /Q /S $(subst /,\,$(1)/) >nul
-OS.MAKE_DIR = @md $(subst /,\,$(1)) >nul
-OS.COPY = @copy /Y "$(subst /,\,$(1))" "$(subst /,\,$(2))" >nul
-OS.LINK = @cmd /c mklink "$(subst /,\,$(2))" "$(subst /,\,$(abspath $(1)))" >nul
-OS.TOUCH = @type nul >$(1)
-OS.DEFAULT_TOOLS = msvs
+OS.REMOVE_DIR=@if exist $(1) @rmdir /Q /S $(subst /,\,$(1)/) >nul
+OS.MAKE_DIR=@md $(subst /,\,$(1)) >nul
+OS.COPY=@$(WIN.COPY_SCRIPT) $(1) $(2) $(3) >nul
+OS.TOUCH=@copy /B $(1)+$(WIN.COMMA)$(WIN.COMMA) $(1)
+OS.DEFAULT_TOOLS=msvs
+OS.NULL_OUTPUT=nul

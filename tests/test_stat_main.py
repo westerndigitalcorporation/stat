@@ -27,7 +27,7 @@ SINGLE_MAKE_FILE = "simple.mak"
 MANY_MAKE_FILES = ['simplified_example.mak', SINGLE_MAKE_FILE, 'full_example.mak']
 MANY_LOG_FILES = [filename[:-4] + '.log' for filename in MANY_MAKE_FILES]
 
-MAKE_ARGUMENTS = ['COPY_HEADERS="TRUE"']
+MAKE_ARGUMENTS = ['INSTALL_BY_COPY="TRUE"']
 
 LOG_LINES = ['First line', 'second line', '3rd line']
 
