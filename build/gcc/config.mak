@@ -14,7 +14,7 @@ CC=gcc
 LINK=gcc
 COMPILE_WITH_DEPS=\
 	@$(CC) $(DEPFLAGS) $(CFLAGS) "$(abspath $(SOURCE_FILE))"\
-	$(NEW_LINE_BREAK) $(call OS.COPY, $(DEP_FILE).tmp, $(DEP_FILE))\
+	$(NEW_LINE_BREAK) $(call OS.CPY, $(DEP_FILE).tmp, $(DEP_FILE))\
 	$(NEW_LINE_BREAK) $(call OS.TOUCH, $(OBJECT_FILE))
 
 # GCC tool-chain global definitions
