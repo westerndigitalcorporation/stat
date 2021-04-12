@@ -17,7 +17,20 @@ All notable changes to this project will be documented in this file.
 Release name format: [2.2.1] - 2020-02-02
 -->
 
-## [Unreleased]
+## [2.1.7] - 2021-04-13
+
+### Added
+
+- Added support for double-versioning of dummy-interfaces
+  - It allows more flexibility, though usually signals bad test-design
+
+### Changed
+
+- Improved performance of rebuild (-c) and 'gear'-ed (-g) command-line configurations.
+
+### Fixed 
+
+- Fixed an issue with the performance of the framework on Windows platform.
 
 None
 
