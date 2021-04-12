@@ -51,7 +51,7 @@ build: $(EXECUTABLE) | $(PRECEDING_CLEANUP) $(ALL_OUTPUT_DIRS)
 
 rebuild: $(PRECEDING_CLEANUP) $(ALL_OUTPUT_DIRS)
 	@echo Installing dependencies...
-	$(call OS.COPY,$(COPY_METHOD_FLAGS),$(DUMMY_INTERFACES),$(HEADERS_DIR))
+	$(call OS.COPY,-n $(COPY_METHOD_FLAGS),$(DUMMY_INTERFACES),$(HEADERS_DIR))
 	$(call OS.COPY,-n $(COPY_METHOD_FLAGS),$(foreach _dir_,$(INCLUDES),$(_dir_)*.h),$(HEADERS_DIR))
 	@echo Compiling all...
 	$(foreach SOURCE_FILE,$(SOURCES),$(RECOMPILE_COMMAND) $(NEW_LINE_BREAK))

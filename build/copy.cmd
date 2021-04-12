@@ -11,7 +11,7 @@ setlocal
 set ITEMS_COUNT=0
 :ARG_LOOP
 set "ARGUMENT=%~1"
-set "FULL_PATHNAME=%~1"
+set "FULL_PATHNAME=%~f1"
 SHIFT /1
 IF "%ARGUMENT%" EQU "" GOTO :NO_MORE_ARGS
 IF "%ARGUMENT:~0,1%" EQU "-" (
@@ -53,9 +53,14 @@ FOR /L %%a in (0,1,%LAST_SOURCE_INDEX%) DO set COPY_SOURCES=!COPY_SOURCES! "!COP
 IF DEFINED OPTION_s (
     :: If symbolic link shall be created instead of copying
     IF DEFINED OPTION_n (
-        FOR %%F IN (%COPY_SOURCES%) DO IF NOT EXIST "%INCLUDES_PATH%\%%~nxF" mklink "%INCLUDES_PATH%\%%~nxF" "%%~fF"
+        FOR %%F IN (%COPY_SOURCES%) DO IF NOT EXIST "%INCLUDES_PATH%\%%~nxF" (
+            mklink "%INCLUDES_PATH%\%%~nxF" "%%~fF"
+        )
     ) ELSE (
-        FOR %%F IN (%COPY_SOURCES%) DO mklink "%INCLUDES_PATH%\%%~nxF" "%%~fF"
+        FOR %%F IN (%COPY_SOURCES%) DO (
+            IF EXIST "%INCLUDES_PATH%\%%~nxF" del /q /f "%INCLUDES_PATH%\%%~nxF"
+            mklink "%INCLUDES_PATH%\%%~nxF" "%%~fF"
+        )
     )
 ) ELSE (
     :: If regular copying was requested
