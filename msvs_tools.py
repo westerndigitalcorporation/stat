@@ -11,8 +11,8 @@ from services import executeForOutput, toPosixPath, Configuration
 from build_tools import BuildTools
 
 NMAKE_ARGUMENTS = "/S /C /NOLOGO /F"
-SUPPORTED = {8.0: 2005, 9.0: 2008, 10.0: 2010, 11.0: 2012, 12.0: 2013, 14.0: 2015, 15.0: 2017, 16.0: 2019}
-SOLUTION_FORMATS = {8.0: 9.0, 9.0: 10.0, 10.0: 11.0, 11.0: 11.0, 12.0: 12.0, 14.0: 12.0, 15.0: 12.0, 16.0: 12.0}
+SUPPORTED = {8.0: 2005, 9.0: 2008, 10.0: 2010, 11.0: 2012, 12.0: 2013, 14.0: 2015, 15.0: 2017, 16.0: 2019, 17.0: 2022}
+SOLUTION_FORMATS = {8.0: 9.0, 9.0: 10.0, 10.0: 11.0, 11.0: 11.0, 12.0: 12.0, 14.0: 12.0, 15.0: 12.0, 16.0: 12.0, 17.0: 12.0}
 
 
 class MsvsTools(BuildTools):

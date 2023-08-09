@@ -127,6 +127,8 @@ An open source project thrives on contribution of different people, and it may c
 [![GitHub](https://img.shields.io/badge/SolarEdge-oran.debotton@SolarEdge.com-blue.svg?style=social)](mailto:oran.debotton@SolarEdge.com)
 - Luna Benarroch  
 [![GitHub](https://img.shields.io/badge/@luna--benarroch-blue.svg?style=social&logo=GitHub)](https://github.com/luna-benarroch) [![GitHub](https://img.shields.io/badge/luna.benarroch@ibm.com-blue.svg?style=social&logo=IBM)](mailto:luna.benarroch@ibm.com)
+- Leah Adler  
+[![GitHub](https://img.shields.io/badge/@leahadler-blue.svg?style=social&logo=GitHub)](https://github.com/leahadler)
 
 ### 6.2. Imported Components
 
