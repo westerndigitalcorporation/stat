@@ -22,7 +22,7 @@ class TestStatMakefileGenerator(FileBasedTestCase):
     def setUp(self):
         directory = os.path.dirname(attributes.AUTO_GENERATED_MAKEFILE)
         remove(directory)
-        self.buildToolsCrawler = self.patch(CUT, BuildToolsCrawler.__name__, auto_spec=True)
+        self.buildToolsCrawler = self.patch(CUT, BuildToolsCrawler.__name__, autospec=True)
         self.buildToolsCrawler.return_value.getBuildAttributes.return_value = TEST_TOOL_ATTRIBUTES
 
     def tearDown(self):
