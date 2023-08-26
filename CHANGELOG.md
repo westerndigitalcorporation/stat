@@ -17,6 +17,17 @@ All notable changes to this project will be documented in this file.
 Release name format: [2.2.1] - 2020-02-02
 -->
 
+## Next Release
+
+### Fixed
+
+- Fixed CI issues with non-compliant text in `dep5` file
+
+### Removed
+
+- Removed official support of Python 2.7 as its support was dropped by GitHub containers
+
+
 ## [2.1.7] - 2021-04-13
 
 ### Added

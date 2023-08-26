@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-2016, windows-latest, ubuntu-16.04, ubuntu-20.04]
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+        python-version: [3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11]
   
     steps:
     
@@ -28,10 +28,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Python 2.7 dependencies
-      if: ${{ matrix.python-version == 2.7 }}
-      run: |
-        pip install mock==1.0.1
+#    - name: Install Python 2.7 dependencies
+#      if: ${{ matrix.python-version == 2.7 }}
+#      run: |
+#        pip install mock==1.0.1
 
     - name: Install common dependencies
       run: |

@@ -6,7 +6,7 @@
 ![GNU](https://img.shields.io/badge/GNU-Make%20|%20GCC-blue?style=flat&logo=GNU&logoColor=white) 
 ![Windows](https://img.shields.io/badge/Windows-7%20|%2010-blue?style=flat&logo=Windows&logoColor=white) 
 ![Linux](https://img.shields.io/badge/Linux-Debian%20Derivatives%20+-blue?style=flat&logo=Linux&logoColor=white) 
-![python](https://img.shields.io/badge/python-2.7%20|%203.5--3.8-blue?style=flat&logo=Python&logoColor=white)  
+![python](https://img.shields.io/badge/python-3.5--3.11-blue?style=flat&logo=Python&logoColor=white)  
 [![standard-readme compliant](https://img.shields.io/badge/readme_style-standard-brightgreen)](https://github.com/RichardLitt/standard-readme)
 [![REUSE Compliance](https://github.com/westerndigitalcorporation/stat/workflows/REUSE%20Compliance/badge.svg?branch=master)](https://api.reuse.software/info/git.fsfe.org/reuse/api)
 [![Regression](https://github.com/westerndigitalcorporation/stat/workflows/Regression/badge.svg?branch=master)](https://github.com/westerndigitalcorporation/stat/actions?query=workflow%3ARegression+branch%3Amaster)
