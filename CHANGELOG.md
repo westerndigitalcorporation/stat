@@ -17,7 +17,15 @@ All notable changes to this project will be documented in this file.
 Release name format: [2.2.1] - 2020-02-02
 -->
 
-## Next Release
+## [Unreleased]
+
+None
+
+## [2.2.0] - 2023-08-27
+
+### Added
+
+- Added support for MSVC 2022
 
 ### Fixed
 
